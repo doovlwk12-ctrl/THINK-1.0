@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -11,7 +11,7 @@ import { Input } from '@/components/shared/Input'
 import { Card } from '@/components/shared/Card'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { Loading } from '@/components/shared/Loading'
-import { Home } from 'lucide-react'
+import { Home, Clock } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,16 +23,38 @@ function getDashboardPathByRole(role: string | undefined): string {
   return '/dashboard'
 }
 
+/** استخراج عدد الثواني من رسالة الحد (مثل "بعد دقيقة (45 ثانية)") */
+function parseWaitSeconds(message: string): number {
+  const match = message.match(/\((\d+)\s*ثانية\)/)
+  if (match) return Math.max(1, parseInt(match[1], 10))
+  return 60
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const { data: session, status, signIn } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [waitSecondsRemaining, setWaitSecondsRemaining] = useState<number | null>(null)
+  const countdownStartedRef = useRef(false)
 
   useEffect(() => {
     if (session?.user) {
       window.location.href = getDashboardPathByRole(session.user.role)
     }
   }, [session])
+
+  useEffect(() => {
+    if (waitSecondsRemaining == null || waitSecondsRemaining <= 0) {
+      countdownStartedRef.current = false
+      return
+    }
+    if (countdownStartedRef.current) return
+    countdownStartedRef.current = true
+    const id = setInterval(() => {
+      setWaitSecondsRemaining((prev) => (prev != null && prev > 1 ? prev - 1 : null))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [waitSecondsRemaining])
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema)
@@ -66,6 +88,10 @@ export default function RegisterPage() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'فشل إنشاء الحساب'
+      const isRateLimit = /محاولات كثيرة|دقيقة|تجاوز الحد/.test(errorMessage)
+      if (isRateLimit) {
+        setWaitSecondsRemaining(parseWaitSeconds(errorMessage))
+      }
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -111,6 +137,26 @@ export default function RegisterPage() {
           </h1>
           <div className="w-12 sm:w-16 h-0.5 bg-gradient-to-r from-transparent via-rocky-blue/40 to-transparent dark:via-rocky-blue-400/40 mx-auto mt-2" />
         </div>
+
+        {/* رسالة انتظار دقيقة عند تجاوز الحد */}
+        {waitSecondsRemaining != null && waitSecondsRemaining > 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-700/50">
+            <div className="flex items-start gap-3">
+              <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-800 dark:text-amber-200 mb-1">
+                  يرجى الانتظار دقيقة واحدة
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
+                  تم تجاوز عدد المحاولات. يمكنك التسجيل مرة أخرى بعد انتهاء العدّ.
+                </p>
+                <p className="text-lg font-bold text-amber-900 dark:text-amber-100 tabular-nums">
+                  يمكنك المحاولة بعد {waitSecondsRemaining} ثانية
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
           <Input
@@ -156,9 +202,12 @@ export default function RegisterPage() {
           <Button
             type="submit"
             loading={loading}
+            disabled={waitSecondsRemaining != null && waitSecondsRemaining > 0}
             className="w-full"
           >
-            إنشاء حساب
+            {waitSecondsRemaining != null && waitSecondsRemaining > 0
+              ? `انتظر ${waitSecondsRemaining} ثانية`
+              : 'إنشاء حساب'}
           </Button>
         </form>
 

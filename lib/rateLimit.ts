@@ -126,8 +126,8 @@ export const apiRateLimit = rateLimit({
 })
 
 export const authRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts per 15 minutes (stricter for auth)
+  windowMs: 60 * 1000, // 1 minute — بعد 5 محاولات ينتظر دقيقة ثم يقدر يحاول مرة ثانية
+  max: 5, // 5 محاولات (تسجيل / نسيت البريد) في الدقيقة
 })
 
 // Lighter rate limit for polling endpoints (messages, notifications)

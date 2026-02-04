@@ -59,10 +59,14 @@ async function runRateLimit(path: string, req: NextRequestWithAuth) {
     const limiter = isStrictAuthPath(path) ? authRateLimit : apiRateLimit
     const result = await limiter(req)
     if (!result.success) {
+      const retryAfterSec = Math.ceil((result.resetTime - Date.now()) / 1000)
+      const authMessage = isStrictAuthPath(path)
+        ? `محاولات كثيرة. يمكنك المحاولة مرة أخرى بعد دقيقة (${retryAfterSec} ثانية).`
+        : 'تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة لاحقاً.'
       return { response: NextResponse.json(
-        { success: false, error: 'تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة لاحقاً.' },
+        { success: false, error: authMessage },
         { status: 429, headers: {
-          'Retry-After': String(Math.ceil((result.resetTime - Date.now()) / 1000)),
+          'Retry-After': String(retryAfterSec),
           'X-RateLimit-Limit': isStrictAuthPath(path) ? '5' : '2000',
           'X-RateLimit-Remaining': String(result.remaining),
           'X-RateLimit-Reset': String(result.resetTime),
