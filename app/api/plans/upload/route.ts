@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
-import { uploadFile, deleteFileByUrl } from '@/lib/storage'
+import { uploadFile, deleteFileByUrl, STORAGE_NOT_CONFIGURED_MESSAGE } from '@/lib/storage'
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024   // 10MB لكل ملف عند الرفع
 const MAX_FILE_SIZE_AFTER_SAVE_BYTES = 5 * 1024 * 1024  // 5MB حد أقصى بعد الحفظ
@@ -100,6 +100,15 @@ export async function POST(request: NextRequest) {
       plan
     })
   } catch (error: unknown) {
+    if (error instanceof Error && error.message === STORAGE_NOT_CONFIGURED_MESSAGE) {
+      return Response.json(
+        {
+          error:
+            'رفع الملفات غير متوفر على الخادم الحالي. يرجى إعداد التخزين السحابي (S3 أو Cloudinary) في متغيرات البيئة.',
+        },
+        { status: 503 }
+      )
+    }
     return handleApiError(error)
   }
 }

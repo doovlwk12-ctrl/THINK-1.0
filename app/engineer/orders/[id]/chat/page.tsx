@@ -104,8 +104,7 @@ export default function EngineerChatPage() {
 
     setSending(true)
     try {
-      const result = await apiClient.post<{ success: boolean }>('/messages/send', {
-        orderId,
+      const result = await apiClient.post<{ success: boolean }>(`/messages/${orderId}`, {
         content: newMessage,
       })
 

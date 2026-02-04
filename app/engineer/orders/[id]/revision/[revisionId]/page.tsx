@@ -123,8 +123,7 @@ export default function EngineerRevisionPage() {
     setSendingToChatPinIndex(pinIndex)
     try {
       const content = buildPinMessageText(pin, pinIndex)
-      const result = await apiClient.post<{ success: boolean }>('/messages/send', {
-        orderId,
+      const result = await apiClient.post<{ success: boolean }>(`/messages/${orderId}`, {
         content,
       })
       if (result.success) {

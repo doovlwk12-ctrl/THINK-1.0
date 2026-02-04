@@ -56,10 +56,17 @@ export async function uploadFile(
   }
 }
 
+/** Use in API routes to detect storage-not-available errors (e.g. Vercel without S3/Cloudinary). */
+export const STORAGE_NOT_CONFIGURED_MESSAGE = 'STORAGE_NOT_CONFIGURED'
+
 /**
  * Upload to local storage (for MVP)
+ * On Vercel the filesystem is read-only; S3 or Cloudinary must be configured.
  */
 async function uploadToLocal(file: File, options: UploadOptions): Promise<UploadResult> {
+  if (process.env.VERCEL) {
+    throw new Error(STORAGE_NOT_CONFIGURED_MESSAGE)
+  }
   const extension = file.name.split('.').pop() || 'bin'
   const fileName = `${randomUUID()}.${extension}`
   const uploadsDir = join(process.cwd(), 'public', 'uploads', options.folder)
