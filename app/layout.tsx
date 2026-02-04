@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Cairo } from 'next/font/google'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/components/providers/AuthProvider'
@@ -52,6 +53,7 @@ export default function RootLayout({
               <ProfileDisplayNameProvider>
                 {children}
                 <Toaster position="top-center" />
+                <SpeedInsights />
               </ProfileDisplayNameProvider>
             </AuthProvider>
           </ErrorBoundaryProvider>

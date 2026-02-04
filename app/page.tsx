@@ -866,15 +866,18 @@ export default function Home() {
                     )}
                   </div>
                   
-                  {/* Step Content - full width on mobile, no clipping */}
+                  {/* Step Content - على الجوال: أيقونة في صف مستقل ثم النص بدون تداخل */}
                   <div className="flex-1 min-w-0 group-hover:translate-x-2 transition-transform duration-300">
                     <div className="relative bg-white dark:bg-charcoal-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-500/30 overflow-visible">
-                      {/* Icon: above text on mobile, absolute on desktop */}
-                      <div className="flex flex-row items-start gap-3 sm:gap-0 sm:absolute sm:top-6 sm:left-6 mb-3 sm:mb-0 w-12 h-12 sm:w-16 sm:h-16 bg-rocky-blue/10 dark:bg-rocky-blue/20 rounded-lg sm:rounded-xl flex-shrink-0 sm:flex items-center justify-center border-2 border-rocky-blue/20">
-                        <step.icon className="w-6 h-6 sm:w-8 sm:h-8 text-rocky-blue dark:text-rocky-blue-300" />
+                      {/* أيقونة: على الجوال صف كامل مع مسافة تحت؛ من sm فما فوق في الزاوية */}
+                      <div className="flex justify-center sm:justify-start sm:absolute sm:top-6 sm:left-6 w-full sm:w-16 sm:h-16 mb-4 sm:mb-0 sm:flex items-center justify-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rocky-blue/10 dark:bg-rocky-blue/20 rounded-xl flex items-center justify-center border-2 border-rocky-blue/20 flex-shrink-0">
+                          <step.icon className="w-6 h-6 sm:w-8 sm:h-8 text-rocky-blue dark:text-rocky-blue-300" />
+                        </div>
                       </div>
                       
-                      <div className="pr-0 sm:pr-24 min-w-0">
+                      {/* النص: على الجوال يبدأ تحت الأيقونة بمسافة واضحة؛ على الديسكتوب مع مساحة لليسار */}
+                      <div className="pr-0 sm:pr-24 min-w-0 pt-0 sm:pt-0">
                         <h3 className="text-lg sm:text-xl md:text-2xl font-black text-charcoal dark:text-cream mb-2 sm:mb-3 group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300">
                           {step.title}
                         </h3>
