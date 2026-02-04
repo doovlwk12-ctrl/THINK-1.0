@@ -35,6 +35,8 @@
 
 **راجع [STATUS_REPORT.md](./STATUS_REPORT.md) لتقرير الحالة الكامل.**
 
+**سير عمل الطلب (من العميل إلى المهندس حتى الإغلاق والأدمن):** راجع [docs/ORDER-WORKFLOW.md](./docs/ORDER-WORKFLOW.md).
+
 ## البدء السريع
 
 ### المتطلبات
