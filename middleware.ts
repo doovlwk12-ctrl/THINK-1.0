@@ -29,7 +29,10 @@ function applyRateLimitHeaders(
     (path.includes('/orders/') && path.includes('/plans')) ||
     path.includes('/revisions/') ||
     path.includes('/packages') ||
-    path.includes('/users/profile')
+    path.includes('/users/profile') ||
+    path === '/api/auth/me' ||
+    path === '/api/auth/session' ||
+    path === '/api/auth/_log'
   let limitValue = '2000'
   if (isStrictAuthPath(path)) limitValue = '5'
   else if (isPollingEndpoint) limitValue = 'unlimited'
@@ -48,7 +51,10 @@ async function runRateLimit(path: string, req: NextRequestWithAuth) {
     (path.includes('/orders/') && path.includes('/plans')) ||
     path.includes('/revisions/') ||
     path.includes('/packages') ||
-    path.includes('/users/profile')
+    path.includes('/users/profile') ||
+    path === '/api/auth/me' ||
+    path === '/api/auth/session' ||
+    path === '/api/auth/_log'
   if (!isPollingEndpoint) {
     const limiter = isStrictAuthPath(path) ? authRateLimit : apiRateLimit
     const result = await limiter(req)

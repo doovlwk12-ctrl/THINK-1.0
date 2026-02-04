@@ -14,6 +14,10 @@ const sendMessageSchema = z.object({
   content: z.string().min(1, 'محتوى الرسالة مطلوب'),
 })
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: { Allow: 'POST, OPTIONS' } })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const result = await requireAuth(request)
