@@ -76,21 +76,16 @@ export function UserMenu({ userName, userRole, onSignOut }: UserMenuProps) {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [isOpen])
 
-  const applyTheme = (newTheme: 'light' | 'dark') => {
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light'
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
       document.documentElement.classList.remove('dark')
     }
     localStorage.setItem('theme', newTheme)
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('themechange'))
-  }
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
     setTheme(newTheme)
-    applyTheme(newTheme)
+    window.dispatchEvent(new Event('themechange'))
   }
 
   const handleSignOut = async () => {
@@ -153,7 +148,7 @@ export function UserMenu({ userName, userRole, onSignOut }: UserMenuProps) {
 
       {/* Dropdown Menu - Enhanced */}
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-72 bg-white dark:bg-charcoal-800 rounded-2xl shadow-2xl border-2 border-greige/30 dark:border-charcoal-600 py-2 z-50 animate-in slide-in-from-top-2 overflow-hidden">
+        <div className="absolute left-0 mt-2 w-[calc(100vw-2rem)] sm:w-72 bg-white dark:bg-charcoal-800 rounded-2xl shadow-2xl border-2 border-greige/30 dark:border-charcoal-600 py-2 z-50 animate-in slide-in-from-top-2 overflow-hidden">
           {/* User Info - Enhanced */}
           <div className="px-5 py-4 border-b-2 border-greige/30 dark:border-charcoal-600 bg-gradient-to-r from-rocky-blue/5 to-blue-gray/5 dark:from-rocky-blue/10 dark:to-blue-gray/10">
             <div className="flex items-center gap-3">

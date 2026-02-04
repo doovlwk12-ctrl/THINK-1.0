@@ -30,11 +30,9 @@ export async function GET(request: NextRequest) {
           },
         },
         engineerOrders: {
-          where: {
-            status: 'COMPLETED',
-          },
           select: {
             id: true,
+            status: true,
           },
         },
       },
@@ -43,7 +41,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Transform the data to include completed orders count
+    // Transform: للعميل عدد طلباته، للمهندس إجمالي الطلبات المعينة + المكتملة
     const usersWithStats = users.map((user) => ({
       id: user.id,
       name: user.name,
@@ -51,8 +49,14 @@ export async function GET(request: NextRequest) {
       phone: user.phone,
       role: user.role,
       createdAt: user.createdAt,
-      ordersCount: user.clientOrders.length,
-      completedOrdersCount: user.role === 'ENGINEER' ? user.engineerOrders.length : 0,
+      ordersCount:
+        user.role === 'ENGINEER'
+          ? user.engineerOrders.length
+          : user.clientOrders.length,
+      completedOrdersCount:
+        user.role === 'ENGINEER'
+          ? user.engineerOrders.filter((o) => o.status === 'COMPLETED').length
+          : 0,
     }))
 
     return Response.json({

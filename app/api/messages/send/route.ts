@@ -40,9 +40,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = sendMessageSchema.parse(body)
 
-    // Check order access
+    // Check order access: ADMIN any, ENGINEER only assigned, CLIENT only own
     const order = await prisma.order.findUnique({
-      where: { id: validatedData.orderId }
+      where: { id: validatedData.orderId },
+      select: { id: true, clientId: true, engineerId: true, deadline: true, status: true },
     })
 
     if (!order) {
@@ -52,7 +53,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (auth.role !== 'ADMIN' && auth.role !== 'ENGINEER') {
+    if (auth.role === 'ADMIN') {
+      // allow
+    } else if (auth.role === 'ENGINEER') {
+      if (order.engineerId !== auth.userId) {
+        return Response.json(
+          { error: 'غير مصرح - الطلب غير مخصص لك' },
+          { status: 403 }
+        )
+      }
+    } else {
       if (order.clientId !== auth.userId) {
         return Response.json(
           { error: 'غير مصرح' },

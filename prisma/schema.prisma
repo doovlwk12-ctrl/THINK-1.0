@@ -69,7 +69,8 @@ model Order {
   payments          Payment[]
   revisionRequests  RevisionRequest[]
   pinPackPurchases  PinPackPurchase[]
-  
+  auditLogs         OrderAuditLog[]
+
   @@index([clientId])
   @@index([engineerId])
   @@index([status])
@@ -77,6 +78,20 @@ model Order {
   @@index([createdAt])
   @@index([deadline])
   @@index([status, createdAt])
+}
+
+model OrderAuditLog {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId    String
+  action    String   // e.g. status_change, form_data_edit
+  oldValue  String?  // JSON or text
+  newValue  String?  // JSON or text
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
 }
 
 model Plan {
@@ -125,6 +140,16 @@ model Payment {
   
   @@index([orderId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model PaymentIdempotency {
+  idempotencyKey String   @unique
+  orderId        String
+  paymentId      String
+  createdAt      DateTime @default(now())
+
+  @@index([idempotencyKey])
   @@index([createdAt])
 }
 

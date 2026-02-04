@@ -88,3 +88,9 @@ export async function GET(request: NextRequest) {
 **نسيت كلمة المرور (Supabase):** عند تفعيل Supabase، صفحة "نسيت كلمة المرور" ترسل رابط إعادة التعيين عبر البريد (`resetPasswordForEmail`). المستخدم يفتح الرابط ويُوجّه إلى `/reset-password` لتعيين كلمة مرور جديدة. يجب إضافة عنوان الصفحة إلى قائمة "Redirect URLs" في Supabase: Authentication → URL Configuration → Redirect URLs (مثال: `https://your-domain.com/reset-password`).
 
 لمزيد من التفاصيل: [SUPABASE-AFTER-SETUP.md](SUPABASE-AFTER-SETUP.md).
+
+## تحليل سير العمل الكامل
+
+لتحليل مفصل لسير العمل قبل التسجيل وأثناءه وبعده (إنشاء حساب، تسجيل دخول، تسجيل خروج، توجيه كل دور)، راجع [AUTH-WORKFLOW.md](AUTH-WORKFLOW.md).
+
+لخطة إصلاح وتحسين المصادقة (ما تم تنفيذه والبنود الاختيارية)، راجع [AUTH-IMPROVEMENTS-PLAN.md](AUTH-IMPROVEMENTS-PLAN.md).

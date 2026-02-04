@@ -370,36 +370,42 @@ export default function AdminHomepageContentPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-2">روابط السوشيال ميديا</label>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {(form.footer?.socialLinks ?? []).map((link, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 p-3 bg-greige/10 dark:bg-charcoal-700 rounded-lg">
-                      <select
-                        value={link.type}
-                        onChange={(e) => updateSocialLink(index, 'type', e.target.value as (typeof SOCIAL_TYPES)[number])}
-                        className="w-full sm:w-auto px-3 py-2.5 border-2 border-greige/50 dark:border-charcoal-600 rounded-lg bg-white dark:bg-charcoal-800 text-charcoal dark:text-cream min-w-0"
-                      >
-                        {SOCIAL_TYPES.map((t) => (
-                          <option key={t} value={t}>{SOCIAL_TYPE_LABELS[t] ?? t}</option>
-                        ))}
-                      </select>
+                    <div key={index} className="flex flex-col gap-3 p-4 bg-greige/10 dark:bg-charcoal-700 rounded-lg border border-greige/30 dark:border-charcoal-600">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-medium text-blue-gray dark:text-greige w-full sm:w-auto">رابط {index + 1}</span>
+                        <select
+                          value={link.type}
+                          onChange={(e) => updateSocialLink(index, 'type', e.target.value as (typeof SOCIAL_TYPES)[number])}
+                          dir="rtl"
+                          className="min-w-[140px] px-3 py-2.5 border-2 border-greige/50 dark:border-charcoal-600 rounded-lg bg-white dark:bg-charcoal-800 text-charcoal dark:text-cream text-start appearance-none cursor-pointer focus:ring-2 focus:ring-rocky-blue focus:border-rocky-blue"
+                          aria-label="نوع المنصة"
+                        >
+                          {SOCIAL_TYPES.map((t) => (
+                            <option key={t} value={t}>{SOCIAL_TYPE_LABELS[t] ?? t}</option>
+                          ))}
+                        </select>
+                        <label className="flex items-center gap-2 text-sm text-charcoal dark:text-cream shrink-0">
+                          <input
+                            type="checkbox"
+                            checked={link.visible}
+                            onChange={(e) => updateSocialLink(index, 'visible', e.target.checked)}
+                            className="rounded border-greige/50 dark:border-charcoal-600 w-4 h-4"
+                          />
+                          إظهار
+                        </label>
+                        <Button type="button" variant="outline" size="sm" onClick={() => removeSocialLink(index)} className="shrink-0 mr-auto" aria-label="حذف الرابط">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                       <Input
                         value={link.url}
                         onChange={(e) => updateSocialLink(index, 'url', e.target.value)}
-                        placeholder="رابط الملف الشخصي"
-                        className="flex-1 min-w-0 w-full sm:min-w-[180px]"
+                        placeholder="رابط الملف الشخصي أو الصفحة"
+                        className="w-full"
+                        dir="ltr"
                       />
-                      <label className="flex items-center gap-2 text-sm text-charcoal dark:text-cream shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={link.visible}
-                          onChange={(e) => updateSocialLink(index, 'visible', e.target.checked)}
-                          className="rounded border-greige/50 dark:border-charcoal-600 w-4 h-4"
-                        />
-                        إظهار
-                      </label>
-                      <Button type="button" variant="outline" size="sm" onClick={() => removeSocialLink(index)} className="shrink-0" aria-label="حذف الرابط">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
                   ))}
                   <Button type="button" variant="outline" onClick={addSocialLink} className="w-full sm:w-auto">

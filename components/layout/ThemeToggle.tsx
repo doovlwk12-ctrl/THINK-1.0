@@ -28,7 +28,9 @@ export function ThemeToggle() {
     return () => window.removeEventListener('themechange', handleThemeChange)
   }, [mounted])
 
-  const applyTheme = (newTheme: 'light' | 'dark') => {
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light'
+    // تطبيق فوري على DOM أولاً (بدون انتظار React)
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
@@ -37,11 +39,6 @@ export function ThemeToggle() {
     localStorage.setItem('theme', newTheme)
     setTheme(newTheme)
     window.dispatchEvent(new Event('themechange'))
-  }
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    applyTheme(newTheme)
   }
 
   if (!mounted) {
@@ -54,7 +51,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-greige/30 dark:border-charcoal-600 text-charcoal dark:text-cream hover:bg-greige/10 dark:hover:bg-charcoal-700 hover:border-rocky-blue/40 dark:hover:border-rocky-blue-500/40 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-rocky-blue focus:ring-offset-2"
+      className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-greige/30 dark:border-charcoal-600 text-charcoal dark:text-cream hover:bg-greige/10 dark:hover:bg-charcoal-700 hover:border-rocky-blue/40 dark:hover:border-rocky-blue-500/40 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-rocky-blue focus:ring-offset-2"
       aria-label={theme === 'light' ? 'تفعيل الوضع الليلي' : 'تفعيل الوضع النهاري'}
       title={theme === 'light' ? 'النمط الليلي' : 'النمط النهاري'}
     >

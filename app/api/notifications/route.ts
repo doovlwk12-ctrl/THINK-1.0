@@ -2,7 +2,18 @@ import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
+
+const getNotificationsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  unreadOnly: z.enum(['true', 'false']).optional(),
+})
+
+const putNotificationsSchema = z.object({
+  notificationIds: z.array(z.string().min(1)).optional(),
+})
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,10 +22,14 @@ export async function GET(request: NextRequest) {
     const { auth } = result
 
     const searchParams = request.nextUrl.searchParams
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const query = getNotificationsQuerySchema.parse({
+      page: searchParams.get('page') ?? 1,
+      limit: searchParams.get('limit') ?? 20,
+      unreadOnly: searchParams.get('unreadOnly') ?? undefined,
+    })
+    const { page, limit, unreadOnly: unreadOnlyVal } = query
     const skip = (page - 1) * limit
-    const unreadOnly = searchParams.get('unreadOnly') === 'true'
+    const unreadOnly = unreadOnlyVal === 'true'
 
     const whereClause = {
       userId: auth.userId,
@@ -71,9 +86,9 @@ export async function PUT(request: NextRequest) {
     const { auth } = result
 
     const body = await request.json()
-    const { notificationIds } = body
+    const { notificationIds } = putNotificationsSchema.parse(body)
 
-    if (notificationIds && Array.isArray(notificationIds)) {
+    if (notificationIds && notificationIds.length > 0) {
       // Mark specific notifications as read
       await prisma.notification.updateMany({
         where: {

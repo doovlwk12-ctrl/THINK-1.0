@@ -12,6 +12,13 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { Home } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
+import { getSession } from 'next-auth/react'
+
+function getDashboardPathByRole(role: string | undefined): string {
+  if (role === 'ADMIN') return '/admin/dashboard'
+  if (role === 'ENGINEER') return '/engineer/dashboard'
+  return '/dashboard'
+}
 
 export default function LoginPage() {
   const { data: session, signIn } = useAuth()
@@ -23,13 +30,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (session?.user) {
-      const path =
-        session.user.role === 'ADMIN'
-          ? '/admin/dashboard'
-          : session.user.role === 'ENGINEER'
-            ? '/engineer/dashboard'
-            : '/dashboard'
-      window.location.href = path
+      window.location.href = getDashboardPathByRole(session.user.role)
     }
   }, [session])
 
@@ -45,15 +46,14 @@ export default function LoginPage() {
 
       if (result?.ok) {
         toast.success('تم تسجيل الدخول بنجاح')
-        const role = result.user?.role
-        const path =
-          role === 'ADMIN'
-            ? '/admin/dashboard'
-            : role === 'ENGINEER'
-              ? '/engineer/dashboard'
-              : '/dashboard'
-        // تأخير قصير ثم إعادة توجيه كاملة حتى تُرسل كوكيز الجلسة مع الطلب (Supabase + middleware)
-        await new Promise((r) => setTimeout(r, 300))
+        let role = result.user?.role
+        if (role === undefined) {
+          await new Promise((r) => setTimeout(r, 200))
+          const s = await getSession()
+          role = (s?.user as { role?: string })?.role
+        }
+        const path = getDashboardPathByRole(role)
+        await new Promise((r) => setTimeout(r, 150))
         window.location.href = path
         return
       }
@@ -66,21 +66,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md dark:bg-charcoal-800 dark:border-charcoal-600">
+      <Card className="w-full max-w-xs sm:max-w-md dark:bg-charcoal-800 dark:border-charcoal-600">
         {/* Theme Toggle + Back to Home */}
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <Link href="/">
-            <Button variant="outline" size="sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 mb-6">
+          <Link href="/" className="flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <Home className="w-4 h-4" />
-              العودة للصفحة الرئيسية
+              <span className="hidden sm:inline">العودة للصفحة الرئيسية</span>
+              <span className="sm:hidden">الرئيسية</span>
             </Button>
           </Link>
           <ThemeToggle />
         </div>
         
-        <h1 className="text-3xl font-bold text-center mb-8 text-charcoal dark:text-cream">تسجيل الدخول</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-charcoal dark:text-cream">تسجيل الدخول</h1>
         
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
           <Input
             {...register('email')}
             type="email"
@@ -97,11 +98,11 @@ export default function LoginPage() {
             error={errors.password?.message}
           />
 
-          <p className="text-center -mt-2 flex flex-col gap-1">
-            <Link href="/forgot-password" className="text-sm text-rocky-blue dark:text-rocky-blue-300 hover:underline">
+          <p className="text-center -mt-2 flex flex-col gap-1 text-xs sm:text-sm">
+            <Link href="/forgot-password" className="text-rocky-blue dark:text-rocky-blue-300 hover:underline">
               نسيت كلمة المرور؟
             </Link>
-            <Link href="/forgot-email" className="text-sm text-rocky-blue dark:text-rocky-blue-300 hover:underline">
+            <Link href="/forgot-email" className="text-rocky-blue dark:text-rocky-blue-300 hover:underline">
               نسيت البريد الإلكتروني؟
             </Link>
           </p>

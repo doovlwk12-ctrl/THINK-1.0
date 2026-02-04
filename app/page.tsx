@@ -199,7 +199,7 @@ export default function Home() {
       <Header />
 
       {/* ===== Hero Section - Enhanced Architectural Style ===== */}
-      <section id="home" className="relative min-h-[90vh] flex items-center bg-gradient-to-b from-cream via-cream to-greige/20 dark:from-charcoal-900 dark:via-charcoal-900 dark:to-charcoal-800 overflow-hidden">
+      <section id="home" className="relative min-h-[70vh] md:min-h-[80vh] lg:min-h-[90vh] flex items-center bg-gradient-to-b from-cream via-cream to-greige/20 dark:from-charcoal-900 dark:via-charcoal-900 dark:to-charcoal-800 overflow-hidden">
         {/* Blueprint Grid Pattern - Very Subtle */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.01] dark:opacity-[0.005]">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -224,18 +224,18 @@ export default function Home() {
         <div className="absolute top-60 right-10 w-12 h-12 border-2 border-rocky-blue/10 dark:border-rocky-blue-500/10 rotate-45 opacity-5" />
         <div className="absolute bottom-60 left-10 w-10 h-10 border-2 border-blue-gray/10 dark:border-blue-gray-500/10 rotate-45 opacity-5" />
 
-        <div className="container mx-auto px-4 py-20 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
             {/* Hero Text - Enhanced */}
             <div className="text-right fade-in-up relative">
               {/* Architectural decoration lines */}
               <div className="absolute -right-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-rocky-blue/20 to-transparent opacity-50" />
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-charcoal dark:text-cream mb-6 leading-tight relative">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-charcoal dark:text-cream mb-4 sm:mb-6 leading-tight relative max-w-2xl break-words">
                 {homepageContent?.hero?.title ? (
-                  <span className="relative">{homepageContent.hero.title}</span>
+                  <span className="relative block text-right">{homepageContent.hero.title}</span>
                 ) : (
-                  <span className="relative">
+                  <span className="relative block text-right">
                     حوّل احتياجاتك إلى مخطط معماري{' '}
                     <span className="highlight text-rocky-blue dark:text-rocky-blue-300 relative">
                       مدروس
@@ -244,15 +244,15 @@ export default function Home() {
                   </span>
                 )}
               </h1>
-              <p className="text-lg md:text-xl text-blue-gray dark:text-greige mb-8 max-w-xl leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-blue-gray dark:text-greige mb-6 sm:mb-8 max-w-xl leading-relaxed">
                 {homepageContent?.hero?.subtitle ?? 'تصميم تخطيطي مبدئي مخصص حسب أرضك واحتياجاتك. نساعدك على اتخاذ قرارات صحيحة منذ البداية.'}
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 {session?.user ? (
                   <>
                     <Link href={session.user.role === 'ADMIN' ? '/admin/dashboard' : session.user.role === 'ENGINEER' ? '/engineer/dashboard' : '/dashboard'}>
-                      <button className="btn-3d px-8 py-4 text-lg font-bold rounded-none">
+                      <button className="btn-3d px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-bold rounded-none w-full sm:w-auto">
                         لوحة التحكم
                         <ArrowLeft className="w-5 h-5 inline-block ms-2" />
                       </button>
@@ -266,7 +266,7 @@ export default function Home() {
                 ) : (
                   <>
                     <Link href="#packages">
-                      <button className="btn-3d px-8 py-4 text-lg font-bold rounded-none">
+                      <button className="btn-3d px-6 py-3 sm:px-8 sm:py-4 text-base sm:text-lg font-bold rounded-none w-full sm:w-auto">
                         ابدأ تصميمك الآن
                         <ArrowLeft className="w-5 h-5 inline-block ms-2" />
                       </button>
@@ -294,7 +294,7 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-br from-charcoal-800 to-charcoal-900 dark:from-charcoal-900 dark:to-black rounded-3xl p-8 shadow-2xl border-2 border-rocky-blue/20 dark:border-rocky-blue-400/20">
+                <div className="bg-gradient-to-br from-charcoal-800 to-charcoal-900 dark:from-charcoal-900 dark:to-black rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl border-2 border-rocky-blue/20 dark:border-rocky-blue-400/20">
                   {/* Title */}
                   <div className="text-center mb-8">
                     <h3 className="text-3xl font-black text-cream mb-2">المقارنة البصرية</h3>
@@ -312,7 +312,7 @@ export default function Home() {
                         </div>
                       </div>
                       
-                      <div className="relative bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/40 dark:to-orange-950/40 rounded-2xl p-8 h-80 border-4 border-red-400 dark:border-red-700 overflow-hidden group-hover:border-red-500 dark:group-hover:border-red-600 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:scale-[1.02]">
+                      <div className="relative bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/40 dark:to-orange-950/40 rounded-2xl p-4 sm:p-6 md:p-8 h-64 sm:h-72 md:h-80 border-4 border-red-400 dark:border-red-700 overflow-hidden group-hover:border-red-500 dark:group-hover:border-red-600 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:scale-[1.02]">
                         {/* SVG Blueprint - Chaotic Layout */}
                         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                           {/* Grid background - chaotic */}
@@ -402,7 +402,7 @@ export default function Home() {
                         </div>
                       </div>
                       
-                      <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-2xl p-8 h-80 border-4 border-emerald-400 dark:border-emerald-700 overflow-hidden group-hover:border-emerald-500 dark:group-hover:border-emerald-600 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:scale-[1.05]">
+                      <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-2xl p-4 sm:p-6 md:p-8 h-64 sm:h-72 md:h-80 border-4 border-emerald-400 dark:border-emerald-700 overflow-hidden group-hover:border-emerald-500 dark:group-hover:border-emerald-600 transition-all duration-500 shadow-lg group-hover:shadow-2xl group-hover:scale-[1.05]">
                         {/* SVG Blueprint - Professional Layout */}
                         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                           {/* Grid background - organized */}
@@ -530,13 +530,13 @@ export default function Home() {
       </section>
 
       {/* ===== Problem & Solution Section - Enhanced ===== */}
-      <section id="about" className="py-20 bg-gradient-to-b from-greige/20 via-greige/30 to-cream dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative">
+      <section id="about" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-greige/20 via-greige/30 to-cream dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative">
         {/* Architectural decorative lines */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-rocky-blue/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-gray/20 to-transparent" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-16 relative">
+          <header className="text-center mb-8 md:mb-12 lg:mb-16 relative">
             {/* Architectural frame decoration */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-rocky-blue/10 dark:border-rocky-blue-500/10 rotate-45 opacity-30" />
             
@@ -548,7 +548,7 @@ export default function Home() {
             </p>
           </header>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8 mb-8 md:mb-12">
             {/* Problem Cards - ترتيب من اليمين: قرارات متسرعة، مساحات مهدورة، توزيع غير مناسب */}
             {[
               { Icon: HastyDecisionsIcon, title: 'قرارات متسرعة', desc: 'قرارات بناء سريعة دون دراسة كافية', color: 'from-red-50 to-orange-50 dark:from-red-950/30 dark:to-orange-950/30' },
@@ -557,7 +557,7 @@ export default function Home() {
             ].map((problem, idx) => {
               const ProblemIcon = problem.Icon
               return (
-                <div key={idx} className="card-3d p-8 text-center fade-in group hover:shadow-hard-lg transition-all duration-300" style={{ animationDelay: `${idx * 0.1}s` }}>
+                <div key={idx} className="card-3d p-4 sm:p-6 md:p-8 text-center fade-in group hover:shadow-hard-lg transition-all duration-300" style={{ animationDelay: `${idx * 0.1}s` }}>
                   {/* إطار الأيقونة مع خلفية متدرجة */}
                   <div className={`relative w-32 h-32 mx-auto mb-6 bg-gradient-to-br ${problem.color} rounded-none border-2 border-rocky-blue/30 dark:border-rocky-blue-400/40 shadow-sm group-hover:shadow-md group-hover:border-rocky-blue/50 dark:group-hover:border-rocky-blue-400/60 transition-all duration-300 overflow-hidden`}>
                     {/* زخرفة الزوايا */}
@@ -701,13 +701,13 @@ export default function Home() {
       </section>
 
       {/* ===== Benefits Section - Enhanced ===== */}
-      <section className="py-20 bg-gradient-to-b from-cream via-greige/20 to-greige/30 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-800 relative overflow-hidden">
+      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-cream via-greige/20 to-greige/30 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-800 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-16">
+          <header className="text-center mb-8 md:mb-12 lg:mb-16">
             {/* Badge - Architectural Style */}
             <div className="relative inline-block bg-rocky-blue dark:bg-rocky-blue-600 text-cream px-6 py-2 rounded-none text-sm font-black mb-4 shadow-lg border-2 border-rocky-blue-400/30 dark:border-rocky-blue-400/40 flex items-center gap-2">
               {/* Architectural corner decorations */}
@@ -725,7 +725,7 @@ export default function Home() {
             </p>
           </header>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto">
             {[
               { 
                 icon: Compass, 
@@ -762,7 +762,7 @@ export default function Home() {
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 {/* Card */}
-                <div className="relative h-full bg-white dark:bg-charcoal-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-400/30 group-hover:-translate-y-2">
+                <div className="relative h-full bg-white dark:bg-charcoal-800 rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-500 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-400/30 group-hover:-translate-y-2">
                   {/* Icon container with gradient */}
                   <div className="relative mb-6">
                     {/* Glow effect */}
@@ -817,13 +817,13 @@ export default function Home() {
       </section>
 
       {/* ===== Process Section - Enhanced ===== */}
-      <section id="process" className="py-20 bg-gradient-to-b from-greige/30 via-greige/20 to-blue-gray/10 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
+      <section id="process" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-greige/30 via-greige/20 to-blue-gray/10 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-16">
+          <header className="text-center mb-8 md:mb-12 lg:mb-16">
             {/* Badge - Architectural Style */}
             <div className="relative inline-block bg-rocky-blue dark:bg-rocky-blue-600 text-cream px-6 py-2 rounded-none text-sm font-black mb-4 shadow-lg border-2 border-rocky-blue-400/30 dark:border-rocky-blue-400/40 flex items-center gap-2">
               {/* Architectural corner decorations */}
@@ -905,13 +905,13 @@ export default function Home() {
       </section>
 
       {/* ===== Packages Section - Enhanced ===== */}
-      <section id="packages" className="py-20 bg-gradient-to-b from-blue-gray/10 via-greige/20 to-rocky-blue/10 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
+      <section id="packages" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-blue-gray/10 via-greige/20 to-rocky-blue/10 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-20 right-0 w-64 h-64 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-0 w-64 h-64 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-16">
+          <header className="text-center mb-8 md:mb-12 lg:mb-16">
             {/* Badge - Architectural Style */}
             <div className="relative inline-block bg-rocky-blue dark:bg-rocky-blue-600 text-cream px-6 py-2 rounded-none text-sm font-black mb-4 shadow-lg border-2 border-rocky-blue-400/30 dark:border-rocky-blue-400/40 flex items-center gap-2">
               {/* Architectural corner decorations */}
@@ -932,7 +932,7 @@ export default function Home() {
           {loadingPackages ? (
             <div className="space-y-6">
               <p className="text-center text-blue-gray dark:text-greige">جاري تحميل الباقات...</p>
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}
@@ -1100,13 +1100,13 @@ export default function Home() {
       </section>
 
       {/* ===== FAQ Section - Enhanced ===== */}
-      <section id="faq" className="py-20 bg-gradient-to-b from-greige/30 via-blue-gray/20 to-rocky-blue/30 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
+      <section id="faq" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-greige/30 via-blue-gray/20 to-rocky-blue/30 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-16">
+          <header className="text-center mb-8 md:mb-12 lg:mb-16">
             {/* Badge - Architectural Style */}
             <div className="relative inline-block bg-rocky-blue dark:bg-rocky-blue-600 text-cream px-6 py-2 rounded-none text-sm font-black mb-4 shadow-lg border-2 border-rocky-blue-400/30 dark:border-rocky-blue-400/40 flex items-center gap-2">
               {/* Architectural corner decorations */}
@@ -1165,7 +1165,7 @@ export default function Home() {
       </section>
 
       {/* ===== Final CTA Section - Enhanced ===== */}
-      <section className="py-20 bg-gradient-to-b from-rocky-blue/50 via-rocky-blue-600 to-rocky-blue-700 dark:from-rocky-blue-800 dark:via-rocky-blue-900 dark:to-charcoal-900 relative overflow-hidden">
+      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-rocky-blue/50 via-rocky-blue-600 to-rocky-blue-700 dark:from-rocky-blue-800 dark:via-rocky-blue-900 dark:to-charcoal-900 relative overflow-hidden">
         {/* Decorative elements - unified colors */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-rocky-blue/20 to-blue-gray/10 dark:from-rocky-blue/30 dark:to-blue-gray/20 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-gray/20 to-greige/10 dark:from-blue-gray/30 dark:to-greige/20 rounded-full blur-3xl" />
@@ -1201,7 +1201,7 @@ export default function Home() {
           </Link>
 
           {/* Quick Features - Enhanced */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-4 md:gap-6 lg:gap-8 max-w-4xl mx-auto">
             {(homepageContent?.cta?.features?.length ? homepageContent.cta.features.map((f, i) => ({ title: f.title, desc: f.desc, icon: [PenTool, Clock, Shield][i] ?? PenTool, color: ['from-rocky-blue/30 to-rocky-blue/20', 'from-blue-gray/30 to-blue-gray/20', 'from-greige/30 to-greige/20'][i] ?? 'from-rocky-blue/30 to-rocky-blue/20' })) : [
               { icon: PenTool, title: 'تعديلات مجانية', desc: 'حتى تصل للنتيجة المثالية', color: 'from-rocky-blue/30 to-rocky-blue/20' },
               { icon: Clock, title: 'تسليم سريع', desc: 'من 7-21 يوم', color: 'from-blue-gray/30 to-blue-gray/20' },
@@ -1232,7 +1232,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-gray/10 to-greige/5 dark:from-blue-gray/20 dark:to-greige/10 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid md:grid-cols-3 gap-12 mb-12">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8 lg:gap-12 mb-8 md:mb-12">
             {/* Brand */}
             <div>
               <h3 className="text-2xl font-black text-cream mb-4">منصة فكرة</h3>
@@ -1310,27 +1310,61 @@ export default function Home() {
 
           {/* Bottom - Enhanced */}
           <div className="border-t border-gradient-to-r from-rocky-blue/20 via-blue-gray/20 to-greige/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-cream/60 text-sm">
+            <p className="text-cream/60 text-sm text-center md:text-right order-2 md:order-1">
               &copy; {new Date().getFullYear()} {homepageContent?.footer?.copyright ?? 'منصة فكرة. جميع الحقوق محفوظة.'}
             </p>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap justify-center gap-3 order-1 md:order-2" role="list" aria-label="روابط السوشيال ميديا">
               {(homepageContent?.footer?.socialLinks?.filter((l) => l.visible) ?? [
                 { type: 'x', url: '#', visible: true },
                 { type: 'linkedin', url: '#', visible: true },
                 { type: 'instagram', url: '#', visible: true },
               ]).map((link, idx) => {
                 const href = link.url || '#'
-                const Icon = link.type === 'linkedin' ? Linkedin : link.type === 'whatsapp' ? MessageCircle : link.type === 'instagram' || link.type === 'snapchat' ? Camera : null
+                const labels: Record<string, string> = {
+                  instagram: 'انستقرام',
+                  snapchat: 'سناب شات',
+                  x: 'منصة X',
+                  whatsapp: 'واتساب',
+                  linkedin: 'لينكدإن',
+                }
+                const ariaLabel = labels[link.type] || link.type
+                const iconClass = 'w-5 h-5 flex-shrink-0'
                 return (
                   <a
                     key={idx}
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={link.type}
-                    className="w-10 h-10 bg-rocky-blue/20 dark:bg-rocky-blue/30 rounded-lg flex items-center justify-center text-cream/60 hover:text-cream hover:bg-rocky-blue/30 dark:hover:bg-rocky-blue/40 transition-all duration-300 hover:scale-110"
+                    aria-label={ariaLabel}
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-cream/90 hover:text-cream bg-white/5 hover:bg-rocky-blue/40 dark:bg-white/5 dark:hover:bg-rocky-blue/40 border border-cream/10 hover:border-rocky-blue/40 transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rocky-blue/50 focus:ring-offset-2 focus:ring-offset-charcoal-900"
                   >
-                    {Icon ? <Icon className="w-5 h-5" /> : <span className="text-sm font-bold">X</span>}
+                    {link.type === 'x' && (
+                      <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                    )}
+                    {link.type === 'linkedin' && (
+                      <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                      </svg>
+                    )}
+                    {link.type === 'instagram' && (
+                      <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                      </svg>
+                    )}
+                    {link.type === 'snapchat' && (
+                      <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301.165-.088.344-.104.464-.104.182 0 .359.029.509.09.45.149.734.479.734.838.015.449-.39.839-1.213 1.168-.089.029-.209.075-.344.119-.45.135-1.139.36-1.333.81-.09.224-.061.524.12.868l.015.015c.06.136 1.526 3.475 4.791 4.014.255.044.435.27.42.509 0 .075-.015.149-.045.225-.24.569-1.273.988-3.146 1.271-.059.091-.12.375-.164.57-.029.179-.074.36-.134.553-.076.271-.27.405-.555.405h-.03c-.135 0-.313-.031-.538-.074-.36-.075-.765-.135-1.273-.135-.3 0-.599.015-.913.074-.6.104-1.123.464-1.723.884-.853.599-1.826 1.288-3.294 1.288-.06 0-.119-.015-.18-.015h-.149c-1.468 0-2.427-.675-3.279-1.288-.599-.42-1.107-.779-1.707-.884-.314-.045-.629-.074-.928-.074-.54 0-.958.089-1.272.149-.211.043-.391.074-.54.074-.374 0-.523-.224-.583-.42-.061-.192-.09-.389-.135-.567-.045-.181-.105-.494-.165-.57-1.918-.222-2.95-.642-3.189-1.226-.031-.063-.052-.15-.052-.225-.015-.243.165-.465.42-.509 3.264-.54 4.73-3.879 4.791-4.02l.016-.029c.18-.345.224-.645.119-.869-.195-.434-.884-.658-1.332-.809-.121-.029-.24-.074-.346-.119-1.107-.435-1.257-.93-1.197-1.273.09-.479.674-.793 1.168-.793.146 0 .27.029.383.074.42.194.789.3 1.104.3.234 0 .384-.06.465-.105l-.046-.569c-.098-1.626-.225-3.651.307-4.837C7.392 1.077 10.739.807 11.727.807l.419-.015h.06z" />
+                      </svg>
+                    )}
+                    {link.type === 'whatsapp' && (
+                      <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                      </svg>
+                    )}
                   </a>
                 )
               })}

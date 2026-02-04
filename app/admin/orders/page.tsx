@@ -28,7 +28,12 @@ interface Order {
     name: string
     email: string
   }
-  package: {
+  package?: {
+    nameAr: string
+    price: number
+  } | null
+  /** من الـ API لعرض الباقة حتى لو حُذفت لاحقاً */
+  packageForDisplay?: {
     nameAr: string
     price: number
   }
@@ -204,11 +209,11 @@ export default function AdminOrdersPage() {
                     </div>
                     <div>
                       <span className="text-blue-gray dark:text-greige">الباقة:</span>
-                      <span className="font-semibold mr-2 text-charcoal dark:text-cream">{(order as { packageForDisplay?: { nameAr: string } }).packageForDisplay?.nameAr ?? order.package?.nameAr}</span>
+                      <span className="font-semibold mr-2 text-charcoal dark:text-cream">{order.packageForDisplay?.nameAr ?? order.package?.nameAr ?? '—'}</span>
                     </div>
                     <div>
                       <span className="text-blue-gray dark:text-greige">السعر:</span>
-                      <span className="font-semibold mr-2 text-charcoal dark:text-cream">{(order as { packageForDisplay?: { price: number } }).packageForDisplay?.price ?? order.package?.price} ريال</span>
+                      <span className="font-semibold mr-2 text-charcoal dark:text-cream">{order.packageForDisplay?.price ?? order.package?.price ?? 0} ريال</span>
                     </div>
                     <div>
                       <span className="text-blue-gray dark:text-greige">تاريخ الإنشاء:</span>

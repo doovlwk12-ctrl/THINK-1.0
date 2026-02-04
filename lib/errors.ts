@@ -5,6 +5,7 @@
 import { ZodError } from 'zod'
 import { Prisma } from '@prisma/client'
 import { logger } from './logger'
+import { reportError } from './reportError'
 
 export class AppError extends Error {
   constructor(
@@ -135,13 +136,15 @@ export function handleApiError(error: unknown): Response {
   }
 
   // Unknown errors
+  const err = error instanceof Error ? error : new Error(String(error))
   const errorId = logger.error(
     'Unknown error',
     {
-      errorType: error instanceof Error ? error.constructor.name : typeof error,
+      errorType: err.constructor.name,
     },
-    error instanceof Error ? error : new Error(String(error))
+    err
   )
+  reportError(err, { errorId })
 
   return Response.json(
     {

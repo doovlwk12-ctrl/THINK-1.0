@@ -304,6 +304,7 @@ import {
 // Mobile First Approach
 <div className="
   w-full           // mobile (default)
+  sm:w-3/4         // small mobile (640px+)
   md:w-1/2         // tablet (768px+)
   lg:w-1/3         // desktop (1024px+)
   xl:w-1/4         // large desktop (1280px+)
@@ -314,17 +315,83 @@ import {
 
 ```tsx
 // Grid responsive
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
 
 // Text responsive
-<h1 className="text-2xl md:text-3xl lg:text-4xl">
+<h1 className="text-2xl sm:text-3xl md:text-4xl">
 
 // Padding responsive
-<div className="p-4 md:p-6 lg:p-8">
+<div className="p-4 sm:p-6 md:p-8">
 
 // Hide/Show responsive
 <div className="hidden md:block">يظهر على الأجهزة الكبيرة فقط</div>
+
+// Flex direction responsive
+<div className="flex flex-col sm:flex-row gap-4">
+
+// Button responsive
+<Button className="w-full sm:w-auto">زر</Button>
 ```
+
+### Utility Classes الجديدة
+
+```tsx
+// Container padding responsive
+<div className="container-padding">
+  // px-4 sm:px-6 md:px-8 lg:px-12
+</div>
+
+// Section spacing responsive
+<section className="section-spacing">
+  // py-12 md:py-16 lg:py-20
+</section>
+
+// Heading responsive
+<h1 className="heading-responsive">
+  // text-2xl sm:text-3xl md:text-4xl
+</h1>
+
+// Gap responsive
+<div className="grid gap-responsive">
+  // gap-4 md:gap-6 lg:gap-8
+</div>
+
+// Margin bottom responsive
+<div className="mb-responsive">
+  // mb-8 md:mb-12 lg:mb-16
+</div>
+```
+
+### أفضل الممارسات
+
+#### 1. استخدم Mobile First
+```tsx
+// ✅ صحيح
+<div className="text-sm sm:text-base md:text-lg">
+
+// ❌ خطأ
+<div className="text-lg md:text-base sm:text-sm">
+```
+
+#### 2. أضف responsive classes للمكونات الجديدة
+```tsx
+// ✅ صحيح - Header responsive
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <h1 className="text-2xl sm:text-3xl">العنوان</h1>
+  <Button className="w-full sm:w-auto">زر</Button>
+</div>
+
+// ❌ خطأ - ثابت على جميع الأحجام
+<div className="flex justify-between items-center gap-4">
+  <h1 className="text-3xl">العنوان</h1>
+  <Button>زر</Button>
+</div>
+```
+
+#### 3. اختبر على أجهزة مختلفة
+- استخدم Chrome DevTools (F12 → Toggle Device Toolbar)
+- اختبر على أجهزة فعلية
+- راجع [RESPONSIVE_TESTING.md](RESPONSIVE_TESTING.md) للتفاصيل
 
 ---
 

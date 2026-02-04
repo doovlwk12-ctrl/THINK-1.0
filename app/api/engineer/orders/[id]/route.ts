@@ -37,6 +37,10 @@ export async function GET(
         },
         plans: {
           orderBy: { createdAt: 'desc' }
+        },
+        auditLogs: {
+          orderBy: { createdAt: 'desc' },
+          take: 50
         }
       }
     })

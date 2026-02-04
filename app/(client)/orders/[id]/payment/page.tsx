@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { CreditCard, CheckCircle, Package } from 'lucide-react'
@@ -36,6 +36,7 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [canChangePackage, setCanChangePackage] = useState(true)
+  const paymentIdempotencyKeyRef = useRef<string | null>(null)
   const [paymentMethod, setPaymentMethod] = useState(() => {
     // Load saved payment method from localStorage
     return storage.get<string>('payment_method', 'card') || 'card'
@@ -78,9 +79,13 @@ export default function PaymentPage() {
   const handlePayment = async () => {
     setProcessing(true)
     try {
+      if (!paymentIdempotencyKeyRef.current) {
+        paymentIdempotencyKeyRef.current = crypto.randomUUID()
+      }
       const result = await apiClient.post<{ success: boolean }>('/payments/create', {
         orderId,
         method: paymentMethod,
+        idempotencyKey: paymentIdempotencyKeyRef.current,
       })
 
       if (result.success) {

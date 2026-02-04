@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -9,9 +9,9 @@ import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
 import { Loading } from '@/components/shared/Loading'
 import { Header } from '@/components/layout/Header'
-import { useApi } from '@/hooks/useApi'
-import { apiClient } from '@/lib/api'
+import { useMyOrders } from '@/hooks/useMyOrders'
 import { formatDateHijriMiladi, isOrderExpired } from '@/lib/utils'
+import toast from 'react-hot-toast'
 
 interface Order {
   id: string
@@ -30,15 +30,8 @@ export default function ClientDashboard() {
   const { status, data: session } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  const { execute, loading, data } = useApi<{ orders: Order[] }>({
-    showErrorToast: true,
-  })
-
-  const loadOrders = useCallback(() => {
-    execute(() => {
-      return apiClient.get('/orders/my-orders')
-    })
-  }, [execute])
+  const enabled = status === 'authenticated' && session?.user?.role !== 'ENGINEER' && session?.user?.role !== 'ADMIN'
+  const { orders, error: ordersError, isLoading: loading, mutate } = useMyOrders(enabled)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -56,13 +49,11 @@ export default function ClientDashboard() {
         return
       }
     }
+  }, [status, session?.user?.role, pathname, router])
 
-    if (status === 'authenticated') {
-      loadOrders()
-    }
-  }, [status, session?.user?.role, pathname, loadOrders, router])
-
-  const orders = data?.orders || []
+  useEffect(() => {
+    if (ordersError) toast.error(ordersError)
+  }, [ordersError])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -131,20 +122,26 @@ export default function ClientDashboard() {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-charcoal dark:text-cream mb-2">لوحة تحكم العميل</h1>
-            <p className="text-blue-gray dark:text-greige">إدارة طلباتك ومتابعة حالة مشاريعك</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-charcoal dark:text-cream mb-2">لوحة تحكم العميل</h1>
+            <p className="text-sm sm:text-base text-blue-gray dark:text-greige">إدارة طلباتك ومتابعة حالة مشاريعك</p>
           </div>
-          <Link href="/orders/select-package">
-            <Button size="lg">
+          <Link href="/orders/select-package" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto">
               <Plus className="w-5 h-5" />
               طلب جديد
             </Button>
           </Link>
         </div>
 
-        {orders.length === 0 ? (
+        {ordersError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-sm text-red-700 dark:text-red-300">{ordersError}</span>
+            <Button variant="outline" size="sm" onClick={() => mutate()}>إعادة المحاولة</Button>
+          </div>
+        )}
+        {!ordersError && orders.length === 0 ? (
           <Card className="text-center py-12 dark:bg-charcoal-800 dark:border-charcoal-600">
             <Package className="w-16 h-16 text-blue-gray dark:text-greige mx-auto mb-4" />
             <p className="text-blue-gray dark:text-greige mb-4">لا توجد طلبات بعد</p>
@@ -152,7 +149,7 @@ export default function ClientDashboard() {
               <Button>إنشاء طلب جديد</Button>
             </Link>
           </Card>
-        ) : (
+        ) : !ordersError ? (
           <div className="grid gap-6">
             {orders.map((order) => {
               const expired = isOrderExpired(order.deadline)
@@ -178,7 +175,7 @@ export default function ClientDashboard() {
                   </span>
                 </div>
                 
-                <div className="grid md:grid-cols-3 gap-4 mb-6 pb-4 border-b border-greige/30 dark:border-charcoal-600">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6 pb-4 border-b border-greige/30 dark:border-charcoal-600">
                   <div className="flex items-center gap-2 text-blue-gray dark:text-greige">
                     <Clock className="w-5 h-5 text-rocky-blue dark:text-rocky-blue-300 flex-shrink-0" />
                     <span className="text-sm">الموعد النهائي: {formatDateHijriMiladi(order.deadline)}</span>
@@ -234,7 +231,7 @@ export default function ClientDashboard() {
               </Card>
             )})}
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   )

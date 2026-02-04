@@ -25,11 +25,9 @@
 
 ## 2) استخدام Supabase كقاعدة بيانات (اختياري)
 
-المشروع حالياً يستخدم **SQLite** محلياً. لاستخدام قاعدة Supabase (PostgreSQL):
+المشروع يستخدم **PostgreSQL** (محلياً أو على Supabase). لاستخدام قاعدة Supabase (PostgreSQL):
 
-1. في `prisma/schema.prisma` غيّر:
-   - من: `provider = "sqlite"`
-   - إلى: `provider = "postgresql"`
+1. في `prisma/schema.prisma` تأكد أن `provider = "postgresql"`.
 2. في ملف `.env` ضع:
    ```env
    DATABASE_URL="postgresql://postgres.[ref]:[PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
@@ -45,7 +43,7 @@
    npx prisma db push
    ```
 
-إن أردت البقاء على SQLite محلياً واستخدام Supabase فقط في الإنتاج، اترك `provider = "sqlite"` محلياً واعمل schema منفصل أو استخدم `provider = "postgresql"` فقط عند النشر (مع `DATABASE_URL` من Supabase).
+للإنتاج: يُفضّل استخدام **اتصال Pooler** (Transaction mode، منفذ 6543) مع `?pgbouncer=true` في `DATABASE_URL` لتجنب استنفاد الاتصالات على Vercel. من **Supabase → Project Settings → Database** يمكن تفعيل **Point-in-Time Recovery** والنسخ الاحتياطية. لا تستخدم نفس مشروع Supabase أو نفس المفاتيح للإنتاج والتطوير؛ استخدم مشروعاً أو قيماً منفصلة للتطوير.
 
 ---
 

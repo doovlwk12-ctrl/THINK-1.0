@@ -120,15 +120,15 @@ export default function EngineerDashboard() {
       <Header />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-          <h1 className="text-3xl font-bold text-charcoal dark:text-cream">لوحة تحكم المهندس</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-charcoal dark:text-cream">لوحة تحكم المهندس</h1>
           {orders.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Filter className="w-5 h-5 text-blue-gray dark:text-greige shrink-0" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-greige/30 dark:border-charcoal-600 rounded-lg bg-white dark:bg-charcoal-700 text-charcoal dark:text-cream focus:outline-none focus:ring-2 focus:ring-rocky-blue"
+                className="flex-1 sm:flex-none px-4 py-2 border border-greige/30 dark:border-charcoal-600 rounded-lg bg-white dark:bg-charcoal-700 text-charcoal dark:text-cream text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-rocky-blue"
                 title="ترتيب حسب الوقت"
               >
                 <option value="newest">الأحدث أولاً</option>

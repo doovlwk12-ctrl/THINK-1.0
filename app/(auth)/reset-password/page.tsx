@@ -71,11 +71,12 @@ export default function ResetPasswordPage() {
   if (!hasRecoverySession) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md dark:bg-charcoal-800 dark:border-charcoal-600">
-          <div className="flex items-center justify-between gap-3 mb-6">
-            <Link href="/login" className="inline-flex items-center gap-2 text-sm text-rocky-blue dark:text-rocky-blue-300 hover:underline">
+        <Card className="w-full max-w-xs sm:max-w-md dark:bg-charcoal-800 dark:border-charcoal-600">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 mb-6">
+            <Link href="/login" className="inline-flex items-center gap-2 text-xs sm:text-sm text-rocky-blue dark:text-rocky-blue-300 hover:underline">
               <ArrowLeft className="w-4 h-4" />
-              العودة لتسجيل الدخول
+              <span className="hidden sm:inline">العودة لتسجيل الدخول</span>
+              <span className="sm:hidden">تسجيل الدخول</span>
             </Link>
             <ThemeToggle />
           </div>
@@ -102,27 +103,28 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md dark:bg-charcoal-800 dark:border-charcoal-600">
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <Link href="/login" className="inline-flex items-center gap-2 text-sm text-rocky-blue dark:text-rocky-blue-300 hover:underline">
+      <Card className="w-full max-w-xs sm:max-w-md dark:bg-charcoal-800 dark:border-charcoal-600">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 mb-6">
+          <Link href="/login" className="inline-flex items-center gap-2 text-xs sm:text-sm text-rocky-blue dark:text-rocky-blue-300 hover:underline">
             <ArrowLeft className="w-4 h-4" />
-            العودة لتسجيل الدخول
+            <span className="hidden sm:inline">العودة لتسجيل الدخول</span>
+            <span className="sm:hidden">تسجيل الدخول</span>
           </Link>
           <ThemeToggle />
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-6">
           <div className="w-12 h-12 rounded-xl bg-rocky-blue/10 dark:bg-rocky-blue/20 flex items-center justify-center border-2 border-rocky-blue/30">
             <Lock className="w-6 h-6 text-rocky-blue dark:text-rocky-blue-300" />
           </div>
-          <h1 className="text-2xl font-bold text-charcoal dark:text-cream">تعيين كلمة مرور جديدة</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-charcoal dark:text-cream text-center sm:text-start">تعيين كلمة مرور جديدة</h1>
         </div>
 
-        <p className="text-sm text-blue-gray dark:text-greige mb-6 text-center">
+        <p className="text-xs sm:text-sm text-blue-gray dark:text-greige mb-6 text-center">
           أدخل كلمة المرور الجديدة لحسابك.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <Input
             type="password"
             label="كلمة المرور الجديدة"

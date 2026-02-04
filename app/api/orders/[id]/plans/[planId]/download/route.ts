@@ -85,7 +85,10 @@ export async function GET(
     const isEngineer = order.engineerId === auth.userId
     const isAdmin = auth.role === 'ADMIN'
     if (!isClient && !isEngineer && !isAdmin) {
-      return new Response(null, { status: 403 })
+      return NextResponse.json(
+        { error: 'غير مصرح - لا توجد صلاحية كافية' },
+        { status: 403 }
+      )
     }
 
     const contentType = getContentType(plan.fileName, plan.fileType)

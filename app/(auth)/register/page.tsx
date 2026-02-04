@@ -15,8 +15,15 @@ import { Home } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
+import { getSession } from 'next-auth/react'
 
 const useSupabaseAuth = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
+
+function getDashboardPathByRole(role: string | undefined): string {
+  if (role === 'ADMIN') return '/admin/dashboard'
+  if (role === 'ENGINEER') return '/engineer/dashboard'
+  return '/dashboard'
+}
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -25,13 +32,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (session?.user) {
-      const path =
-        session.user.role === 'ADMIN'
-          ? '/admin/dashboard'
-          : session.user.role === 'ENGINEER'
-            ? '/engineer/dashboard'
-            : '/dashboard'
-      window.location.href = path
+      window.location.href = getDashboardPathByRole(session.user.role)
     }
   }, [session])
 
@@ -47,22 +48,21 @@ export default function RegisterPage() {
 
       if (result.success) {
         toast.success('تم إنشاء الحساب بنجاح')
-        if (useSupabaseAuth) {
-          const signInResult = await signIn(data.email, data.password)
-          if (signInResult?.ok && signInResult?.user) {
-            const path =
-              signInResult.user.role === 'ADMIN'
-                ? '/admin/dashboard'
-                : signInResult.user.role === 'ENGINEER'
-                  ? '/engineer/dashboard'
-                  : '/dashboard'
-            await new Promise((r) => setTimeout(r, 300))
-            window.location.href = path
-            return
+        const signInResult = await signIn(data.email, data.password)
+        if (signInResult?.ok) {
+          let role = signInResult.user?.role
+          if (role === undefined) {
+            await new Promise((r) => setTimeout(r, 200))
+            const s = await getSession()
+            role = (s?.user as { role?: string })?.role
           }
-          if (signInResult?.error) {
-            toast(signInResult.error, { icon: 'ℹ️' })
-          }
+          const path = getDashboardPathByRole(role)
+          await new Promise((r) => setTimeout(r, 200))
+          window.location.href = path
+          return
+        }
+        if (signInResult?.error) {
+          toast(signInResult.error, { icon: 'ℹ️' })
         }
         router.push('/login')
       }
@@ -92,28 +92,29 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-cream via-cream to-greige/20 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md dark:bg-charcoal-800 dark:border-charcoal-600 shadow-xl dark:shadow-charcoal-900/50">
+      <Card className="w-full max-w-xs sm:max-w-md dark:bg-charcoal-800 dark:border-charcoal-600 shadow-xl dark:shadow-charcoal-900/50">
         {/* Theme Toggle + Back to Home */}
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <Link href="/">
-            <Button variant="outline" size="sm" className="border-2 border-greige/30 dark:border-charcoal-600 hover:border-rocky-blue/50 dark:hover:border-rocky-blue-500/50">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 mb-6">
+          <Link href="/" className="flex-1 sm:flex-none">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto border-2 border-greige/30 dark:border-charcoal-600 hover:border-rocky-blue/50 dark:hover:border-rocky-blue-500/50">
               <Home className="w-4 h-4" />
-              العودة للصفحة الرئيسية
+              <span className="hidden sm:inline">العودة للصفحة الرئيسية</span>
+              <span className="sm:hidden">الرئيسية</span>
             </Button>
           </Link>
           <ThemeToggle />
         </div>
         
         {/* Header with architectural styling */}
-        <div className="text-center mb-8 relative">
+        <div className="text-center mb-6 sm:mb-8 relative">
           <div className="absolute inset-0 border-2 border-rocky-blue/10 dark:border-rocky-blue/20 rounded-none opacity-50" />
-          <h1 className="text-3xl font-black text-charcoal dark:text-cream relative z-10 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-charcoal dark:text-cream relative z-10 mb-2">
             إنشاء حساب جديد
           </h1>
-          <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-rocky-blue/40 to-transparent dark:via-rocky-blue-400/40 mx-auto mt-2" />
+          <div className="w-12 sm:w-16 h-0.5 bg-gradient-to-r from-transparent via-rocky-blue/40 to-transparent dark:via-rocky-blue-400/40 mx-auto mt-2" />
         </div>
         
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
           <Input
             {...register('name')}
             type="text"

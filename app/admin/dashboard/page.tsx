@@ -84,10 +84,10 @@ export default function AdminDashboard() {
       <main className="container mx-auto px-4 py-8">
         <BackButton href="/" label="العودة للصفحة الرئيسية" />
         
-        <h1 className="text-3xl font-bold mb-8 text-charcoal dark:text-cream">لوحة تحكم الإدارة</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-charcoal dark:text-cream">لوحة تحكم الإدارة</h1>
 
         {/* Main Stats Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card className="hover:shadow-lg transition-shadow dark:bg-charcoal-800 dark:border-charcoal-600">
             <div className="flex items-center justify-between">
               <div>
@@ -188,19 +188,29 @@ export default function AdminDashboard() {
         </div>
 
         {/* Packages Stats */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card className="hover:shadow-lg transition-shadow dark:bg-charcoal-800 dark:border-charcoal-600">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-blue-gray dark:text-greige mb-1">إجمالي الباقات</p>
-                <p className="text-2xl font-bold text-charcoal dark:text-cream">{stats?.totalPackages || 0}</p>
-                {stats && stats.activePackages > 0 && (
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    {stats.activePackages} باقة نشطة
+                <p className="text-2xl font-bold text-charcoal dark:text-cream">{stats?.totalPackages ?? 0}</p>
+                {stats && (
+                  <p className="text-xs text-blue-gray dark:text-greige mt-1">
+                    {stats.activePackages ?? 0} نشطة • {(stats.totalPackages ?? 0) - (stats.activePackages ?? 0)} غير نشطة
                   </p>
                 )}
               </div>
               <Box className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+            </div>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow dark:bg-charcoal-800 dark:border-charcoal-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-gray dark:text-greige mb-1">الباقات النشطة</p>
+                <p className="text-2xl font-bold text-charcoal dark:text-cream">{stats?.activePackages ?? 0}</p>
+                <p className="text-xs text-blue-gray dark:text-greige mt-1">المتاحة للعملاء</p>
+              </div>
+              <Box className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
           </Card>
         </div>

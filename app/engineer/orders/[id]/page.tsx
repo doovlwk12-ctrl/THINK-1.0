@@ -16,6 +16,14 @@ import { compressImage, isImageFile, formatFileSize } from '@/lib/imageCompressi
 import { formatDateHijriMiladi, formatDateTimeHijriMiladi } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
+interface OrderAuditEntry {
+  id: string
+  action: string
+  oldValue: string | null
+  newValue: string | null
+  createdAt: string
+}
+
 interface Order {
   id: string
   orderNumber: string
@@ -39,6 +47,7 @@ interface Order {
     createdAt: string
     isActive: boolean
   }>
+  auditLogs?: OrderAuditEntry[]
 }
 
 interface RevisionRequest {
@@ -550,7 +559,10 @@ export default function EngineerOrderPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <BackButton href="/engineer/dashboard" label="العودة للوحة التحكم" />
+          <BackButton
+            href={session?.user?.role === 'ADMIN' ? '/admin/dashboard' : '/engineer/dashboard'}
+            label="العودة للوحة التحكم"
+          />
         </div>
         <h1 className="text-2xl font-bold mb-6 text-charcoal dark:text-cream">تفاصيل الطلب #{order.orderNumber}</h1>
 
@@ -908,6 +920,30 @@ export default function EngineerOrderPage() {
                     )
                   })}
                 </div>
+              </Card>
+            )}
+
+            {/* سجل التغييرات */}
+            {order.auditLogs && order.auditLogs.length > 0 && (
+              <Card className="dark:bg-charcoal-800 dark:border-charcoal-600">
+                <h2 className="text-xl font-semibold mb-4 text-charcoal dark:text-cream">سجل التغييرات</h2>
+                <ul className="space-y-2 text-sm">
+                  {order.auditLogs.map((entry) => (
+                    <li key={entry.id} className="flex flex-wrap items-center gap-2 py-2 border-b border-greige/20 dark:border-charcoal-600 last:border-0">
+                      <span className="text-blue-gray dark:text-greige shrink-0">
+                        {formatDateTimeHijriMiladi(entry.createdAt)}
+                      </span>
+                      {entry.action === 'status_change' && (
+                        <span className="text-charcoal dark:text-cream">
+                          تغيير الحالة: <span className="font-medium">{entry.oldValue ?? '—'}</span> → <span className="font-medium">{entry.newValue ?? '—'}</span>
+                        </span>
+                      )}
+                      {entry.action !== 'status_change' && (
+                        <span className="text-charcoal dark:text-cream">{entry.action}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </Card>
             )}
 

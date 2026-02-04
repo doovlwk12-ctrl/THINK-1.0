@@ -25,6 +25,7 @@ import { apiClient } from '@/lib/api'
 import { storage } from '@/lib/localStorage'
 import { regions, getCitiesForRegion, getDistrictsForCity, otherOption, citiesByRegion } from '@/lib/locations'
 import { BackButton } from '@/components/shared/BackButton'
+import { orderFormDataSchema } from '@/schemas/orderFormSchema'
 import toast from 'react-hot-toast'
 
 interface Package {
@@ -1157,10 +1158,18 @@ export function CreateOrderContent() {
     setSubmitting(true)
     try {
       const finalFormData = normalizeFormDataForSubmit(formData, selectedAddons)
+      const schemaResult = orderFormDataSchema.safeParse(finalFormData)
+      if (!schemaResult.success) {
+        const firstError = schemaResult.error.errors[0]
+        const message = firstError?.message ?? 'بيانات الطلب غير صحيحة'
+        toast.error(message)
+        setSubmitting(false)
+        return
+      }
 
       const result = await apiClient.post<{ success: boolean; order?: { id: string } }>('/orders/create', {
         packageId: selectedPackage.id,
-        formData: finalFormData,
+        formData: schemaResult.data,
       })
 
       if (result.success && result.order) {

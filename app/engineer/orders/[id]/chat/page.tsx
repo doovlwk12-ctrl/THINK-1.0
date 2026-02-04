@@ -9,6 +9,7 @@ import { Card } from '@/components/shared/Card'
 import { Loading } from '@/components/shared/Loading'
 import { Header } from '@/components/layout/Header'
 import { BackButton } from '@/components/shared/BackButton'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { apiClient } from '@/lib/api'
 import { parseModificationPointMessage } from '@/lib/parseModificationPointMessage'
 import { ModificationPointMessage } from '@/components/chat/ModificationPointMessage'
@@ -35,16 +36,20 @@ export default function EngineerChatPage() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const POLL_INTERVAL_MS = 3000
 
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async (isInitial = false) => {
     try {
+      setFetchError(null)
       const result = await apiClient.get<{ success: boolean; messages: Message[] }>(`/messages/${orderId}`)
       if (result.success) {
         setMessages(result.messages)
       }
-    } catch {
-      // Silent fail for polling
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'فشل تحميل المحادثة'
+      if (isInitial) setFetchError(msg)
     } finally {
       setLoading(false)
     }
@@ -61,13 +66,10 @@ export default function EngineerChatPage() {
         router.push('/dashboard')
         return
       }
-      fetchMessages()
-      
-      // Poll for new messages every 5 seconds
+      fetchMessages(true)
       const interval = setInterval(() => {
-        fetchMessages()
-      }, 5000)
-      
+        fetchMessages(false)
+      }, POLL_INTERVAL_MS)
       return () => clearInterval(interval)
     }
   }, [status, session, router, fetchMessages])
@@ -102,17 +104,34 @@ export default function EngineerChatPage() {
   const sendMessage = async () => {
     if (!newMessage.trim()) return
 
+    const text = newMessage.trim()
+    setNewMessage('')
     setSending(true)
+
+    // Optimistic: add temporary message (reverted on failure)
+    const optimisticId = `opt-${Date.now()}`
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      content: text,
+      senderId: '',
+      sender: { name: session?.user?.name ?? 'المهندس', role: 'ENGINEER' },
+      createdAt: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, optimisticMessage])
+
     try {
-      const result = await apiClient.post<{ success: boolean }>(`/messages/${orderId}`, {
-        content: newMessage,
+      const result = await apiClient.post<{ success: boolean; message?: Message }>(`/messages/${orderId}`, {
+        content: text,
       })
 
-      if (result.success) {
-        setNewMessage('')
-        fetchMessages()
+      if (result.success && result.message) {
+        setMessages((prev) => prev.map((m) => (m.id === optimisticId ? result.message! : m)))
+        fetchMessages(false)
+      } else if (result.success) {
+        fetchMessages(false)
       }
     } catch (error: unknown) {
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId))
       const errorMessage = error instanceof Error ? error.message : 'فشل إرسال الرسالة'
       toast.error(errorMessage)
     } finally {
@@ -120,13 +139,21 @@ export default function EngineerChatPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || (loading && messages.length === 0)) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />
       </div>
     )
   }
+
+  const chatFallback = (
+    <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-6 text-center">
+      <p className="text-charcoal dark:text-cream font-medium mb-2">تعذر تحميل المحادثة</p>
+      <p className="text-sm text-blue-gray dark:text-greige mb-4">حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.</p>
+      <Button onClick={() => window.location.reload()}>إعادة المحاولة</Button>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex flex-col">
@@ -136,6 +163,19 @@ export default function EngineerChatPage() {
         <div className="mb-4">
           <BackButton href={`/engineer/orders/${orderId}`} label="العودة لتفاصيل الطلب" />
         </div>
+        <ErrorBoundary fallback={chatFallback}>
+        {fetchError && (
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-sm text-red-700 dark:text-red-300">{fetchError}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setLoading(true); fetchMessages(true) }}
+            >
+              إعادة المحاولة
+            </Button>
+          </div>
+        )}
         <Card className="flex-1 flex flex-col dark:bg-charcoal-800 dark:border-charcoal-600">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((message) => (
@@ -197,6 +237,7 @@ export default function EngineerChatPage() {
             </div>
           </div>
         </Card>
+        </ErrorBoundary>
       </main>
     </div>
   )

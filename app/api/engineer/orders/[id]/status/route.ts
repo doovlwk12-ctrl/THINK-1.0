@@ -4,6 +4,9 @@ import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
+import { validateTransition, type OrderStatus } from '@/lib/orderStateMachine'
+import { appendOrderAuditLog } from '@/lib/orderAuditLog'
+import { logger } from '@/lib/logger'
 
 const updateStatusSchema = z.object({
   status: z.enum(['PENDING', 'IN_PROGRESS', 'REVIEW', 'COMPLETED', 'CLOSED', 'ARCHIVED']),
@@ -88,12 +91,17 @@ export async function PUT(
       )
     }
 
-    // Validate status transition
-    const currentStatus = order.status
-    const newStatus = validatedData.status
-
-    // Allow any status change for now (can add business logic later)
-    // For example, prevent going from COMPLETED back to IN_PROGRESS
+    // Validate status transition via state machine
+    const currentStatus = order.status as OrderStatus
+    const newStatus = validatedData.status as OrderStatus
+    const actor = auth.role === 'ADMIN' ? 'admin' : 'engineer'
+    const transition = validateTransition(currentStatus, newStatus, actor)
+    if (!transition.valid) {
+      return Response.json(
+        { success: false, error: transition.error },
+        { status: 400 }
+      )
+    }
 
     // If order had no engineer assigned, assign current user when engineer updates status
     const assignEngineer = auth.role === 'ENGINEER' && order.engineerId == null
@@ -114,6 +122,16 @@ export async function PUT(
         engineer: true,
       },
     })
+
+    if (currentStatus !== newStatus) {
+      appendOrderAuditLog({
+        orderId,
+        userId: auth.userId,
+        action: 'status_change',
+        oldValue: currentStatus,
+        newValue: newStatus,
+      }).catch(() => {})
+    }
 
     // Create notification for client if status changed
     if (currentStatus !== newStatus && order.clientId) {
@@ -151,6 +169,9 @@ export async function PUT(
       }
     }
 
+    if (currentStatus !== newStatus) {
+      logger.info('order_status_changed', { orderId, userId: auth.userId, from: currentStatus, to: newStatus })
+    }
     return Response.json({
       success: true,
       message: 'تم تحديث حالة الطلب بنجاح',

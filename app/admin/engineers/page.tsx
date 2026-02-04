@@ -78,21 +78,21 @@ export default function AdminEngineersPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-cream dark:bg-charcoal-900">
       <Header />
 
       <main className="container mx-auto px-4 py-8">
         <BackButton href="/admin/dashboard" label="العودة للوحة التحكم" />
         
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">إدارة المهندسين</h1>
+        <div className="flex justify-between items-center mb-6 sm:mb-8 flex-wrap gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-charcoal dark:text-cream">إدارة المهندسين</h1>
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -112,7 +112,7 @@ export default function AdminEngineersPage() {
         </div>
 
         {/* Future Feature Notice */}
-        <Card className="mb-6 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+        <Card className="mb-6 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 dark:bg-charcoal-800 dark:border-charcoal-600">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <UserPlus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -129,18 +129,18 @@ export default function AdminEngineersPage() {
         </Card>
 
         {engineers.length === 0 ? (
-          <Card className="text-center py-12">
-            <Users className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">لا يوجد مهندسين مسجلين بعد</p>
+          <Card className="text-center py-12 dark:bg-charcoal-800 dark:border-charcoal-600">
+            <Users className="w-16 h-16 text-blue-gray dark:text-greige mx-auto mb-4" />
+            <p className="text-blue-gray dark:text-greige">لا يوجد مهندسين مسجلين بعد</p>
           </Card>
         ) : (
           <div className="grid gap-6">
             {engineers.map((engineer) => (
-              <Card key={engineer.id} className="hover:shadow-lg transition-shadow">
+              <Card key={engineer.id} className="hover:shadow-lg transition-shadow dark:bg-charcoal-800 dark:border-charcoal-600">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <h3 className="text-xl font-semibold text-charcoal dark:text-cream">
                         {engineer.name}
                       </h3>
                       {engineer.isActive ? (
@@ -156,7 +156,7 @@ export default function AdminEngineersPage() {
                       )}
                     </div>
                     
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="flex flex-wrap gap-4 text-sm text-blue-gray dark:text-greige">
                       <div className="flex items-center gap-2">
                         <Mail className="w-4 h-4" />
                         {engineer.email}
@@ -170,18 +170,18 @@ export default function AdminEngineersPage() {
 
                   <div className="flex flex-col md:items-end gap-2">
                     <div className="text-right">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">إجمالي الطلبات</p>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      <p className="text-sm text-blue-gray dark:text-greige">إجمالي الطلبات</p>
+                      <p className="text-2xl font-bold text-charcoal dark:text-cream">
                         {engineer.ordersCount}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">المكتملة</p>
+                      <p className="text-sm text-blue-gray dark:text-greige">المكتملة</p>
                       <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                         {engineer.completedOrdersCount}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                    <p className="text-xs text-blue-gray dark:text-greige mt-2">
                       انضم في {formatDateHijriMiladi(engineer.createdAt)}
                     </p>
                   </div>

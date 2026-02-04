@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireClient } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
+import { validateTransition, type OrderStatus } from '@/lib/orderStateMachine'
+import { appendOrderAuditLog } from '@/lib/orderAuditLog'
 
 export async function POST(
   request: NextRequest,
@@ -48,10 +50,11 @@ export async function POST(
       )
     }
 
-    // يمكن للعميل تأكيد إنهاء الطلب (وضع "منتهي") فقط عندما يكون المهندس قد وضع الطلب مكتملاً
-    if (order.status !== 'COMPLETED') {
+    const currentStatus = order.status as OrderStatus
+    const transition = validateTransition(currentStatus, 'CLOSED', 'client')
+    if (!transition.valid) {
       return Response.json(
-        { success: false, error: order.status === 'CLOSED' || order.status === 'ARCHIVED' ? 'الطلب منتهٍ بالفعل' : 'يمكن تأكيد إنهاء الطلب فقط بعد أن يضع المهندس حالة الطلب مكتمل' },
+        { success: false, error: transition.error },
         { status: 400 }
       )
     }
@@ -95,6 +98,14 @@ export async function POST(
 
       return updatedOrder
     })
+
+    appendOrderAuditLog({
+      orderId,
+      userId: auth.userId,
+      action: 'status_change',
+      oldValue: 'COMPLETED',
+      newValue: 'CLOSED',
+    }).catch(() => {})
 
     return Response.json({
       success: true,

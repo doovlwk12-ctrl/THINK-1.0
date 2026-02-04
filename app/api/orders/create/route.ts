@@ -6,11 +6,8 @@ import { z } from 'zod'
 import { addDays } from 'date-fns'
 import { generateOrderNumber } from '@/lib/utils'
 import { handleApiError } from '@/lib/errors'
-
-const createOrderSchema = z.object({
-  packageId: z.string(),
-  formData: z.record(z.any()),
-})
+import { logger } from '@/lib/logger'
+import { createOrderSchema } from '@/schemas/orderFormSchema'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +16,18 @@ export async function POST(request: NextRequest) {
     const { auth } = result
 
     const body = await request.json()
-    const validatedData = createOrderSchema.parse(body)
+    const parseResult = createOrderSchema.safeParse(body)
+    if (!parseResult.success) {
+      const first = parseResult.error.flatten().fieldErrors.formData?.[0]
+        ?? parseResult.error.flatten().fieldErrors.packageId?.[0]
+        ?? parseResult.error.errors[0]?.message
+        ?? 'بيانات الطلب غير صحيحة'
+      return Response.json(
+        { success: false, error: first },
+        { status: 400 }
+      )
+    }
+    const validatedData = parseResult.data
 
     // Get package
     const pkg = await prisma.package.findUnique({
@@ -64,6 +72,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    logger.info('order_created', { orderId: order.id, userId: auth.userId, packageId: pkg.id })
     return Response.json({
       success: true,
       order

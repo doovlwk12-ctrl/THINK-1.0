@@ -203,6 +203,19 @@ npx prisma migrate deploy
 
 ---
 
+## إعدادات الإنتاج (Vercel و Supabase)
+
+### Vercel
+- **Function timeout:** إذا احتجت وقت تنفيذ أطول لبعض المسارات، من **Project → Settings → Functions** يمكن ضبط **Max Duration** (مثلاً 10s أو 60s) حسب خطة Vercel.
+- **Environment variables:** اضبط المتغيرات لـ **Production** و/أو **Preview** حسب الحاجة؛ لا تستخدم قيم الإنتاج في بيئة التطوير المحلي.
+- **NODE_ENV:** يُضبط تلقائياً إلى `production` عند النشر على Vercel.
+
+### Supabase (عند استخدامه في الإنتاج)
+- **Point-in-Time Recovery (PITR) و النسخ الاحتياطية:** من **Supabase Dashboard → Project Settings → Database** يمكن تفعيل النسخ الاحتياطية و PITR حسب الخطة (مدفوعة).
+- **عدم استخدام بيانات الإنتاج في التطوير:** استخدم مشروع Supabase منفصل للتطوير (أو قيم مختلفة لـ `DATABASE_URL` و `NEXT_PUBLIC_SUPABASE_URL` و `NEXT_PUBLIC_SUPABASE_ANON_KEY`) حتى لا تخلط بيانات الإنتاج مع التطوير ولا تعرّض مفاتيح الإنتاج.
+
+---
+
 ## ملخص سريع
 
 | الخطوة | الإجراء |

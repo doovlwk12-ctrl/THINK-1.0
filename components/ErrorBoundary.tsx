@@ -24,10 +24,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log to error tracking service
     console.error('Error caught by boundary:', error, errorInfo)
-    // TODO: Send to Sentry or other error tracking service
-    // Sentry.captureException(error, { contexts: { react: errorInfo } })
+    const { reportError } = require('@/lib/reportError')
+    reportError(error, { componentStack: errorInfo.componentStack })
   }
 
   render() {
