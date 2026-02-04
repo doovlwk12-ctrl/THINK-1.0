@@ -79,8 +79,8 @@ export async function GET(
       }
     })
 
-    // Mark messages as read
-    await prisma.message.updateMany({
+    // Mark messages as read (non-blocking for response)
+    prisma.message.updateMany({
       where: {
         orderId,
         senderId: { not: auth.userId },
@@ -89,16 +89,31 @@ export async function GET(
       data: {
         isRead: true
       }
+    }).catch((err: unknown) => {
+      logger.error('messages_mark_read_failed', { orderId }, err instanceof Error ? err : new Error(String(err)))
     })
+
+    // Serialize to plain objects so JSON response never fails (e.g. Date/BigInt on serverless)
+    const serialized = messages.map((m) => ({
+      id: m.id,
+      orderId: m.orderId,
+      senderId: m.senderId,
+      content: m.content,
+      isRead: m.isRead,
+      createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
+      sender: m.sender,
+    }))
 
     return Response.json({
       success: true,
-      messages,
-      ...(messages.length > 0 && {
-        cursor: messages[messages.length - 1].createdAt.toISOString(),
+      messages: serialized,
+      ...(serialized.length > 0 && {
+        cursor: serialized[serialized.length - 1].createdAt,
       })
     })
   } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    logger.error('messages_get_error', {}, err)
     return handleApiError(error)
   }
 }
