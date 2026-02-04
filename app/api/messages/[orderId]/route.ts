@@ -27,8 +27,14 @@ export async function GET(
     const { auth } = result
 
     const resolvedParams = await Promise.resolve(params).catch(() => ({}))
-    const orderId = 'orderId' in resolvedParams ? resolvedParams.orderId : undefined
-    if (!orderId || typeof orderId !== 'string') {
+    const orderId =
+      resolvedParams != null &&
+      typeof resolvedParams === 'object' &&
+      'orderId' in resolvedParams &&
+      typeof (resolvedParams as { orderId: unknown }).orderId === 'string'
+        ? (resolvedParams as { orderId: string }).orderId
+        : undefined
+    if (!orderId) {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
     }
 
@@ -128,8 +134,14 @@ export async function POST(
     const { auth } = result
 
     const resolvedParams = await Promise.resolve(params).catch(() => ({}))
-    const orderId = 'orderId' in resolvedParams ? resolvedParams.orderId : undefined
-    if (!orderId || typeof orderId !== 'string') {
+    const orderId =
+      resolvedParams != null &&
+      typeof resolvedParams === 'object' &&
+      'orderId' in resolvedParams &&
+      typeof (resolvedParams as { orderId: unknown }).orderId === 'string'
+        ? (resolvedParams as { orderId: string }).orderId
+        : undefined
+    if (!orderId) {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
     }
     const body = await request.json()
