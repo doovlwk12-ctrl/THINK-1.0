@@ -28,7 +28,7 @@
 
 | الاسم | القيمة | مطلوب؟ |
 |--------|--------|--------|
-| `DATABASE_URL` | رابط PostgreSQL من Supabase (من Project Settings → Database → Connection string → URI). استبدل `[YOUR-PASSWORD]` بكلمة مرور قاعدة البيانات. | نعم |
+| `DATABASE_URL` | **يجب استخدام رابط الاتصال عبر الـ Pooler (وضع Transaction)** وليس الاتصال المباشر، لتجنب خطأ 503 (تعذر الاتصال بقاعدة البيانات) على Vercel. من Supabase: **Connect → Transaction** (أو Connection string → **Transaction mode**). الشكل: `postgres://postgres:[YOUR-PASSWORD]@db.xxxxx.supabase.co:6543/postgres` — **أضف في نهاية الرابط:** `?pgbouncer=true`. مثال كامل: `postgres://postgres:mypass@db.abcdef.supabase.co:6543/postgres?pgbouncer=true` | نعم |
 | `NEXTAUTH_SECRET` | سلسلة عشوائية طويلة (32 حرفاً أو أكثر). يمكن توليدها بـ: `openssl rand -base64 32` | نعم |
 | `NEXTAUTH_URL` | رابط الموقع بعد النشر، مثلاً `https://اسم-المشروع.vercel.app` (غيّره بعد أول نشر إذا اختلف الرابط) | نعم |
 | `USE_SUPABASE_AUTH` | `true` | إذا تستخدم Supabase للمصادقة |
@@ -39,6 +39,24 @@
 
 - لا تضع مسافات قبل أو بعد القيم.
 - بعد إضافة أو تعديل أي متغير، يُفضّل **إعادة النشر (Redeploy)** حتى تُحمّل القيم الجديدة.
+
+#### إصلاح خطأ 503 (Service Unavailable) أو "تعذر الاتصال بقاعدة البيانات"
+
+إذا ظهر خطأ **503** أو رسالة **"تعذر الاتصال بقاعدة البيانات. يرجى المحاولة لاحقاً"** عند استدعاء مسارات مثل `/api/orders/my-orders`:
+
+1. **السبب المعتاد:** استخدام رابط الاتصال **المباشر** (Direct، منفذ 5432) بدل رابط **الـ Pooler** (Transaction mode، منفذ 6543). على Vercel (Serverless) الاتصال المباشر يستهلك عدد اتصالات كبير ويؤدي إلى فشل الطلبات.
+2. **الحل:**
+   - من **Supabase Dashboard** → **Project Settings** → **Database** (أو من الصفحة الرئيسية للمشروع زر **Connect**).
+   - اختر **Connection string** ثم **Transaction** (وضع Transaction للـ pooler).
+   - انسخ الرابط — يكون عادة بالشكل:  
+     `postgres://postgres:[YOUR-PASSWORD]@db.xxxxxxxx.supabase.co:6543/postgres`
+   - **أضف في نهاية الرابط:** `?pgbouncer=true` (مطلوب لـ Prisma مع Transaction pooler).  
+     مثال نهائي:  
+     `postgres://postgres:YourPassword@db.abcdefgh.supabase.co:6543/postgres?pgbouncer=true`
+   - ضع هذا الرابط في متغير `DATABASE_URL` في **Vercel → Project → Settings → Environment Variables**.
+   - نفّذ **Redeploy** للنشر الحالي.
+
+بعد التعديل يجب أن تختفي أخطاء 503 المرتبطة بقاعدة البيانات.
 
 ### الخطوة 4: النشر (Deploy)
 
@@ -96,11 +114,18 @@ npx prisma db push
 
 في `.env`:
 
-- غيّر `DATABASE_URL` إلى رابط الاتصال من Supabase:
-  - **Supabase Dashboard → Project Settings → Database → Connection string (URI)**
+- غيّر `DATABASE_URL` إلى رابط الاتصال من Supabase. للنشر على Vercel استخدم **وضع Transaction (Pooler)** وليس المباشر:
+  - **Supabase Dashboard → Connect (أو Database) → Connection string → Transaction**
   - استبدل `[YOUR-PASSWORD]` بكلمة مرور قاعدة البيانات (إن كان فيها `@` استبدلها بـ `%40` في الرابط)
+  - أضف في النهاية: `?pgbouncer=true`
 
-مثال:
+مثال (للاستخدام على Vercel أو مع Pooler):
+
+```env
+DATABASE_URL="postgresql://postgres:كلمة_المرور@db.xxxxx.supabase.co:6543/postgres?pgbouncer=true"
+```
+
+مثال للاتصال المباشر فقط (مثلاً للتطوير المحلي أو تشغيل الهجرات):
 
 ```env
 DATABASE_URL="postgresql://postgres:كلمة_المرور@db.xxxxx.supabase.co:5432/postgres"
@@ -135,7 +160,7 @@ npx prisma migrate deploy
 
 | الاسم | القيمة | ملاحظة |
 |--------|--------|--------|
-| `DATABASE_URL` | رابط PostgreSQL من Supabase (Connection string URI) | **مطلوب** |
+| `DATABASE_URL` | رابط PostgreSQL عبر **Transaction pooler** (منفذ 6543) مع `?pgbouncer=true` في النهاية — راجع قسم "إصلاح خطأ 503" أعلاه | **مطلوب** |
 | `NEXTAUTH_SECRET` | سلسلة عشوائية طويلة (32+ حرف) | مطلوب لـ NextAuth |
 | `NEXTAUTH_URL` | رابط الموقع بعد النشر، مثلاً `https://your-app.vercel.app` | غيّره بعد أول نشر |
 | `USE_SUPABASE_AUTH` | `true` | إن كنت تستخدم مصادقة Supabase — يُفضّل ضبط الاثنين معاً |

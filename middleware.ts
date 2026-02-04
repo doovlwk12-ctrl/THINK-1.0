@@ -7,11 +7,12 @@ import { isPublicPath } from '@/lib/routes'
 const useFirebaseAuth = process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH === 'true'
 const useSupabaseAuth = process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
 
-/** مسارات المصادقة التي نحدّها بشدة (تسجيل، نسيت كلمة المرور، NextAuth). /api/auth/me مستثنى لأنه يُستدعى كثيراً للتحقق من الجلسة. */
+/** مسارات المصادقة التي نحدّها بشدة (تسجيل، نسيت كلمة المرور، NextAuth). استثناء: /me و /session و /_log لأنها تُستدعى كثيراً. */
 function isStrictAuthPath(path: string): boolean {
   if (path === '/api/auth/register' || path === '/api/auth/forgot-email') return true
-  if (path.startsWith('/api/auth/') && path !== '/api/auth/me') return true // NextAuth callback etc.
-  return false
+  if (!path.startsWith('/api/auth/')) return false
+  if (path === '/api/auth/me' || path === '/api/auth/session' || path === '/api/auth/_log') return false
+  return true // NextAuth callback, signin, etc.
 }
 
 function applyRateLimitHeaders(
