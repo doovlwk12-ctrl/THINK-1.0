@@ -17,8 +17,6 @@ import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { getSession } from 'next-auth/react'
 
-const useSupabaseAuth = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
-
 function getDashboardPathByRole(role: string | undefined): string {
   if (role === 'ADMIN') return '/admin/dashboard'
   if (role === 'ENGINEER') return '/engineer/dashboard'
@@ -50,7 +48,7 @@ export default function RegisterPage() {
         toast.success('تم إنشاء الحساب بنجاح')
         const signInResult = await signIn(data.email, data.password)
         if (signInResult?.ok) {
-          let role = signInResult.user?.role
+          let role: string | undefined = signInResult.user?.role as string | undefined
           if (role === undefined) {
             await new Promise((r) => setTimeout(r, 200))
             const s = await getSession()

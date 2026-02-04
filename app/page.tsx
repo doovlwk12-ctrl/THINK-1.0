@@ -16,9 +16,7 @@ import {
   Layers,
   Target,
   Shield,
-  Linkedin,
   MessageCircle,
-  Camera,
   Lightbulb,
   Zap
 } from 'lucide-react'

@@ -46,7 +46,7 @@ export default function LoginPage() {
 
       if (result?.ok) {
         toast.success('تم تسجيل الدخول بنجاح')
-        let role = result.user?.role
+        let role: string | undefined = result.user?.role as string | undefined
         if (role === undefined) {
           await new Promise((r) => setTimeout(r, 200))
           const s = await getSession()

@@ -23,26 +23,26 @@ export type TransitionActor = 'engineer' | 'admin' | 'client' | 'system'
  */
 const ALLOWED_TRANSITIONS: Record<string, Set<TransitionActor>> = {
   // Engineer starts work (or admin assigns and starts)
-  'PENDING->IN_PROGRESS': new Set(['engineer', 'admin']),
+  'PENDING->IN_PROGRESS': new Set<TransitionActor>(['engineer', 'admin']),
   // Engineer sends plan for review
-  'IN_PROGRESS->REVIEW': new Set(['engineer', 'admin']),
+  'IN_PROGRESS->REVIEW': new Set<TransitionActor>(['engineer', 'admin']),
   // Engineer marks complete
-  'REVIEW->COMPLETED': new Set(['engineer', 'admin']),
-  'IN_PROGRESS->COMPLETED': new Set(['engineer', 'admin']),
+  'REVIEW->COMPLETED': new Set<TransitionActor>(['engineer', 'admin']),
+  'IN_PROGRESS->COMPLETED': new Set<TransitionActor>(['engineer', 'admin']),
   // Client confirms completion -> order closed
-  'COMPLETED->CLOSED': new Set(['client']),
+  'COMPLETED->CLOSED': new Set<TransitionActor>(['client']),
   // System or admin: archive (e.g. after deadline)
-  'COMPLETED->ARCHIVED': new Set(['system', 'admin']),
-  'REVIEW->ARCHIVED': new Set(['system', 'admin']),
-  'IN_PROGRESS->ARCHIVED': new Set(['system', 'admin']),
-  'PENDING->ARCHIVED': new Set(['system', 'admin']),
+  'COMPLETED->ARCHIVED': new Set<TransitionActor>(['system', 'admin']),
+  'REVIEW->ARCHIVED': new Set<TransitionActor>(['system', 'admin']),
+  'IN_PROGRESS->ARCHIVED': new Set<TransitionActor>(['system', 'admin']),
+  'PENDING->ARCHIVED': new Set<TransitionActor>(['system', 'admin']),
   // Reopen archived (e.g. after extension purchase)
-  'ARCHIVED->IN_PROGRESS': new Set(['system', 'admin']),
+  'ARCHIVED->IN_PROGRESS': new Set<TransitionActor>(['system', 'admin']),
   // Engineer reopens to revise
-  'COMPLETED->REVIEW': new Set(['engineer', 'admin']),
-  'REVIEW->IN_PROGRESS': new Set(['engineer', 'admin']),
+  'COMPLETED->REVIEW': new Set<TransitionActor>(['engineer', 'admin']),
+  'REVIEW->IN_PROGRESS': new Set<TransitionActor>(['engineer', 'admin']),
   // Client cannot move back; system can close from archived
-  'ARCHIVED->CLOSED': new Set(['system', 'admin']),
+  'ARCHIVED->CLOSED': new Set<TransitionActor>(['system', 'admin']),
 }
 
 function transitionKey(from: OrderStatus, to: OrderStatus): string {

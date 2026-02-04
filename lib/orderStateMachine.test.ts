@@ -3,7 +3,6 @@ import {
   canTransition,
   validateTransition,
   type OrderStatus,
-  type TransitionActor,
 } from './orderStateMachine'
 
 const statuses: OrderStatus[] = [

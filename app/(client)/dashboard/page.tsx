@@ -13,19 +13,6 @@ import { useMyOrders } from '@/hooks/useMyOrders'
 import { formatDateHijriMiladi, isOrderExpired } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
-interface Order {
-  id: string
-  orderNumber: string
-  status: string
-  package: {
-    nameAr: string
-    price: number
-  }
-  remainingRevisions: number
-  deadline: string
-  createdAt: string
-}
-
 export default function ClientDashboard() {
   const { status, data: session } = useAuth()
   const router = useRouter()
