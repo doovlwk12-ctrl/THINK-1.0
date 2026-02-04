@@ -15,14 +15,17 @@ const postMessageSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> | { orderId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const orderId = params.orderId
+    const { orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
 
     // Check order access
     const order = await prisma.order.findUnique({
@@ -87,14 +90,17 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> | { orderId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const orderId = params.orderId
+    const { orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
     const body = await request.json()
     const { content } = postMessageSchema.parse(body)
 
