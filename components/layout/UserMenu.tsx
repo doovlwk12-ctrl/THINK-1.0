@@ -126,7 +126,7 @@ export function UserMenu({ userName, userRole, onSignOut }: UserMenuProps) {
       {/* User Button - Enhanced */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`group flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-rocky-blue focus:ring-offset-2 ${
+        className={`group flex items-center gap-2 px-4 py-2 min-h-[2.75rem] rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-rocky-blue focus:ring-offset-2 touch-target ${
           isActive('/dashboard') || isActive('/dashboard/profile') || isActive('/engineer/dashboard')
             ? 'bg-rocky-blue/10 dark:bg-rocky-blue/20 text-rocky-blue dark:text-rocky-blue-300 border-2 border-rocky-blue/30 dark:border-rocky-blue-500/40 shadow-sm'
             : 'bg-greige/20 dark:bg-charcoal-700 text-charcoal dark:text-cream hover:bg-greige/30 dark:hover:bg-charcoal-600 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-500/40'

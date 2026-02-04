@@ -138,7 +138,7 @@ export function NotificationBell() {
             }
           }
         }}
-        className="group relative flex items-center justify-center w-10 h-10 rounded-xl border-2 border-rocky-blue dark:border-rocky-blue-400 text-rocky-blue dark:text-rocky-blue-300 hover:bg-rocky-blue hover:text-cream dark:hover:bg-rocky-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-rocky-blue focus:ring-offset-2"
+        className="group relative flex items-center justify-center min-w-[2.75rem] min-h-[2.75rem] w-10 h-10 rounded-xl border-2 border-rocky-blue dark:border-rocky-blue-400 text-rocky-blue dark:text-rocky-blue-300 hover:bg-rocky-blue hover:text-cream dark:hover:bg-rocky-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-rocky-blue focus:ring-offset-2 touch-target"
         aria-label={`الإشعارات${unreadCount > 0 ? ` (${unreadCount} غير مقروء)` : ''}`}
         aria-expanded={showDropdown}
       >

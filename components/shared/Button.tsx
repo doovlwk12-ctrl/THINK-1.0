@@ -28,8 +28,8 @@ export function Button({
   }
   
   const sizes = {
-    sm: 'px-3 py-1.5 text-xs sm:text-sm',
-    md: 'px-4 py-2.5 text-sm sm:text-base',
+    sm: 'px-3 py-1.5 min-h-[2.75rem] text-xs sm:text-sm',
+    md: 'px-4 py-2.5 min-h-[2.75rem] text-sm sm:text-base',
     lg: 'px-6 py-3 text-base sm:text-lg',
   }
 

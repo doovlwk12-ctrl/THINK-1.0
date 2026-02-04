@@ -236,8 +236,8 @@ export function Header() {
             )}
           </nav>
           
-          {/* User Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 ms-4 sm:ms-6 md:ms-8">
+          {/* User Actions — تباعد كافٍ على الجوال لمنع تداخل الأيقونات */}
+          <div className="flex items-center gap-3 ms-4 sm:ms-6 md:ms-8">
             <ThemeToggle />
             {session && (
               <>

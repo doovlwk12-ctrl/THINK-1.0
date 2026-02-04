@@ -690,14 +690,14 @@ export default function EngineerOrderPage() {
                 <Upload className="w-5 h-5" />
                 رفع المخطط (حد أقصى 6 ملفات)
               </h2>
-              <div className="mb-4 p-4 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-sm text-amber-800 dark:text-amber-200">
+              <div className="mb-4 p-4 rounded-lg border-2 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 text-sm text-amber-800 dark:text-amber-200 min-w-0 break-words">
                 <p className="font-medium mb-1">حدود الحجم:</p>
-                <ul className="list-disc list-inside space-y-0.5 text-amber-700 dark:text-amber-300">
+                <ul className="list-disc list-inside space-y-0.5 text-amber-700 dark:text-amber-300 break-words">
                   <li>الملف الواحد: حد أقصى 10MB</li>
                   <li>مجموع الملفات: حد أقصى 30MB</li>
                   <li>بعد الحفظ: حد أقصى 5MB لكل ملف (يُنصح بتقليل الحجم لتسريع التحميل)</li>
                 </ul>
-                <p className="mt-2 text-amber-700 dark:text-amber-300">
+                <p className="mt-2 text-amber-700 dark:text-amber-300 break-words">
                   يُنصح بتقليل حجم الملفات (ضغط الصور أو PDF أصغر) لتسريع الرفع والاطلاع. (تنطبق على المهندس والأدمن.)
                 </p>
               </div>
@@ -743,7 +743,7 @@ export default function EngineerOrderPage() {
                       {pendingFiles.map((entry, index) => (
                         <li
                           key={index}
-                          className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between gap-2"
+                          className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between gap-2 min-w-0"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <Upload className="w-4 h-4 text-gray-500 flex-shrink-0" />
@@ -782,7 +782,7 @@ export default function EngineerOrderPage() {
 
                 {unsentPlans.length > 0 && (
                   <div className="space-y-3">
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3 min-w-0">
                       <Button
                         onClick={async () => {
                           if (whatsappUrl) handleOpenWhatsApp()
@@ -927,19 +927,19 @@ export default function EngineerOrderPage() {
             {order.auditLogs && order.auditLogs.length > 0 && (
               <Card className="dark:bg-charcoal-800 dark:border-charcoal-600">
                 <h2 className="text-xl font-semibold mb-4 text-charcoal dark:text-cream">سجل التغييرات</h2>
-                <ul className="space-y-2 text-sm">
+                <ul className="space-y-2 text-sm min-w-0">
                   {order.auditLogs.map((entry) => (
-                    <li key={entry.id} className="flex flex-wrap items-center gap-2 py-2 border-b border-greige/20 dark:border-charcoal-600 last:border-0">
+                    <li key={entry.id} className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-2 py-2 border-b border-greige/20 dark:border-charcoal-600 last:border-0 min-w-0">
                       <span className="text-blue-gray dark:text-greige shrink-0">
                         {formatDateTimeHijriMiladi(entry.createdAt)}
                       </span>
                       {entry.action === 'status_change' && (
-                        <span className="text-charcoal dark:text-cream">
+                        <span className="text-charcoal dark:text-cream break-words min-w-0">
                           تغيير الحالة: <span className="font-medium">{entry.oldValue ?? '—'}</span> → <span className="font-medium">{entry.newValue ?? '—'}</span>
                         </span>
                       )}
                       {entry.action !== 'status_change' && (
-                        <span className="text-charcoal dark:text-cream">{entry.action}</span>
+                        <span className="text-charcoal dark:text-cream break-words min-w-0">{entry.action}</span>
                       )}
                     </li>
                   ))}

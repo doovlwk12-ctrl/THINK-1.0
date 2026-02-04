@@ -193,7 +193,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-cream dark:bg-charcoal-900">
+    <div className="min-h-screen bg-cream dark:bg-charcoal-900 overflow-x-hidden">
       <Header />
 
       {/* ===== Hero Section - Enhanced Architectural Style ===== */}
@@ -225,7 +225,7 @@ export default function Home() {
         <div className="container mx-auto px-4 py-12 md:py-16 lg:py-20 relative z-10">
           <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
             {/* Hero Text - Enhanced */}
-            <div className="text-right fade-in-up relative">
+            <div className="text-right fade-in-up relative min-w-0">
               {/* Architectural decoration lines */}
               <div className="absolute -right-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-rocky-blue/20 to-transparent opacity-50" />
               
@@ -499,14 +499,14 @@ export default function Home() {
                   </div>
                   
                   {/* Bottom summary */}
-                  <div className="mt-8 bg-gradient-to-r from-rocky-blue/20 to-emerald-500/20 rounded-xl p-6 border-2 border-rocky-blue/30">
-                    <div className="flex items-center justify-center gap-4 flex-wrap">
-                      <div className="text-center">
+                  <div className="mt-8 bg-gradient-to-r from-rocky-blue/20 to-emerald-500/20 rounded-xl p-6 border-2 border-rocky-blue/30 min-w-0">
+                    <div className="flex items-center justify-center gap-4 flex-wrap min-w-0">
+                      <div className="text-center min-w-0">
                         <div className="text-red-500 text-2xl font-black mb-1">-40%</div>
                         <div className="text-xs text-cream">مساحة مهدورة قبل</div>
                       </div>
-                      <div className="text-4xl text-cream rtl:scale-x-[-1]">→</div>
-                      <div className="text-center">
+                      <div className="text-4xl text-cream rtl:scale-x-[-1] shrink-0">→</div>
+                      <div className="text-center min-w-0">
                         <div className="text-emerald-500 text-2xl font-black mb-1">+95%</div>
                         <div className="text-xs text-cream">كفاءة بعد التصميم</div>
                       </div>
@@ -538,7 +538,7 @@ export default function Home() {
             {/* Architectural frame decoration */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-rocky-blue/10 dark:border-rocky-blue-500/10 rotate-45 opacity-30" />
             
-            <h2 className="text-3xl md:text-4xl font-black text-charcoal dark:text-cream mb-4 relative z-10">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal dark:text-cream mb-4 relative z-10 break-words">
               لماذا تبدأ البناء بدون مخطط مدروس؟
             </h2>
             <p className="text-blue-gray dark:text-greige max-w-2xl mx-auto relative z-10">
@@ -715,7 +715,7 @@ export default function Home() {
               <span className="relative z-10">المميزات</span>
             </div>
             
-            <h2 className="text-4xl md:text-5xl font-black text-charcoal dark:text-cream mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-charcoal dark:text-cream mb-4 break-words">
               ماذا ستحصل عليه؟
             </h2>
             <p className="text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto">
@@ -800,12 +800,12 @@ export default function Home() {
           </div>
           
           {/* Bottom CTA */}
-          <div className="text-center mt-16">
-            <p className="text-lg text-blue-gray dark:text-greige mb-6">
+          <div className="text-center mt-16 min-w-0">
+            <p className="text-base sm:text-lg text-blue-gray dark:text-greige mb-6 px-1">
               جاهز لتحويل فكرتك إلى تصميم احترافي؟
             </p>
-            <Link href="#packages">
-              <button className="inline-flex items-center gap-3 bg-gradient-to-r from-rocky-blue to-rocky-blue-600 hover:from-rocky-blue-600 hover:to-rocky-blue-700 text-cream px-8 py-4 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300">
+            <Link href="#packages" className="inline-block">
+              <button className="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-rocky-blue to-rocky-blue-600 hover:from-rocky-blue-600 hover:to-rocky-blue-700 text-cream px-6 py-3 sm:px-8 sm:py-4 min-h-[2.75rem] rounded-xl font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto">
                 <span>استكشف الباقات</span>
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -915,10 +915,10 @@ export default function Home() {
               <span className="relative z-10">الباقات</span>
             </div>
             
-            <h2 className="text-4xl md:text-5xl font-black text-charcoal dark:text-cream mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-charcoal dark:text-cream mb-4 break-words">
               باقات الخدمة
             </h2>
-            <p className="text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto px-1">
               اختر الباقة المناسبة لاحتياجاتك وميزانيتك
             </p>
           </header>
@@ -1024,8 +1024,8 @@ export default function Home() {
                     </div>
                     
                     {/* Package Header - Enhanced */}
-                    <div className="package-header mb-6">
-                      <h3 className="text-3xl font-black text-charcoal dark:text-cream mb-2 group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300">
+                    <div className="package-header mb-6 min-w-0">
+                      <h3 className="text-2xl sm:text-3xl font-black text-charcoal dark:text-cream mb-2 group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300 break-words">
                         {pkg.nameAr}
                       </h3>
                       <div className="inline-block bg-greige/20 dark:bg-charcoal-700 px-4 py-1 rounded-full">
@@ -1110,28 +1110,28 @@ export default function Home() {
               <span className="relative z-10">{homepageContent?.faq?.sectionTitle ?? 'الأسئلة الشائعة'}</span>
             </div>
             
-            <h2 className="text-4xl md:text-5xl font-black text-charcoal dark:text-cream mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-charcoal dark:text-cream mb-4 break-words">
               {homepageContent?.faq?.sectionTitle ?? 'الأسئلة الشائعة'}
             </h2>
-            <p className="text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto px-1">
               إجابات على أكثر الأسئلة التي تردنا
             </p>
           </header>
 
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-4xl mx-auto space-y-6 min-w-0">
             {(homepageContent?.faq?.items?.length ? homepageContent.faq.items.map((item, i) => ({ ...item, icon: [Layers, Target, PenTool, Clock, Shield][i] ?? Layers })) : faqs).map((faq, idx) => (
               <div key={idx} className="group">
                 <div className="bg-white dark:bg-charcoal-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-500/30 overflow-hidden">
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full p-6 flex items-center justify-between text-right hover:bg-greige/5 dark:hover:bg-charcoal-700/50 transition-colors"
+                    className="w-full p-6 flex items-center justify-between text-right hover:bg-greige/5 dark:hover:bg-charcoal-700/50 transition-colors min-h-[2.75rem]"
                   >
-                    <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
                       {/* Icon with background */}
                       <div className="w-12 h-12 bg-rocky-blue/10 dark:bg-rocky-blue/20 rounded-xl flex items-center justify-center border-2 border-rocky-blue/20 flex-shrink-0">
                         <faq.icon className="w-6 h-6 text-rocky-blue dark:text-rocky-blue-300" />
                       </div>
-                      <span className="text-lg font-black text-charcoal dark:text-cream group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300">
+                      <span className="text-lg font-black text-charcoal dark:text-cream group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300 break-words text-right">
                         {faq.question}
                       </span>
                     </div>
@@ -1174,18 +1174,18 @@ export default function Home() {
             <span className="relative z-10">{homepageContent?.cta?.badge ?? 'ابدأ الآن'}</span>
           </div>
           
-          <h2 className="text-4xl md:text-5xl font-black text-cream mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-cream mb-4 break-words">
             {homepageContent?.cta?.title ?? 'خذ قرارك بثقة'}
           </h2>
-          <h3 className="text-2xl md:text-3xl text-cream/90 dark:text-cream mb-6 font-bold">
+          <h3 className="text-xl sm:text-2xl md:text-3xl text-cream/90 dark:text-cream mb-6 font-bold break-words">
             {homepageContent?.cta?.subtitle ?? 'وابدأ بتصميم منزلك اليوم للتنفيذ غداً'}
           </h3>
           <p className="text-xl text-cream/90 max-w-3xl mx-auto mb-10 leading-relaxed whitespace-pre-line">
             {homepageContent?.cta?.paragraph ?? 'لا تبدأ البناء قبل أن تتأكد من أن المخطط مناسب لك ولعائلتك.\nدع الخبرة الهندسية تساعدك على اتخاذ القرارات الصحيحة منذ البداية.'}
           </p>
           
-          <Link href="#packages">
-            <button className="group relative inline-flex items-center gap-4 bg-gradient-to-r from-cream to-greige/30 hover:from-greige/30 hover:to-cream text-rocky-blue dark:text-charcoal-900 px-12 py-6 rounded-2xl font-black text-2xl shadow-2xl hover:shadow-cream/30 dark:hover:shadow-charcoal-800/50 transition-all duration-300 hover:scale-110 mb-16">
+          <Link href="#packages" className="block w-full sm:w-auto">
+            <button className="group relative inline-flex items-center justify-center gap-4 bg-gradient-to-r from-cream to-greige/30 hover:from-greige/30 hover:to-cream text-rocky-blue dark:text-charcoal-900 px-8 py-5 sm:px-12 sm:py-6 rounded-2xl font-black text-xl sm:text-2xl shadow-2xl hover:shadow-cream/30 dark:hover:shadow-charcoal-800/50 transition-all duration-300 hover:scale-110 mb-16 w-full sm:w-auto min-h-[2.75rem]">
               <span>هيا بنا</span>
               <ArrowLeft className="w-7 h-7 group-hover:-translate-x-2 transition-transform duration-300" />
               
