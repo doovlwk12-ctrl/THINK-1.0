@@ -15,15 +15,20 @@ const sendMessageSchema = z.object({
 })
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: { Allow: 'POST, OPTIONS' } })
+  return new NextResponse(null, { status: 204, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } })
 }
 
-/** GET غير مدعوم — استخدم POST. يعيد 200 مع رسالة لتجنب 405 عند طلبات GET (مثلاً من كاش أو prefetch). */
+/** GET غير مدعوم للإرسال — استخدم POST. يعيد 200 لتجنب 405 عند طلبات GET/HEAD (كاش أو prefetch). */
 export async function GET() {
   return NextResponse.json(
     { success: false, error: 'استخدم POST مع الرابط /api/messages/:orderId والجسم { content }' },
-    { status: 200, headers: { Allow: 'POST, OPTIONS' } }
+    { status: 200, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } }
   )
+}
+
+/** يعيد 204 لتجنب 405 عند طلبات HEAD (بعض المتصفحات أو الأدوات). */
+export async function HEAD() {
+  return new NextResponse(null, { status: 204, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } })
 }
 
 export async function POST(request: NextRequest) {

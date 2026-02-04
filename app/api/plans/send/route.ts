@@ -13,6 +13,21 @@ const sendPlanSchema = z.object({
   planIds: z.array(z.string()).min(1, 'يجب اختيار مخطط واحد على الأقل').max(6, 'الحد الأقصى 6 مخططات'),
 })
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } })
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { success: false, error: 'استخدم POST مع الجسم { orderId, planIds }' },
+    { status: 200, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } }
+  )
+}
+
+export async function HEAD() {
+  return new NextResponse(null, { status: 204, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } })
+}
+
 export async function POST(request: NextRequest) {
   try {
     const result = await requireEngineerOrAdmin(request)
