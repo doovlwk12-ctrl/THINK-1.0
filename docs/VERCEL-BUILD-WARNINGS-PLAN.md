@@ -8,7 +8,7 @@
 
 | التحذير | المصدر | النوع | أولوية المعالجة |
 |--------|--------|-------|------------------|
-| `rimraf@3.0.2` deprecated | flat-cache (سلسلة ESLint) | تبعية غير مباشرة | متوسطة |
+| `rimraf@3.0.2` deprecated | flat-cache (سلسلة ESLint) — **تم:** override إلى ^5.0.5 في package.json | تبعية غير مباشرة | مُعالج |
 | `inflight@1.0.6` غير مدعوم | glob (سلسلة ESLint / Next) | تبعية غير مباشرة | متوسطة |
 | `google-p12-pem@4.0.1` لم يعد يُصان | firebase-admin أو حزمة Google | تبعية غير مباشرة | منخفضة |
 | `@humanwhocodes/config-array@0.13.0` | eslint | تبعية غير مباشرة | متوسطة |
@@ -33,7 +33,7 @@
 
 المصادر في المشروع:
 
-- **rimraf@3.0.2:** من `flat-cache` (سلسلة ESLint للأداء).
+- **rimraf@3.0.2:** من `flat-cache` (سلسلة ESLint للأداء). **تم تطبيق override في package.json إلى rimraf@^5.0.5**؛ التحذير يختفي والبناء ناجح.
 - **inflight:** من `glob` (يُستخدم في عدة حزم تابعة لـ ESLint و Next).
 - **glob (إصدارات قديمة):** من `@next/eslint-plugin-next` (glob 10.3.10)، و `@types/glob`، وحزم أخرى.
 - **@humanwhocodes/config-array** و **object-schema:** من `eslint`؛ البديل الرسمي هو `@eslint/config-array` و `@eslint/object-schema` (غالباً مع ESLint 9).
@@ -46,7 +46,7 @@
   - **glob / inflight / humanwhocodes:** لا يُنصح بفرض إصدارات يدوياً لأن ESLint 8 و eslint-config-next يعتمدان على شجرة تبعيات محددة؛ الترقية تكون مع نقل المشروع إلى ESLint 9 لاحقاً.
 - **google-p12-pem:** لا override؛ انتظار تحديث من `firebase-admin`؛ التحذير لا يمنع البناء.
 
-إذا تم إضافة overrides، يُفضّل توثيقها في هذا الملف مع نتيجة الاختبار المحلي.
+تم إضافة override لـ rimraf وتوثيق النتيجة في "المرحلة 2" أعلاه.
 
 ---
 
@@ -68,12 +68,12 @@
 - [x] إنشاء هذا المستند (VERCEL-BUILD-WARNINGS-PLAN.md).
 - [ ] إضافة فقرة قصيرة في [README.md](../README.md) أو [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) تشير إلى أن تحذيرات الحزم المعطلة معروفة وموثقة في هذا الملف، وأن البناء ينجح رغمها.
 
-### المرحلة 2: overrides آمنة (اختياري)
+### المرحلة 2: overrides آمنة (تم تنفيذها)
 
-- [ ] في `package.json` إضافة حقل `"overrides"` مع تجربة:
-  - `"rimraf": "^5.0.5"` (أو أحدث 5.x).
-- [ ] تشغيل `npm install` ثم `npm run build` و `npm run lint` محلياً.
-- [ ] إن نجح كل شيء، رفع التعديل ومراجعة بناء Vercel؛ إن ظهرت أخطاء، إرجاع الـ override وتوثيق أن rimraf يُترك على 3.x حتى ترقية سلسلة ESLint لاحقاً.
+- [x] في `package.json` إضافة حقل `"overrides"` مع `"rimraf": "^5.0.5"`.
+- [x] تشغيل `npm install` ثم `npm run build` و `npm run lint` محلياً — **نجح البناء والـ lint بدون أخطاء**؛ تحذير rimraf يختفي عند التثبيت.
+
+**ما تبقى من تحذيرات** (eslint، humanwhocodes، glob، inflight، google-p12-pem) **لا يُزال دون ترقية Next/ESLint أو تحديث من firebase-admin**؛ البناء ينجح رغمها.
 
 ### المرحلة 3: ترقية ESLint (لاحقاً مع ترقية Next)
 
