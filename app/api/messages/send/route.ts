@@ -18,6 +18,14 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: { Allow: 'POST, OPTIONS' } })
 }
 
+/** GET غير مدعوم — استخدم POST. يعيد 200 مع رسالة لتجنب 405 عند طلبات GET (مثلاً من كاش أو prefetch). */
+export async function GET() {
+  return NextResponse.json(
+    { success: false, error: 'استخدم POST مع الرابط /api/messages/:orderId والجسم { content }' },
+    { status: 200, headers: { Allow: 'POST, OPTIONS' } }
+  )
+}
+
 export async function POST(request: NextRequest) {
   try {
     const result = await requireAuth(request)
