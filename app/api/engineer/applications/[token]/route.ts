@@ -5,10 +5,13 @@ import { handleApiError } from '@/lib/errors'
 // GET - Get application info by token
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> | { token: string } }
 ) {
   try {
-    const token = params.token
+    const { token } = await Promise.resolve(params)
+    if (!token) {
+      return Response.json({ success: false, error: 'الرابط غير صحيح' }, { status: 400 })
+    }
 
     // Check if engineerApplication model exists in Prisma Client
     if (!prisma.engineerApplication) {
@@ -56,10 +59,13 @@ export async function GET(
 // POST - Submit application (set all information)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> | { token: string } }
 ) {
   try {
-    const token = params.token
+    const { token } = await Promise.resolve(params)
+    if (!token) {
+      return Response.json({ success: false, error: 'الرابط غير صحيح' }, { status: 400 })
+    }
     const body = await request.json()
     const { name, email, phone, password } = body
 

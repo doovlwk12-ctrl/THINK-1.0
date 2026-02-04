@@ -12,7 +12,7 @@ const extendDeadlineSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const authResult = await requireEngineerOrAdmin(request)
@@ -27,7 +27,10 @@ export async function POST(
       )
     }
 
-    const orderId = params.id
+    const { id: orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
     const body = await request.json()
     const validatedData = extendDeadlineSchema.parse(body)
 

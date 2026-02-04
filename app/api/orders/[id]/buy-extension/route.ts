@@ -7,14 +7,17 @@ import { addDays } from 'date-fns'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const authResult = await requireClient(request)
     if (authResult instanceof NextResponse) return authResult
     const { auth } = authResult
 
-    const orderId = params.id
+    const { id: orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ success: false, error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
 
     // Get order
     const order = await prisma.order.findUnique({

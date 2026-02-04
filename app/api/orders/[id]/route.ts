@@ -7,14 +7,17 @@ import { isOrderExpired } from '@/lib/utils'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const orderId = params.id
+    const { id: orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ success: false, error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },

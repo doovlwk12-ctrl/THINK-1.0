@@ -6,14 +6,17 @@ import { handleApiError } from '@/lib/errors'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const result = await requireEngineerOrAdmin(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const orderId = params.id
+    const { id: orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
 
     const order = await prisma.order.findUnique({
       where: { id: orderId }

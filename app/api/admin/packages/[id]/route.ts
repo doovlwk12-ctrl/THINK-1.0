@@ -20,14 +20,17 @@ const updatePackageSchema = z.object({
 // Update package
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
     const { auth: _auth } = result
 
-    const packageId = params.id
+    const { id: packageId } = await Promise.resolve(params)
+    if (!packageId) {
+      return Response.json({ success: false, error: 'معرف الباقة مطلوب' }, { status: 400 })
+    }
     const body = await request.json()
     const validatedData = updatePackageSchema.parse(body)
     const { features, ...rest } = validatedData
@@ -74,14 +77,17 @@ export async function PUT(
 // Delete package
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
     const { auth: _auth } = result
 
-    const packageId = params.id
+    const { id: packageId } = await Promise.resolve(params)
+    if (!packageId) {
+      return Response.json({ success: false, error: 'معرف الباقة مطلوب' }, { status: 400 })
+    }
 
     // Check if package has orders
     const ordersCount = await prisma.order.count({

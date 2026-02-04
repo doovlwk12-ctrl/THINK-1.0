@@ -11,14 +11,17 @@ const rejectSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const applicationId = params.id
+    const { id: applicationId } = await Promise.resolve(params)
+    if (!applicationId) {
+      return Response.json({ success: false, error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
     const body = await request.json()
     const { notes } = rejectSchema.parse(body)
 

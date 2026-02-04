@@ -6,14 +6,17 @@ import { handleApiError } from '@/lib/errors'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { revisionId: string } }
+  { params }: { params: Promise<{ revisionId: string }> | { revisionId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const revisionId = params.revisionId
+    const { revisionId } = await Promise.resolve(params)
+    if (!revisionId) {
+      return Response.json({ error: 'معرف طلب التعديل مطلوب' }, { status: 400 })
+    }
 
     // Get revision request
     const revision = await prisma.revisionRequest.findUnique({

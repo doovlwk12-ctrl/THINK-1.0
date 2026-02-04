@@ -10,7 +10,7 @@ const FALLBACK_PRICE = 100
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const authResult = await requireClient(request)
@@ -25,7 +25,10 @@ export async function POST(
       )
     }
 
-    const orderId = params.id
+    const { id: orderId } = await Promise.resolve(params)
+    if (!orderId) {
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+    }
     const body = await request.json()
     const revisions = typeof body.revisions === 'number' ? Math.floor(body.revisions) : parseInt(String(body.revisions), 10)
     if (Number.isNaN(revisions) || revisions < 1) {
