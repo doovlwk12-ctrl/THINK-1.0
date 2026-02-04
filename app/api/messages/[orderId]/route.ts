@@ -13,6 +13,10 @@ const postMessageSchema = z.object({
   content: z.string().min(1, 'محتوى الرسالة مطلوب'),
 })
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: { Allow: 'GET, POST, OPTIONS' } })
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> | { orderId: string } }
@@ -22,8 +26,9 @@ export async function GET(
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const { orderId } = await Promise.resolve(params)
-    if (!orderId) {
+    const resolvedParams = await Promise.resolve(params).catch(() => ({}))
+    const orderId = 'orderId' in resolvedParams ? resolvedParams.orderId : undefined
+    if (!orderId || typeof orderId !== 'string') {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
     }
 
@@ -107,8 +112,9 @@ export async function POST(
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const { orderId } = await Promise.resolve(params)
-    if (!orderId) {
+    const resolvedParams = await Promise.resolve(params).catch(() => ({}))
+    const orderId = 'orderId' in resolvedParams ? resolvedParams.orderId : undefined
+    if (!orderId || typeof orderId !== 'string') {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
     }
     const body = await request.json()
