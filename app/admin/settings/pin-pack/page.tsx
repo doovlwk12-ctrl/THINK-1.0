@@ -68,14 +68,14 @@ export default function AdminPinPackSettingsPage() {
       router.push('/login')
       return
     }
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ADMIN') {
+    if (status === 'authenticated' && session?.user?.role != null) {
+      if (session.user.role !== 'ADMIN') {
         router.push('/dashboard')
         return
       }
       fetchSettings()
     }
-  }, [status, session, router, fetchSettings])
+  }, [status, session, session?.user?.role, router, fetchSettings])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,7 +99,9 @@ export default function AdminPinPackSettingsPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  const roleReady = status === 'authenticated' && session?.user?.role != null
+  const isAdmin = session?.user?.role === 'ADMIN'
+  if (status === 'loading' || !roleReady || !isAdmin || loading) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />

@@ -104,14 +104,14 @@ export default function AdminHomepageContentPage() {
       router.push('/login')
       return
     }
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ADMIN') {
+    if (status === 'authenticated' && session?.user?.role != null) {
+      if (session.user.role !== 'ADMIN') {
         router.push('/dashboard')
         return
       }
       fetchContent()
     }
-  }, [status, session, router, fetchContent])
+  }, [status, session, session?.user?.role, router, fetchContent])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -195,7 +195,9 @@ export default function AdminHomepageContentPage() {
       },
     }))
 
-  if (status === 'loading' || loading) {
+  const roleReady = status === 'authenticated' && session?.user?.role != null
+  const isAdmin = session?.user?.role === 'ADMIN'
+  if (status === 'loading' || !roleReady || !isAdmin || loading) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center overflow-hidden">
         <Loading text="جاري التحميل..." />

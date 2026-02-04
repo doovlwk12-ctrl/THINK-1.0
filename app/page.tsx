@@ -815,13 +815,13 @@ export default function Home() {
       </section>
 
       {/* ===== Process Section - Enhanced ===== */}
-      <section id="process" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-greige/30 via-greige/20 to-blue-gray/10 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
+      <section id="process" className="py-10 sm:py-12 md:py-16 lg:py-20 bg-gradient-to-b from-greige/30 via-greige/20 to-blue-gray/10 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-visible">
         {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-8 md:mb-12 lg:mb-16">
+        <div className="container mx-auto px-4 sm:px-6 relative z-10">
+          <header className="text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16">
             {/* Badge - Architectural Style */}
             <div className="relative inline-block bg-rocky-blue dark:bg-rocky-blue-600 text-cream px-6 py-2 rounded-none text-sm font-black mb-4 shadow-lg border-2 border-rocky-blue-400/30 dark:border-rocky-blue-400/40 flex items-center gap-2">
               {/* Architectural corner decorations */}
@@ -831,20 +831,19 @@ export default function Home() {
               <span className="relative z-10">العملية</span>
             </div>
             
-            <h2 className="text-4xl md:text-5xl font-black text-charcoal dark:text-cream mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-charcoal dark:text-cream mb-3 sm:mb-4 px-1">
               التفكير بطريقة هندسية لمشروعك
             </h2>
-            <p className="text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto px-1">
               رحلة من الفكرة إلى التصميم في 5 خطوات احترافية
             </p>
           </header>
 
           <div className="max-w-5xl mx-auto relative">
-            {/* Enhanced Vertical Line with dots */}
-            <div className="absolute right-12 top-0 bottom-0 w-1 bg-gradient-to-b from-rocky-blue via-rocky-blue/50 to-rocky-blue hidden md:block">
-              {/* Connection dots */}
+            {/* Enhanced Vertical Line with dots - desktop only */}
+            <div className="absolute right-12 top-0 bottom-0 w-1 bg-gradient-to-b from-rocky-blue via-rocky-blue/50 to-rocky-blue hidden md:block" aria-hidden>
               {processSteps.map((_, idx) => (
-                <div 
+                <div
                   key={idx}
                   className="absolute right-1/2 translate-x-1/2 w-6 h-6 bg-rocky-blue rounded-full border-4 border-cream dark:border-charcoal-900 shadow-lg"
                   style={{ top: `${(idx * 20) + 10}%` }}
@@ -855,42 +854,36 @@ export default function Home() {
             {processSteps.map((step, idx) => {
               const isLast = idx === processSteps.length - 1
               return (
-                <div key={idx} className="relative flex gap-8 mb-10 fade-in group" style={{ animationDelay: `${idx * 0.1}s` }}>
-                  {/* Enhanced Step Number */}
-                  <div className="relative flex-shrink-0 z-20">
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 bg-rocky-blue rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
-                    
-                    {/* Number container */}
-                    <div className="relative w-20 h-20 bg-gradient-to-br from-rocky-blue to-rocky-blue-600 dark:from-rocky-blue-600 dark:to-rocky-blue-700 text-cream rounded-2xl flex items-center justify-center font-black text-2xl shadow-xl border-4 border-cream dark:border-charcoal-900 group-hover:scale-110 transition-transform duration-300">
+                <div key={idx} className="relative flex flex-col sm:flex-row gap-4 sm:gap-8 mb-6 sm:mb-10 fade-in group min-h-0" style={{ animationDelay: `${idx * 0.1}s` }}>
+                  {/* Step Number - smaller on mobile */}
+                  <div className="relative flex-shrink-0 z-20 flex flex-row sm:flex-col items-center gap-3 sm:gap-0">
+                    <div className="absolute inset-0 bg-rocky-blue rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300 hidden sm:block" />
+                    <div className="relative w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-rocky-blue to-rocky-blue-600 dark:from-rocky-blue-600 dark:to-rocky-blue-700 text-cream rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-lg sm:text-2xl shadow-xl border-2 sm:border-4 border-cream dark:border-charcoal-900 group-hover:scale-110 transition-transform duration-300">
                       {step.number}
                     </div>
-                    
-                    {/* Connection line to next step */}
                     {!isLast && (
-                      <div className="absolute top-20 right-1/2 translate-x-1/2 w-0.5 h-10 bg-gradient-to-b from-rocky-blue/50 to-transparent hidden md:block" />
+                      <div className="absolute top-14 sm:top-20 right-1/2 translate-x-1/2 w-0.5 h-4 sm:h-10 bg-gradient-to-b from-rocky-blue/50 to-transparent hidden md:block" />
                     )}
                   </div>
                   
-                  {/* Enhanced Step Content */}
-                  <div className="flex-1 group-hover:translate-x-2 transition-transform duration-300">
-                    <div className="relative bg-white dark:bg-charcoal-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-500/30">
-                      {/* Icon with background */}
-                      <div className="absolute top-6 left-6 w-16 h-16 bg-rocky-blue/10 dark:bg-rocky-blue/20 rounded-xl flex items-center justify-center border-2 border-rocky-blue/20">
-                        <step.icon className="w-8 h-8 text-rocky-blue dark:text-rocky-blue-300" />
+                  {/* Step Content - full width on mobile, no clipping */}
+                  <div className="flex-1 min-w-0 group-hover:translate-x-2 transition-transform duration-300">
+                    <div className="relative bg-white dark:bg-charcoal-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-500/30 overflow-visible">
+                      {/* Icon: above text on mobile, absolute on desktop */}
+                      <div className="flex flex-row items-start gap-3 sm:gap-0 sm:absolute sm:top-6 sm:left-6 mb-3 sm:mb-0 w-12 h-12 sm:w-16 sm:h-16 bg-rocky-blue/10 dark:bg-rocky-blue/20 rounded-lg sm:rounded-xl flex-shrink-0 sm:flex items-center justify-center border-2 border-rocky-blue/20">
+                        <step.icon className="w-6 h-6 sm:w-8 sm:h-8 text-rocky-blue dark:text-rocky-blue-300" />
                       </div>
                       
-                      <div className="pr-24">
-                        <h3 className="text-2xl font-black text-charcoal dark:text-cream mb-3 group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300">
+                      <div className="pr-0 sm:pr-24 min-w-0">
+                        <h3 className="text-lg sm:text-xl md:text-2xl font-black text-charcoal dark:text-cream mb-2 sm:mb-3 group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300">
                           {step.title}
                         </h3>
-                        <p className="text-base leading-relaxed text-blue-gray dark:text-greige">
+                        <p className="text-sm sm:text-base leading-relaxed text-blue-gray dark:text-greige break-words">
                           {step.description}
                         </p>
                       </div>
                       
-                      {/* Bottom decoration */}
-                      <div className="mt-6 pt-4 border-t border-greige/30 dark:border-charcoal-600">
+                      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-greige/30 dark:border-charcoal-600">
                         <div className="w-0 h-1 bg-gradient-to-r from-rocky-blue to-transparent rounded-full group-hover:w-full transition-all duration-500" />
                       </div>
                     </div>

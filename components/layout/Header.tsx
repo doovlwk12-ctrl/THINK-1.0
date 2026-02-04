@@ -367,7 +367,7 @@ export function Header() {
                       <div className="flex-1">
                         <p className="text-sm font-medium text-charcoal dark:text-cream">{displayName ?? session.user.name ?? 'مستخدم'}</p>
                         <p className="text-xs text-blue-gray dark:text-greige">
-                          {session.user.role === 'CLIENT' ? 'عميل' : session.user.role === 'ENGINEER' ? 'مهندس' : 'مدير'}
+                          {(session.user.role ?? 'CLIENT') === 'CLIENT' ? 'عميل' : session.user.role === 'ENGINEER' ? 'مهندس' : 'مدير'}
                         </p>
                       </div>
                     </div>

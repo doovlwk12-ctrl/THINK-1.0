@@ -11,7 +11,8 @@ export interface AuthSession {
     id: string
     name: string | null
     email: string | null
-    role: AuthRole
+    /** عند استخدام Supabase قد يكون undefined حتى يُحمّل من /api/auth/me */
+    role?: AuthRole
   }
 }
 

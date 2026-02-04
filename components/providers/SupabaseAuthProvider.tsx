@@ -61,13 +61,13 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
     setStatus(session ? 'authenticated' : 'unauthenticated')
   }, [])
 
-  /** جلسة مؤقتة من Supabase فقط (قبل جلب الدور من الـ API) حتى لا يظهر الهيدر "تسجيل الدخول" */
+  /** جلسة مؤقتة من Supabase فقط (قبل جلب الدور من الـ API). لا نضع role حتى لا يُوجّه الأدمن للوحة العميل بالخطأ. */
   const sessionToAuthSession = useCallback((s: { user: { id: string; email?: string; user_metadata?: { name?: string } } }): AuthSession => ({
     user: {
       id: s.user.id,
       name: s.user.user_metadata?.name ?? null,
       email: s.user.email ?? null,
-      role: 'CLIENT',
+      role: undefined,
     },
   }), [])
 

@@ -59,15 +59,14 @@ export default function EngineerDashboard() {
       router.push('/login')
       return
     }
-
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ENGINEER' && session?.user?.role !== 'ADMIN') {
+    if (status === 'authenticated' && session?.user?.role != null) {
+      if (session.user.role !== 'ENGINEER' && session.user.role !== 'ADMIN') {
         router.push('/dashboard')
         return
       }
       fetchOrders()
     }
-  }, [status, session, router, fetchOrders, pathname]) // Re-fetch when pathname changes (navigation)
+  }, [status, session, session?.user?.role, router, fetchOrders, pathname])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -107,7 +106,9 @@ export default function EngineerDashboard() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  const roleReady = status === 'authenticated' && session?.user?.role != null
+  const canAccess = session?.user?.role === 'ENGINEER' || session?.user?.role === 'ADMIN'
+  if (status === 'loading' || !roleReady || !canAccess || loading) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />

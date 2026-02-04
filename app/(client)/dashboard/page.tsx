@@ -17,6 +17,7 @@ export default function ClientDashboard() {
   const { status, data: session } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const roleReady = status === 'authenticated' && session?.user?.role != null
   const enabled = status === 'authenticated' && session?.user?.role !== 'ENGINEER' && session?.user?.role !== 'ADMIN'
   const { orders, error: ordersError, isLoading: loading, mutate } = useMyOrders(enabled)
 
@@ -26,7 +27,7 @@ export default function ClientDashboard() {
       return
     }
 
-    if (status === 'authenticated' && session?.user?.role) {
+    if (status === 'authenticated' && session?.user?.role != null) {
       if (session.user.role === 'ENGINEER') {
         router.replace('/engineer/dashboard')
         return
@@ -80,7 +81,7 @@ export default function ClientDashboard() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || !roleReady || loading) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />

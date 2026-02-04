@@ -58,15 +58,14 @@ export default function AdminEngineerApplicationsPage() {
       router.push('/login')
       return
     }
-
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ADMIN') {
+    if (status === 'authenticated' && session?.user?.role != null) {
+      if (session.user.role !== 'ADMIN') {
         router.push('/dashboard')
         return
       }
       fetchApplications()
     }
-  }, [status, session, router, fetchApplications])
+  }, [status, session, session?.user?.role, router, fetchApplications])
 
   const handleApprove = async (applicationId: string) => {
     if (!confirm('هل أنت متأكد من قبول هذا الطلب؟ سيتم إنشاء حساب للمهندس تلقائياً.')) {
@@ -148,7 +147,9 @@ export default function AdminEngineerApplicationsPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  const roleReady = status === 'authenticated' && session?.user?.role != null
+  const isAdmin = session?.user?.role === 'ADMIN'
+  if (status === 'loading' || !roleReady || !isAdmin || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />

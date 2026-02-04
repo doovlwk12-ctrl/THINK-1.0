@@ -82,15 +82,15 @@ export default function AdminOrdersPage() {
       router.push('/login')
       return
     }
-
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ADMIN') {
+    // لا توجّه حتى يُحمّل الدور من /api/auth/me (يتجنب توجيه الأدمن للوحة العميل بالخطأ)
+    if (status === 'authenticated' && session?.user?.role != null) {
+      if (session.user.role !== 'ADMIN') {
         router.push('/dashboard')
         return
       }
       fetchOrders()
     }
-  }, [status, session, router, fetchOrders])
+  }, [status, session, session?.user?.role, router, fetchOrders])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -130,7 +130,9 @@ export default function AdminOrdersPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  const roleReady = status === 'authenticated' && session?.user?.role != null
+  const isAdmin = session?.user?.role === 'ADMIN'
+  if (status === 'loading' || !roleReady || !isAdmin || loading) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />
