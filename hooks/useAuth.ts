@@ -21,7 +21,7 @@ export interface AuthSession {
 export function useAuth(): {
   data: AuthSession | null
   status: 'loading' | 'authenticated' | 'unauthenticated'
-  signIn: (email: string, password: string) => Promise<{ ok?: boolean; error?: string }>
+  signIn: (email: string, password: string) => Promise<{ ok?: boolean; error?: string; user?: AuthSession['user'] }>
   signOut: (options?: { callbackUrl?: string }) => Promise<void>
   update: (data?: AuthSession | null) => Promise<void>
 } {

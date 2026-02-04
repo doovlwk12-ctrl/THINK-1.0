@@ -3,6 +3,8 @@
 
 دليل خطوة بخطوة لربط مشروع منصة فكرة بمشروع Supabase بعد إنشائه.
 
+لتدفق المصادقة والصلاحيات مع Supabase انظر [AUTH.md](AUTH.md).
+
 ---
 
 ## 1) أخذ القيم من لوحة Supabase
@@ -49,17 +51,35 @@
 
 ## 3) تفعيل مصادقة Supabase (Auth)
 
-1. في `.env` أضف أو عدّل:
+1. في `.env` أضف أو عدّل (يُفضّل ضبط **كلا** المتغيرين للمصادقة لضمان اتساق الـ API والـ middleware والعميل):
    ```env
    USE_SUPABASE_AUTH=true
    NEXT_PUBLIC_USE_SUPABASE_AUTH=true
    NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
    ```
-2. المستخدمون يمكن إنشاؤهم من:
-   - **Supabase Dashboard → Authentication → Users → Add user**، أو
-   - نموذج التسجيل في الموقع (إن كان مربوطاً بـ Supabase).
-3. يجب أن يكون لكل مستخدم سجل في جدول **User** في قاعدة البيانات (نفس الـ id أو ربط مع `auth.users` حسب تصميمك). مشروعك حالياً يستخدم Prisma لجدول User؛ تأكد أن تسجيل الدخول يخلق أو يربط المستخدم في هذا الجدول.
+2. **التسجيل من الموقع (إنشاء حساب جديد):**
+   - عند تفعيل Supabase Auth، نموذج **إنشاء حساب** في الموقع ينشئ المستخدم في **Supabase Auth** ثم في جدول **User** في Prisma (بنفس المعرّف). بعدها يمكن للمستخدم تسجيل الدخول مباشرة من صفحة تسجيل الدخول.
+   - إن كان **تأكيد البريد** مفعّلاً في Supabase (Authentication → Providers → Email → Confirm email)، يجب على المستخدم تأكيد بريده قبل تسجيل الدخول؛ يمكن تعطيله من اللوحة للتجربة.
+3. **إضافة مستخدم تجريبي يدوياً (مثلاً client@test.com):**
+   - **Supabase Dashboard → Authentication → Users → Add user**
+   - اختر **Create new user**
+   - أدخل **Email** و **Password**
+   - اضغط **Create user**
+   - عند أول تسجيل دخول من الموقع يُنشأ تلقائياً سجل في جدول **User** في قاعدة البيانات (مزامنة من Supabase Auth).
+4. إذا ظهرت رسالة **"Invalid login credentials"** أو خطأ 400: المستخدم غير موجود في Supabase Auth أو كلمة المرور خاطئة. أضف المستخدم من الخطوة أعلاه أو صحّح كلمة المرور.
+
+5. **حساب مهندس (ENGINEER) وحساب أدمن (ADMIN):**
+   - في **Supabase → Authentication → Users → Add user** أنشئ مستخدمين جديدين، مثلاً:
+     - `engineer@test.com` + كلمة مرور
+     - `admin@test.com` + كلمة مرور
+   - سجّل دخولاً **مرة واحدة** من الموقع بكل حساب (حتى يُنشأ سجله في جدول User).
+   - من مجلد المشروع في الطرفية نفّذ (استبدل البريد إن استخدمت بريداً مختلفاً):
+     ```bash
+     npx tsx scripts/set-user-role.ts engineer@test.com ENGINEER
+     npx tsx scripts/set-user-role.ts admin@test.com ADMIN
+     ```
+   - بعدها يمكن تسجيل الدخول بنفس البريد وكلمة المرور وسيكون الحساب مهندساً أو أدمن حسب ما عيّنته.
 
 ---
 

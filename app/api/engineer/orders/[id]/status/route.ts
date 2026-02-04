@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -13,36 +14,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const auth = await getApiAuth(request)
-
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'api/engineer/orders/[id]/status/route.ts:PUT',
-        message: 'auth result',
-        data: { hasAuth: !!auth, userId: auth?.userId ?? null, role: auth?.role ?? null, source: auth?.source ?? null },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        hypothesisId: 'H3_H4',
-      }),
-    }).catch(() => {})
-    // #endregion
-
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-
-    if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {
-      return Response.json(
-        { success: false, error: 'غير مصرح - فقط المهندسون يمكنهم تعديل حالة الطلب' },
-        { status: 403 }
-      )
-    }
+    const result = await requireEngineerOrAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const resolvedParams = await Promise.resolve(params)
     const orderId = resolvedParams.id

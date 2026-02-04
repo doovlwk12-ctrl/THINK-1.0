@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
-  const auth = await getApiAuth(request)
-  if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const result = await requireAuth(request)
+  if (result instanceof NextResponse) return result
+  const { auth } = result
   const dbUser = await prisma.user.findUnique({
     where: { id: auth.userId },
     select: { id: true, name: true, email: true, role: true },

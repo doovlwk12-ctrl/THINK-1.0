@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
 import { generateWhatsAppPlanUploadedUrl } from '@/lib/whatsapp'
@@ -10,14 +11,9 @@ const planUploadedSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireEngineerOrAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     // Check if user is engineer or admin
     if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {

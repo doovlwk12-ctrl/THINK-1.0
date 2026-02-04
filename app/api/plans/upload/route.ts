@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { uploadFile, deleteFileByUrl } from '@/lib/storage'
@@ -9,22 +10,9 @@ const MAX_FILE_SIZE_AFTER_SAVE_BYTES = 5 * 1024 * 1024  // 5MB حد أقصى ب�
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-
-    // Check if user is engineer or admin (نفس حدود الحجم تنطبق على المهندس والأدمن)
-    if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {
-      return Response.json(
-        { error: 'غير مصرح - فقط المهندسين والأدمن يمكنهم رفع المخططات' },
-        { status: 403 }
-      )
-    }
+    const result = await requireEngineerOrAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const formData = await request.formData()
     const file = formData.get('file') as File

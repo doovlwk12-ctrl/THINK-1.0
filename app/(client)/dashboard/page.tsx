@@ -27,7 +27,7 @@ interface Order {
 }
 
 export default function ClientDashboard() {
-  const { status } = useAuth()
+  const { status, data: session } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const { execute, loading, data } = useApi<{ orders: Order[] }>({
@@ -42,14 +42,25 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login')
+      router.replace('/login')
       return
+    }
+
+    if (status === 'authenticated' && session?.user?.role) {
+      if (session.user.role === 'ENGINEER') {
+        router.replace('/engineer/dashboard')
+        return
+      }
+      if (session.user.role === 'ADMIN') {
+        router.replace('/admin/dashboard')
+        return
+      }
     }
 
     if (status === 'authenticated') {
       loadOrders()
     }
-  }, [status, pathname, loadOrders, router])
+  }, [status, session?.user?.role, pathname, loadOrders, router])
 
   const orders = data?.orders || []
 
@@ -95,6 +106,22 @@ export default function ClientDashboard() {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
+        <Loading text="جاري التحويل لتسجيل الدخول..." />
+      </div>
+    )
+  }
+
+  if (status === 'authenticated' && (session?.user?.role === 'ENGINEER' || session?.user?.role === 'ADMIN')) {
+    return (
+      <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
+        <Loading text="جاري التحويل للوحة التحكم..." />
       </div>
     )
   }

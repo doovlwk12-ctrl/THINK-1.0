@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -14,22 +15,9 @@ const sendPlanSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-
-    // Check if user is engineer or admin
-    if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {
-      return Response.json(
-        { error: 'غير مصرح - فقط المهندسين يمكنهم إرسال المخططات' },
-        { status: 403 }
-      )
-    }
+    const result = await requireEngineerOrAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const body = await request.json()
     const validatedData = sendPlanSchema.parse(body)

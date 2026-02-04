@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -16,13 +17,9 @@ const subscribeSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireAuth(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const body = await request.json()
     const validatedData = subscribeSchema.parse(body)

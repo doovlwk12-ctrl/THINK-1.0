@@ -1,25 +1,15 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-
-    if (auth.role !== 'ADMIN') {
-      return Response.json(
-        { success: false, error: 'غير مصرح - يجب أن تكون مسؤولاً' },
-        { status: 403 }
-      )
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     // Check if engineerApplication model exists in Prisma Client
     if (!prisma.engineerApplication) {

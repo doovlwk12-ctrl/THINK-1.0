@@ -21,7 +21,7 @@ const NotificationBell = dynamic(() => import('@/components/notifications/Notifi
 export function Header() {
   const router = useRouter()
   const pathname = usePathname()
-  const { data: session, signOut } = useAuth()
+  const { data: session, status: authStatus, signOut } = useAuth()
   const { displayName, setDisplayName } = useProfileDisplayName()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -230,7 +230,7 @@ export function Header() {
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="text-sm font-medium">
-                  {session.user.role === 'ADMIN' ? 'لوحة تحكم الإدارة' : 'لوحة التحكم'}
+                  {session.user.role === 'ADMIN' ? 'لوحة تحكم الإدارة' : session.user.role === 'ENGINEER' ? 'لوحة تحكم المهندس' : 'لوحة التحكم'}
                 </span>
               </Link>
             )}
@@ -250,7 +250,10 @@ export function Header() {
               </>
             )}
             
-            {!session && (
+            {authStatus === 'loading' && (
+              <div className="w-10 h-10 rounded-lg bg-greige/20 dark:bg-charcoal-600 animate-pulse" aria-hidden />
+            )}
+            {authStatus !== 'loading' && !session && (
               <div className="flex gap-3">
                 <Link href="/login">
                   <Button variant="outline" size="sm" className="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
@@ -335,7 +338,7 @@ export function Header() {
                   aria-current={isActive('/dashboard') || isActive('/engineer/dashboard') ? 'page' : undefined}
                 >
                   <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium">لوحة التحكم</span>
+                  <span className="font-medium">{session.user.role === 'ADMIN' ? 'لوحة تحكم الإدارة' : session.user.role === 'ENGINEER' ? 'لوحة تحكم المهندس' : 'لوحة التحكم'}</span>
                 </Link>
               )}
               

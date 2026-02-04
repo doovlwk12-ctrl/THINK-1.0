@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireClient } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { addDays } from 'date-fns'
@@ -9,21 +10,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-
-    // Only clients can buy extensions
-    if (auth.role !== 'CLIENT') {
-      return Response.json(
-        { success: false, error: 'غير مصرح - فقط العملاء يمكنهم شراء تمديد' },
-        { status: 403 }
-      )
-    }
+    const authResult = await requireClient(request)
+    if (authResult instanceof NextResponse) return authResult
+    const { auth } = authResult
 
     const orderId = params.id
 

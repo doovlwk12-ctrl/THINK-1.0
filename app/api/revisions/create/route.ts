@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireClient } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -22,15 +22,11 @@ const createRevisionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireClient(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
-    // Only clients can create revision requests
+    // Only clients can create revision requests (enforced by requireClient)
     if (auth.role !== 'CLIENT') {
       return Response.json(
         { success: false, error: 'غير مصرح - فقط العملاء يمكنهم طلب التعديلات' },

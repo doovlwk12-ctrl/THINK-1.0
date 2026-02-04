@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireClient } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 
@@ -8,13 +8,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const authResult = await requireClient(request)
+    if (authResult instanceof NextResponse) return authResult
+    const { auth } = authResult
 
     // Only clients can complete orders
     if (auth.role !== 'CLIENT') {

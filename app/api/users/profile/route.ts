@@ -1,9 +1,11 @@
 import { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
 import bcrypt from 'bcryptjs'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { createAdminClient } from '@/lib/supabase/server'
 
 const updateProfileSchema = z.object({
   name: z.string().min(2, 'الاسم يجب أن يكون على الأقل حرفين').optional(),
@@ -16,14 +18,9 @@ const updateProfileSchema = z.object({
 // GET - Get current user profile
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireAuth(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const user = await prisma.user.findUnique({
       where: { id: auth.userId },
@@ -61,14 +58,9 @@ export async function GET(request: NextRequest) {
 // PUT - Update user profile
 export async function PUT(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireAuth(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const body = await request.json()
     const validatedData = updateProfileSchema.parse(body)
@@ -85,32 +77,35 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // طلب كلمة المرور الحالية فقط عند تغيير البريد أو الجوال فعلياً (ليس عند تغيير الاسم فقط)
     const emailChanged = validatedData.email != null && String(validatedData.email).trim() !== String(currentUser.email ?? '').trim()
     const phoneChanged = validatedData.phone != null && String(validatedData.phone).trim() !== String(currentUser.phone ?? '').trim()
+    const isSupabaseUser = auth.source === 'supabase'
+
     if (emailChanged || phoneChanged) {
-      if (!validatedData.currentPassword || !String(validatedData.currentPassword).trim()) {
-        return Response.json(
-          { success: false, error: 'تغيير البريد أو رقم الجوال يتطلب إدخال كلمة المرور الحالية للتأكيد' },
-          { status: 400 }
+      if (!isSupabaseUser) {
+        if (!validatedData.currentPassword || !String(validatedData.currentPassword).trim()) {
+          return Response.json(
+            { success: false, error: 'تغيير البريد أو رقم الجوال يتطلب إدخال كلمة المرور الحالية للتأكيد' },
+            { status: 400 }
+          )
+        }
+        const currentPasswordHash = currentUser.password
+        if (!currentPasswordHash) {
+          return Response.json(
+            { success: false, error: 'لا يمكن التحقق من كلمة المرور' },
+            { status: 400 }
+          )
+        }
+        const isPasswordValid = await bcrypt.compare(
+          validatedData.currentPassword,
+          currentPasswordHash
         )
-      }
-      const currentPasswordHash = currentUser.password
-      if (!currentPasswordHash) {
-        return Response.json(
-          { success: false, error: 'لا يمكن التحقق من كلمة المرور' },
-          { status: 400 }
-        )
-      }
-      const isPasswordValid = await bcrypt.compare(
-        validatedData.currentPassword,
-        currentPasswordHash
-      )
-      if (!isPasswordValid) {
-        return Response.json(
-          { success: false, error: 'كلمة المرور الحالية غير صحيحة' },
-          { status: 400 }
-        )
+        if (!isPasswordValid) {
+          return Response.json(
+            { success: false, error: 'كلمة المرور الحالية غير صحيحة' },
+            { status: 400 }
+          )
+        }
       }
       const existingUser = await prisma.user.findFirst({
         where: {
@@ -150,36 +145,57 @@ export async function PUT(request: NextRequest) {
     if (validatedData.phone) updateData.phone = validatedData.phone
 
     if (validatedData.newPassword) {
-      if (!validatedData.currentPassword) {
-        return Response.json(
-          { success: false, error: 'يجب إدخال كلمة المرور الحالية لتغيير كلمة المرور' },
-          { status: 400 }
-        )
-      }
       if (validatedData.newPassword === validatedData.currentPassword) {
         return Response.json(
           { success: false, error: 'كلمة المرور الجديدة يجب أن تختلف عن الحالية' },
           { status: 400 }
         )
       }
-      const hashForNewPassword = currentUser.password
-      if (!hashForNewPassword) {
-        return Response.json(
-          { success: false, error: 'لا يمكن التحقق من كلمة المرور' },
-          { status: 400 }
+      if (isSupabaseUser) {
+        const supabaseAdmin = createAdminClient()
+        if (!supabaseAdmin) {
+          return Response.json(
+            { success: false, error: 'تغيير كلمة المرور لمستخدمي Supabase غير متاح حالياً. يرجى التواصل مع الدعم أو إعداد المفتاح الخدمي (SUPABASE_SERVICE_ROLE_KEY).' },
+            { status: 400 }
+          )
+        }
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          auth.userId,
+          { password: validatedData.newPassword }
         )
-      }
-      const isPasswordValid = await bcrypt.compare(
-        validatedData.currentPassword,
-        hashForNewPassword
-      )
-      if (!isPasswordValid) {
-        return Response.json(
-          { success: false, error: 'كلمة المرور الحالية غير صحيحة' },
-          { status: 400 }
+        if (updateError) {
+          return Response.json(
+            { success: false, error: 'فشل تحديث كلمة المرور. يرجى المحاولة لاحقاً.' },
+            { status: 500 }
+          )
+        }
+        updateData.password = await bcrypt.hash(validatedData.newPassword, 10)
+      } else {
+        if (!validatedData.currentPassword) {
+          return Response.json(
+            { success: false, error: 'يجب إدخال كلمة المرور الحالية لتغيير كلمة المرور' },
+            { status: 400 }
+          )
+        }
+        const hashForNewPassword = currentUser.password
+        if (!hashForNewPassword) {
+          return Response.json(
+            { success: false, error: 'لا يمكن التحقق من كلمة المرور' },
+            { status: 400 }
+          )
+        }
+        const isPasswordValid = await bcrypt.compare(
+          validatedData.currentPassword,
+          hashForNewPassword
         )
+        if (!isPasswordValid) {
+          return Response.json(
+            { success: false, error: 'كلمة المرور الحالية غير صحيحة' },
+            { status: 400 }
+          )
+        }
+        updateData.password = await bcrypt.hash(validatedData.newPassword, 10)
       }
-      updateData.password = await bcrypt.hash(validatedData.newPassword, 10)
     }
 
     if (Object.keys(updateData).length === 0) {

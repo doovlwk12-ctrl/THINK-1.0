@@ -1,17 +1,14 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireAuth(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')

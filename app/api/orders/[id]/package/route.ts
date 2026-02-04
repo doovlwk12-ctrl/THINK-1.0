@@ -1,5 +1,5 @@
-import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { addDays } from 'date-fns'
@@ -14,13 +14,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const result = await requireAuth(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const resolvedParams = await Promise.resolve(params)
     const orderId = resolvedParams.id

@@ -1,153 +1,149 @@
 import { withAuth, type NextRequestWithAuth } from 'next-auth/middleware'
 import { NextResponse, type NextFetchEvent } from 'next/server'
 import { apiRateLimit, authRateLimit } from '@/lib/rateLimit'
+import { getSupabaseSession } from '@/lib/supabase/middleware'
+import { isPublicPath } from '@/lib/routes'
 
 const useFirebaseAuth = process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH === 'true'
+const useSupabaseAuth = process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
+
+/** مسارات المصادقة التي نحدّها بشدة (تسجيل، نسيت كلمة المرور، NextAuth). /api/auth/me مستثنى لأنه يُستدعى كثيراً للتحقق من الجلسة. */
+function isStrictAuthPath(path: string): boolean {
+  if (path === '/api/auth/register' || path === '/api/auth/forgot-email') return true
+  if (path.startsWith('/api/auth/') && path !== '/api/auth/me') return true // NextAuth callback etc.
+  return false
+}
+
+function applyRateLimitHeaders(
+  response: NextResponse,
+  path: string,
+  rateLimitResult: { success: boolean; remaining: number; resetTime: number }
+): void {
+  if (!path.startsWith('/api/') || !rateLimitResult) return
+  const isPollingEndpoint =
+    path.includes('/messages/') ||
+    path.includes('/notifications') ||
+    path.includes('/orders/my-orders') ||
+    path.includes('/engineer/orders') ||
+    (path.includes('/orders/') && path.includes('/plans')) ||
+    path.includes('/revisions/') ||
+    path.includes('/packages') ||
+    path.includes('/users/profile')
+  let limitValue = '2000'
+  if (isStrictAuthPath(path)) limitValue = '5'
+  else if (isPollingEndpoint) limitValue = 'unlimited'
+  response.headers.set('X-RateLimit-Limit', limitValue)
+  response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining))
+  response.headers.set('X-RateLimit-Reset', String(rateLimitResult.resetTime))
+}
+
+async function runRateLimit(path: string, req: NextRequestWithAuth) {
+  if (!path.startsWith('/api/')) return null
+  const isPollingEndpoint =
+    path.includes('/messages/') ||
+    path.includes('/notifications') ||
+    path.includes('/orders/my-orders') ||
+    path.includes('/engineer/orders') ||
+    (path.includes('/orders/') && path.includes('/plans')) ||
+    path.includes('/revisions/') ||
+    path.includes('/packages') ||
+    path.includes('/users/profile')
+  if (!isPollingEndpoint) {
+    const limiter = isStrictAuthPath(path) ? authRateLimit : apiRateLimit
+    const result = await limiter(req)
+    if (!result.success) {
+      return { response: NextResponse.json(
+        { success: false, error: 'تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة لاحقاً.' },
+        { status: 429, headers: {
+          'Retry-After': String(Math.ceil((result.resetTime - Date.now()) / 1000)),
+          'X-RateLimit-Limit': isStrictAuthPath(path) ? '5' : '2000',
+          'X-RateLimit-Remaining': String(result.remaining),
+          'X-RateLimit-Reset': String(result.resetTime),
+        } }
+      ) }
+    }
+    return { rateLimitResult: result }
+  }
+  return { rateLimitResult: { success: true, remaining: 999999, resetTime: Date.now() + 15 * 60 * 1000 } }
+}
 
 const authMiddleware = withAuth(
   async function middleware(req: NextRequestWithAuth) {
     const token = req.nextauth.token
     const path = req.nextUrl.pathname
 
-    // Apply rate limiting to API routes
     let rateLimitResult: { success: boolean; remaining: number; resetTime: number } | null = null
-    
-    if (path.startsWith('/api/')) {
-      // Skip rate limiting for polling and frequently-used read endpoints
-      const isPollingEndpoint =
-        path.includes('/messages/') ||
-        path.includes('/notifications') ||
-        path.includes('/orders/my-orders') ||
-        path.includes('/engineer/orders') ||
-        (path.includes('/orders/') && path.includes('/plans')) ||
-        path.includes('/revisions/') ||
-        path.includes('/packages') ||
-        path.includes('/users/profile')
-      
-      if (!isPollingEndpoint) {
-        // Determine which rate limiter to use based on endpoint
-        let limiter = apiRateLimit
-        let limitValue = '2000'
-        
-        if (path.includes('/auth/')) {
-          limiter = authRateLimit
-          limitValue = '5'
-        }
-        
-        rateLimitResult = await limiter(req)
+    const rateLimitOut = await runRateLimit(path, req)
+    if (rateLimitOut && 'response' in rateLimitOut) return rateLimitOut.response
+    if (rateLimitOut?.rateLimitResult) rateLimitResult = rateLimitOut.rateLimitResult
 
-        if (!rateLimitResult.success) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'تم تجاوز الحد المسموح من الطلبات. يرجى المحاولة لاحقاً.',
-            },
-            {
-              status: 429,
-              headers: {
-                'Retry-After': String(Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000)),
-                'X-RateLimit-Limit': limitValue,
-                'X-RateLimit-Remaining': String(rateLimitResult.remaining),
-                'X-RateLimit-Reset': String(rateLimitResult.resetTime),
-              },
-            }
-          )
-        }
-      } else {
-        // Polling endpoints: no rate limiting, but set headers to indicate unlimited
-        rateLimitResult = {
-          success: true,
-          remaining: 999999,
-          resetTime: Date.now() + 15 * 60 * 1000,
-        }
-      }
-    }
-
-    // Redirect based on role
     if (token) {
-      // Protect admin routes - only ADMIN can access
       if (path.startsWith('/admin/') && token.role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', req.url))
       }
-
-      // Protect engineer routes - ENGINEER and ADMIN can access
-      // But allow /engineer/apply/ for unauthenticated users
       if (path.startsWith('/engineer/') && !path.startsWith('/engineer/apply/') && token.role !== 'ENGINEER' && token.role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', req.url))
       }
-
       if (path.startsWith('/orders/') && token.role === 'ENGINEER') {
-        // Engineers should use /engineer/orders
         return NextResponse.redirect(new URL('/engineer/dashboard', req.url))
       }
     }
 
     const response = NextResponse.next()
-    
-    // Add rate limit headers if API route (using the result from the single check above)
-    if (path.startsWith('/api/') && rateLimitResult) {
-      const isPollingEndpoint =
-        path.includes('/messages/') ||
-        path.includes('/notifications') ||
-        path.includes('/orders/my-orders') ||
-        path.includes('/engineer/orders') ||
-        (path.includes('/orders/') && path.includes('/plans')) ||
-        path.includes('/revisions/') ||
-        path.includes('/packages') ||
-        path.includes('/users/profile')
-      
-      let limitValue = '2000'
-      if (path.includes('/auth/')) {
-        limitValue = '5'
-      } else if (isPollingEndpoint) {
-        limitValue = 'unlimited'
-      }
-      response.headers.set('X-RateLimit-Limit', limitValue)
-      response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining))
-      response.headers.set('X-RateLimit-Reset', String(rateLimitResult.resetTime))
-    }
-
+    if (path.startsWith('/api/') && rateLimitResult) applyRateLimitHeaders(response, path, rateLimitResult)
     return response
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname
-        
-        // Allow access to engineer apply page without authentication
-        if (path.startsWith('/engineer/apply/')) {
-          return true
-        }
-        
-        // Allow access to engineer applications API without authentication
-        if (path.startsWith('/api/engineer/applications/')) {
-          return true
-        }
-
-        // Allow forgot-email and register without authentication
-        if (path === '/api/auth/forgot-email' || path === '/api/auth/register') {
-          return true
-        }
-        
-        // All other routes require authentication
+        if (isPublicPath(path)) return true
         return !!token
       },
     },
   }
 )
 
+async function supabaseMiddleware(req: NextRequestWithAuth, event: NextFetchEvent) {
+  const path = req.nextUrl.pathname
+
+  const rateLimitOut = await runRateLimit(path, req)
+  if (rateLimitOut && 'response' in rateLimitOut) return rateLimitOut.response
+  const rateLimitResult = rateLimitOut?.rateLimitResult ?? null
+
+  const response = NextResponse.next()
+  const { response: resWithAuth, user } = await getSupabaseSession(req, response)
+
+  if (!user && !isPublicPath(path)) {
+    const loginUrl = new URL('/login', req.url)
+    return NextResponse.redirect(loginUrl)
+  }
+  // مستخدم مسجّل يزور صفحة تسجيل الدخول أو التسجيل → توجيهه للوحة التحكم
+  if (user && (path === '/login' || path === '/register')) {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
+  }
+
+  if (path.startsWith('/api/') && rateLimitResult) applyRateLimitHeaders(resWithAuth, path, rateLimitResult)
+  return resWithAuth
+}
+
 export default async function middleware(
   req: NextRequestWithAuth,
   event: NextFetchEvent
 ) {
-  if (useFirebaseAuth) {
-    return NextResponse.next()
-  }
+  if (useFirebaseAuth) return NextResponse.next()
+  if (useSupabaseAuth) return supabaseMiddleware(req, event)
   return authMiddleware(req, event)
 }
 
 export const config = {
   matcher: [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/forgot-email',
+    '/reset-password',
     '/dashboard/:path*',
     '/orders/:path*',
     '/engineer/:path*',

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { join } from 'path'
@@ -53,10 +54,9 @@ export async function GET(
   context: { params: Promise<{ id: string; planId: string }> | { id: string; planId: string } }
 ) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return new Response(null, { status: 401 })
-    }
+    const result = await requireAuth(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const { id: orderId, planId } = await Promise.resolve(context.params)
 

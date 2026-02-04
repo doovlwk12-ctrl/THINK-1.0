@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -14,14 +15,9 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await getApiAuth(request)
-
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
+    const authResult = await requireEngineerOrAdmin(request)
+    if (authResult instanceof NextResponse) return authResult
+    const { auth } = authResult
 
     // Only engineers and admins can extend deadlines
     if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {

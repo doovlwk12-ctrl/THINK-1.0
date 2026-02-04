@@ -186,7 +186,7 @@ export function UserMenu({ userName, userRole, onSignOut }: UserMenuProps) {
               }`}
             >
               <LayoutDashboard className="w-5 h-5" />
-              <span>{userRole === 'ADMIN' ? 'لوحة تحكم الإدارة' : 'لوحة التحكم'}</span>
+              <span>{userRole === 'ADMIN' ? 'لوحة تحكم الإدارة' : userRole === 'ENGINEER' ? 'لوحة تحكم المهندس' : 'لوحة التحكم'}</span>
             </Link>
             
             {/* Admin-specific links */}

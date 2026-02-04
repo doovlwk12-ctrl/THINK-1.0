@@ -1,14 +1,18 @@
 /**
  * Get current user id and role for API routes.
  * Supports NextAuth, Supabase Auth, or Firebase Bearer token based on env.
+ * With Supabase: creates Prisma User on first login if missing (sync from auth.users).
  */
 import { getServerSession } from 'next-auth'
+import bcrypt from 'bcryptjs'
 import { authOptions } from '@/lib/auth'
 import { createClient as createSupabaseServer, createClientFromRequest } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 const USE_FIREBASE = process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH === 'true'
-const USE_SUPABASE_AUTH = process.env.USE_SUPABASE_AUTH === 'true'
+const USE_SUPABASE_AUTH =
+  process.env.USE_SUPABASE_AUTH === 'true' ||
+  process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
 
 export type AuthSource = 'nextauth' | 'firebase' | 'supabase'
 
@@ -39,22 +43,56 @@ async function getFirestoreUserRole(uid: string): Promise<ApiRole | null> {
 
 export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
   if (USE_SUPABASE_AUTH) {
-    let user: { id: string } | null = null
+    type SupabaseUser = { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } | null }
+    let user: SupabaseUser | null = null
     if (request) {
       const supabaseReq = createClientFromRequest(request)
       const { data } = await supabaseReq.auth.getUser()
-      user = data?.user ?? null
+      user = data?.user as SupabaseUser ?? null
     }
     if (!user?.id) {
       const supabase = await createSupabaseServer()
       const { data } = await supabase.auth.getUser()
-      user = data?.user ?? null
+      user = data?.user as SupabaseUser ?? null
     }
     if (!user?.id) return null
-    const dbUser = await prisma.user.findUnique({
+
+    let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { role: true },
     })
+    if (!dbUser) {
+      const email = user.email ?? `user-${user.id}@supabase.local`
+      const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? email.split('@')[0]
+      const phone = `supabase-${user.id.slice(0, 8)}`
+      const placeholderPassword = await bcrypt.hash(user.id + (process.env.NEXTAUTH_SECRET ?? ''), 10)
+      try {
+        await prisma.user.create({
+          data: {
+            id: user.id,
+            email,
+            name,
+            phone,
+            password: placeholderPassword,
+            role: 'CLIENT',
+          },
+        })
+        dbUser = { role: 'CLIENT' }
+      } catch {
+        const existingByEmail = await prisma.user.findFirst({
+          where: { email },
+          select: { id: true, role: true },
+        })
+        if (existingByEmail) {
+          dbUser = { role: existingByEmail.role }
+          return { userId: existingByEmail.id, source: 'supabase', role: (existingByEmail.role as ApiRole) ?? 'CLIENT' }
+        }
+        dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true },
+        }) ?? null
+      }
+    }
     if (!dbUser) return null
     const role = (dbUser.role as ApiRole) ?? 'CLIENT'
     return { userId: user.id, source: 'supabase', role }

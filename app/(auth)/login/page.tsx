@@ -15,7 +15,6 @@ import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
-  const router = useRouter()
   const { data: session, signIn } = useAuth()
   const [loading, setLoading] = useState(false)
 
@@ -25,15 +24,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (session?.user) {
-      if (session.user.role === 'ADMIN') {
-        router.push('/admin/dashboard')
-      } else if (session.user.role === 'ENGINEER') {
-        router.push('/engineer/dashboard')
-      } else {
-        router.push('/dashboard')
-      }
+      const path =
+        session.user.role === 'ADMIN'
+          ? '/admin/dashboard'
+          : session.user.role === 'ENGINEER'
+            ? '/engineer/dashboard'
+            : '/dashboard'
+      window.location.href = path
     }
-  }, [session, router])
+  }, [session])
 
   const onSubmit = async (data: LoginInput) => {
     setLoading(true)
@@ -47,7 +46,17 @@ export default function LoginPage() {
 
       if (result?.ok) {
         toast.success('تم تسجيل الدخول بنجاح')
-        router.refresh()
+        const role = result.user?.role
+        const path =
+          role === 'ADMIN'
+            ? '/admin/dashboard'
+            : role === 'ENGINEER'
+              ? '/engineer/dashboard'
+              : '/dashboard'
+        // تأخير قصير ثم إعادة توجيه كاملة حتى تُرسل كوكيز الجلسة مع الطلب (Supabase + middleware)
+        await new Promise((r) => setTimeout(r, 300))
+        window.location.href = path
+        return
       }
     } catch {
       toast.error('حدث خطأ ما')

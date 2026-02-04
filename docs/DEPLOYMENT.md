@@ -5,6 +5,80 @@
 
 ---
 
+## شرح خطوة نشر Vercel (بالترتيب)
+
+### الخطوة 1: التأكد من المشروع جاهز للنشر
+
+- المشروع يستخدم **PostgreSQL** في الإنتاج (في `prisma/schema.prisma` يجب أن يكون `provider = "postgresql"`).
+- لديك مشروع **Supabase** مع قاعدة بيانات ورابط اتصال (Connection string).
+- الكود مرفوع على **GitHub** (أو GitLab / Bitbucket).
+
+### الخطوة 2: إنشاء المشروع على Vercel
+
+1. ادخل إلى [vercel.com](https://vercel.com) وسجّل الدخول (أو أنشئ حساباً مرتبطاً بـ GitHub).
+2. اضغط **Add New…** ثم **Project**.
+3. اختر المستودع (Repository) الخاص بالمشروع. إن لم يظهر، اضغط **Import Git Repository** وربط حساب GitHub ثم اختر المستودع.
+4. اختر **Framework Preset**: Next.js (يُكتشف تلقائياً عادة).
+5. **Root Directory** اتركه فارغاً إلا إذا المشروع داخل مجلد فرعي.
+6. **لا تضغط Deploy بعد.** انتقل أولاً إلى **Environment Variables** (أو اضغط Deploy ثم نضيف المتغيرات ونعيد النشر).
+
+### الخطوة 3: إضافة متغيرات البيئة (Environment Variables)
+
+من **Project → Settings → Environment Variables** (أو أثناء إنشاء المشروع)، أضف المتغيرات التالية. اختر **Production** (وإن أردت نفس القيم لـ Preview فاخترها أيضاً).
+
+| الاسم | القيمة | مطلوب؟ |
+|--------|--------|--------|
+| `DATABASE_URL` | رابط PostgreSQL من Supabase (من Project Settings → Database → Connection string → URI). استبدل `[YOUR-PASSWORD]` بكلمة مرور قاعدة البيانات. | نعم |
+| `NEXTAUTH_SECRET` | سلسلة عشوائية طويلة (32 حرفاً أو أكثر). يمكن توليدها بـ: `openssl rand -base64 32` | نعم |
+| `NEXTAUTH_URL` | رابط الموقع بعد النشر، مثلاً `https://اسم-المشروع.vercel.app` (غيّره بعد أول نشر إذا اختلف الرابط) | نعم |
+| `USE_SUPABASE_AUTH` | `true` | إذا تستخدم Supabase للمصادقة |
+| `NEXT_PUBLIC_USE_SUPABASE_AUTH` | `true` | نفس أعلاه (مطلوب للواجهة والـ middleware) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` (من Supabase → Project Settings → API) | نعم مع Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | المفتاح **anon public** (من Supabase → API) | نعم مع Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | المفتاح **service_role** (من Supabase → API). لا تشاركه ولا تضعّه في الواجهة. | اختياري (لتغيير كلمة المرور من الملف الشخصي) |
+
+- لا تضع مسافات قبل أو بعد القيم.
+- بعد إضافة أو تعديل أي متغير، يُفضّل **إعادة النشر (Redeploy)** حتى تُحمّل القيم الجديدة.
+
+### الخطوة 4: النشر (Deploy)
+
+1. اضغط **Deploy** (أو إن كنت قد نشرت مسبقاً فمن **Deployments** اختر آخر نشر ثم **⋯ → Redeploy**).
+2. انتظر حتى تنتهي عملية البناء (Build). إن فشل البناء راجع سجلات (Logs) الخطأ.
+3. بعد النجاح، ستظهر لك رابط مثل: `https://اسم-المشروع.vercel.app`.
+
+### الخطوة 5: تحديث الرابط في المتغيرات وSupabase
+
+1. **NEXTAUTH_URL**: من **Vercel → Project → Settings → Environment Variables** عدّل `NEXTAUTH_URL` ليكون مطابقاً لرابط الموقع الفعلي (مثل `https://اسم-المشروع.vercel.app`).
+2. **Supabase**: من **Supabase Dashboard → Authentication → URL Configuration**:
+   - **Site URL**: ضعه نفس رابط الموقع (مثل `https://اسم-المشروع.vercel.app`).
+   - **Redirect URLs**: أضف نفس النطاق، وأضف أيضاً مسار إعادة تعيين كلمة المرور، مثلاً:  
+     `https://اسم-المشروع.vercel.app/reset-password`
+3. احفظ ثم **Redeploy** على Vercel مرة واحدة بعد تعديل `NEXTAUTH_URL`.
+
+### الخطوة 6: تطبيق الهجرات على قاعدة الإنتاج (مرة واحدة)
+
+يجب أن تكون جداول قاعدة البيانات موجودة على Supabase. من جهازك (مع `.env` يحتوي نفس `DATABASE_URL` المستخدم في Vercel، أي رابط Supabase):
+
+```bash
+npx prisma generate
+npx prisma migrate deploy
+```
+
+أو إذا كنت تستخدم `db push` للتوافق مع المخطط بدون ملفات migrate:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### الخطوة 7: التحقق بعد النشر
+
+- افتح رابط الموقع وتأكد من تحميل الصفحة الرئيسية.
+- جرّب التسجيل أو تسجيل الدخول (إن كان Supabase مفعّلاً).
+- تأكد من أن لوحة التحكم والطلبات تعمل وأن الاتصال بقاعدة البيانات ناجح.
+
+---
+
 ## قبل النشر: قاعدة البيانات
 
 على Vercel لا يمكن استخدام SQLite (ملف). يجب استخدام **PostgreSQL** من Supabase.
@@ -64,8 +138,8 @@ npx prisma migrate deploy
 | `DATABASE_URL` | رابط PostgreSQL من Supabase (Connection string URI) | **مطلوب** |
 | `NEXTAUTH_SECRET` | سلسلة عشوائية طويلة (32+ حرف) | مطلوب لـ NextAuth |
 | `NEXTAUTH_URL` | رابط الموقع بعد النشر، مثلاً `https://your-app.vercel.app` | غيّره بعد أول نشر |
-| `USE_SUPABASE_AUTH` | `true` | إن كنت تستخدم مصادقة Supabase |
-| `NEXT_PUBLIC_USE_SUPABASE_AUTH` | `true` | نفس أعلاه |
+| `USE_SUPABASE_AUTH` | `true` | إن كنت تستخدم مصادقة Supabase — يُفضّل ضبط الاثنين معاً |
+| `NEXT_PUBLIC_USE_SUPABASE_AUTH` | `true` | نفس أعلاه (الـ middleware والعميل يعتمدان عليه) |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxxx.supabase.co` | من Supabase → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | المفتاح anon (JWT) | من Supabase → API |
 
@@ -111,9 +185,10 @@ npx prisma migrate deploy
 | 1 | في `prisma/schema.prisma`: `provider = "postgresql"` |
 | 2 | في `.env`: `DATABASE_URL` = رابط Supabase (PostgreSQL) |
 | 3 | محلياً: `npx prisma generate` ثم `npx prisma db push` أو `migrate deploy` |
-| 4 | Vercel: ربط المستودع وإنشاء المشروع |
+| 4 | Vercel: ربط المستودع وإنشاء المشروع (راجع **شرح خطوة نشر Vercel** أعلاه) |
 | 5 | Vercel: إضافة كل متغيرات البيئة (أعلاه) |
-| 6 | Redeploy ثم تشغيل `npx prisma migrate deploy` مرة واحدة على قاعدة الإنتاج |
-| 7 | ضبط NEXTAUTH_URL و Supabase Site URL حسب رابط الموقع |
+| 6 | Deploy ثم Redeploy بعد إضافة المتغيرات |
+| 7 | ضبط NEXTAUTH_URL و Supabase (Site URL + Redirect URLs مثل `/reset-password`) |
+| 8 | تشغيل `npx prisma migrate deploy` أو `db push` مرة واحدة على قاعدة الإنتاج |
 
 بعد ذلك تكون قد وصلت إلى **خطوة النشر** واكتمال النشر على Vercel مع Supabase.

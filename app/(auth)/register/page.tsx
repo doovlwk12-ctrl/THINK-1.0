@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -10,14 +10,31 @@ import { Button } from '@/components/shared/Button'
 import { Input } from '@/components/shared/Input'
 import { Card } from '@/components/shared/Card'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
+import { Loading } from '@/components/shared/Loading'
 import { Home } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import toast from 'react-hot-toast'
+import { useAuth } from '@/hooks/useAuth'
+
+const useSupabaseAuth = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { data: session, status, signIn } = useAuth()
   const [loading, setLoading] = useState(false)
-  
+
+  useEffect(() => {
+    if (session?.user) {
+      const path =
+        session.user.role === 'ADMIN'
+          ? '/admin/dashboard'
+          : session.user.role === 'ENGINEER'
+            ? '/engineer/dashboard'
+            : '/dashboard'
+      window.location.href = path
+    }
+  }, [session])
+
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema)
   })
@@ -26,10 +43,27 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       const userData = { name: data.name, email: data.email, phone: data.phone, password: data.password }
-      const result = await apiClient.post<{ success: boolean }>('/auth/register', userData)
-      
+      const result = await apiClient.post<{ success: boolean; user?: unknown }>('/auth/register', userData)
+
       if (result.success) {
         toast.success('تم إنشاء الحساب بنجاح')
+        if (useSupabaseAuth) {
+          const signInResult = await signIn(data.email, data.password)
+          if (signInResult?.ok && signInResult?.user) {
+            const path =
+              signInResult.user.role === 'ADMIN'
+                ? '/admin/dashboard'
+                : signInResult.user.role === 'ENGINEER'
+                  ? '/engineer/dashboard'
+                  : '/dashboard'
+            await new Promise((r) => setTimeout(r, 300))
+            window.location.href = path
+            return
+          }
+          if (signInResult?.error) {
+            toast(signInResult.error, { icon: 'ℹ️' })
+          }
+        }
         router.push('/login')
       }
     } catch (error: unknown) {
@@ -38,6 +72,22 @@ export default function RegisterPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream via-cream to-greige/20 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-900 flex items-center justify-center p-4">
+        <Loading text="جاري التحميل..." />
+      </div>
+    )
+  }
+
+  if (status === 'authenticated' && session?.user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-cream via-cream to-greige/20 dark:from-charcoal-900 dark:via-charcoal-800 dark:to-charcoal-900 flex items-center justify-center p-4">
+        <Loading text="جاري التحويل للوحة التحكم..." />
+      </div>
+    )
   }
 
   return (

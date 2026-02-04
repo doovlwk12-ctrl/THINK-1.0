@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -21,19 +22,9 @@ const createPackageSchema = z.object({
 // Get all packages (admin only)
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 403 }
-      )
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const packages = await prisma.package.findMany({
       orderBy: {
@@ -53,19 +44,9 @@ export async function GET(request: NextRequest) {
 // Create new package
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 403 }
-      )
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const activeCount = await prisma.package.count({ where: { isActive: true } })
     if (activeCount >= MAX_PACKAGES) {

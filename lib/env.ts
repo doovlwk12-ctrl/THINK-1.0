@@ -13,6 +13,13 @@ const envSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(32, 'NEXTAUTH_SECRET must be at least 32 characters'),
   NEXTAUTH_URL: z.string().url(),
 
+  // Optional: Supabase Auth (when NEXT_PUBLIC_USE_SUPABASE_AUTH=true, set these)
+  USE_SUPABASE_AUTH: z.string().optional(),
+  NEXT_PUBLIC_USE_SUPABASE_AUTH: z.string().optional(),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+
   // Optional: AWS S3 (for file storage)
   AWS_REGION: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),

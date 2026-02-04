@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/requireAuth'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -16,19 +17,9 @@ const DEFAULT_MAX = 20
 // GET: admin only – fetch revisions purchase settings
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 403 }
-      )
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const config = await prisma.revisionsPurchaseConfig.findFirst({
       orderBy: { updatedAt: 'desc' },
@@ -69,19 +60,9 @@ export async function GET(request: NextRequest) {
 // PUT: admin only – update revisions purchase settings (upsert)
 export async function PUT(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json(
-        { success: false, error: 'غير مصرح' },
-        { status: 403 }
-      )
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const body = await request.json()
     const data = updateSchema.parse(body)

@@ -11,12 +11,15 @@ import { Card } from '@/components/shared/Card'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { ArrowLeft, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { createClient } from '@/lib/supabase/client'
 
 const forgotSchema = z.object({
   email: z.string().min(1, 'البريد الإلكتروني مطلوب').email('البريد الإلكتروني غير صحيح'),
 })
 
 type ForgotInput = z.infer<typeof forgotSchema>
+
+const useSupabaseAuth = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
 
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false)
@@ -26,10 +29,23 @@ export default function ForgotPasswordPage() {
     resolver: zodResolver(forgotSchema),
   })
 
-  const onSubmit = async (_data: ForgotInput) => {
+  const onSubmit = async (data: ForgotInput) => {
     setLoading(true)
     try {
-      // NextAuth/Prisma: لا يوجد إرسال بريد مفعّل — نوجّه المستخدم للدعم
+      if (useSupabaseAuth) {
+        const supabase = createClient()
+        const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/reset-password`
+        const { error } = await supabase.auth.resetPasswordForEmail(data.email.trim(), { redirectTo })
+        if (error) {
+          toast.error(error.message === 'For security purposes, you can only request this once every 60 seconds.'
+            ? 'يمكنك طلب الرابط مرة واحدة كل دقيقة. انتظر قليلاً ثم جرّب مجدداً.'
+            : error.message)
+          return
+        }
+        setSent(true)
+        toast.success('تم إرسال رابط إعادة التعيين إلى بريدك. تحقق من صندوق الوارد أو البريد المزعج.')
+        return
+      }
       setSent(true)
       toast.success('تم استلام طلبك. تواصل مع الدعم الفني لإعادة تعيين كلمة المرور.')
     } catch {
@@ -63,7 +79,9 @@ export default function ForgotPasswordPage() {
 
         {sent ? (
           <div className="rounded-lg bg-rocky-blue/10 dark:bg-rocky-blue/20 border border-rocky-blue/30 p-4 text-center text-charcoal dark:text-cream text-sm">
-            تم استلام طلبك. للاستفسار أو إعادة تعيين كلمة المرور تواصل مع الدعم الفني.
+            {useSupabaseAuth
+              ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك. تحقق من صندوق الوارد أو البريد المزعج، ثم استخدم الرابط لتعيين كلمة مرور جديدة.'
+              : 'تم استلام طلبك. للاستفسار أو إعادة تعيين كلمة المرور تواصل مع الدعم الفني.'}
             <p className="mt-4">
               <Link href="/login" className="text-rocky-blue dark:text-rocky-blue-300 font-semibold hover:underline">
                 العودة لتسجيل الدخول

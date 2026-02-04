@@ -1,23 +1,14 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 401 }
-      )
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json(
-        { error: 'غير مصرح' },
-        { status: 403 }
-      )
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
@@ -75,8 +66,8 @@ export async function GET(request: NextRequest) {
     const orders = ordersRaw.map((o) => ({
       ...o,
       packageForDisplay: {
-        nameAr: o.packageNameAr ?? o.package?.nameAr ?? '',
-        price: o.packagePrice ?? o.package?.price ?? 0,
+        nameAr: o.package?.nameAr ?? '',
+        price: o.package?.price ?? 0,
       },
     }))
 

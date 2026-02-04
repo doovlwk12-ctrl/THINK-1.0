@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { getApiAuth } from '@/lib/getApiAuth'
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
@@ -92,13 +93,9 @@ const DEFAULT_CONTENT: HomepageContentPayload = {
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json({ success: false, error: 'غير مصرح' }, { status: 401 })
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json({ success: false, error: 'غير مصرح' }, { status: 403 })
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const row = await prisma.homepageContent.findFirst({ orderBy: { updatedAt: 'desc' } })
     const content = parseContent(row?.content ?? null)
@@ -120,13 +117,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const auth = await getApiAuth(request)
-    if (!auth) {
-      return Response.json({ success: false, error: 'غير مصرح' }, { status: 401 })
-    }
-    if (auth.role !== 'ADMIN') {
-      return Response.json({ success: false, error: 'غير مصرح' }, { status: 403 })
-    }
+    const result = await requireAdmin(request)
+    if (result instanceof NextResponse) return result
+    const { auth } = result
 
     const body = await request.json() as unknown
     const data = homepageContentSchema.partial().parse(body)
