@@ -11,7 +11,7 @@ export async function GET(
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const orderId = params.id
 

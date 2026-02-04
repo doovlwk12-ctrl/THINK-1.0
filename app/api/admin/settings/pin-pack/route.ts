@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     if (!prisma.pinPackConfig) {
       return Response.json({
@@ -69,7 +69,7 @@ export async function PUT(request: NextRequest) {
   try {
     const authResult = await requireAdmin(request)
     if (authResult instanceof NextResponse) return authResult
-    const { auth } = authResult
+    const { auth: _auth } = authResult
 
     const body = await request.json()
     const data = updatePinPackSchema.parse(body)

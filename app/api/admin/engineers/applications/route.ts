@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     // Check if engineerApplication model exists in Prisma Client
     if (!prisma.engineerApplication) {

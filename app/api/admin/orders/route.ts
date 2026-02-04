@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')

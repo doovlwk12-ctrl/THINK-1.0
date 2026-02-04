@@ -470,7 +470,7 @@ export default function RevisionPage() {
   }, [plan?.id])
 
   // Handle zoom with mouse wheel (min = fitScale, max = 3)
-  const handleWheel = useCallback((e: React.WheelEvent) => {
+  const _handleWheel = useCallback((e: React.WheelEvent) => {
     if (!imageContainerRef.current) return
     const delta = e.deltaY > 0 ? -0.1 : 0.1
     const newZoom = Math.max(fitScale, Math.min(3, zoom + delta))
@@ -501,7 +501,7 @@ export default function RevisionPage() {
   }, [])
 
   // Touch handlers for pan (no preventDefault here - see useEffect below for passive: false)
-  const handleTouchStartPan = useCallback((e: React.TouchEvent) => {
+  const _handleTouchStartPan = useCallback((e: React.TouchEvent) => {
     if (!isPanMode || editingPin) return
     const touch = e.touches[0]
     if (touch) {
@@ -510,7 +510,7 @@ export default function RevisionPage() {
     }
   }, [isPanMode, pan, editingPin])
 
-  const handleTouchMovePan = useCallback((e: React.TouchEvent) => {
+  const _handleTouchMovePan = useCallback((e: React.TouchEvent) => {
     if (!isDragging || !isPanMode || editingPin) return
     const touch = e.touches[0]
     if (touch) {

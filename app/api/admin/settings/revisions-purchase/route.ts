@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const config = await prisma.revisionsPurchaseConfig.findFirst({
       orderBy: { updatedAt: 'desc' },
@@ -62,7 +62,7 @@ export async function PUT(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const body = await request.json()
     const data = updateSchema.parse(body)

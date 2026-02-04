@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const row = await prisma.homepageContent.findFirst({ orderBy: { updatedAt: 'desc' } })
     const content = parseContent(row?.content ?? null)
@@ -119,7 +119,7 @@ export async function PUT(request: NextRequest) {
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const body = await request.json() as unknown
     const data = homepageContentSchema.partial().parse(body)

@@ -25,7 +25,7 @@ export async function PUT(
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const packageId = params.id
     const body = await request.json()
@@ -79,7 +79,7 @@ export async function DELETE(
   try {
     const result = await requireAdmin(request)
     if (result instanceof NextResponse) return result
-    const { auth } = result
+    const { auth: _auth } = result
 
     const packageId = params.id
 
