@@ -103,7 +103,16 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       const supabase = createClient()
       const { data: result, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        return { ok: false, error: error.message }
+        const msg = (error.message ?? '').toLowerCase()
+        const arabicError =
+          msg.includes('email not confirmed') || msg.includes('confirm your signup')
+            ? 'البريد الإلكتروني غير مؤكد. إن كنت قد سجّلت للتو، فعّل خيار «عدم طلب تأكيد البريد» من لوحة Supabase (Authentication → Email → Confirm email) لتسجيل دخول عادي.'
+            : msg.includes('invalid login') || msg.includes('invalid credentials')
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+              : msg.includes('user not found')
+                ? 'لا يوجد حساب بهذا البريد'
+                : error.message
+        return { ok: false, error: arabicError }
       }
       if (result?.user) {
         // إعطاء المتصفح وقتاً لكتابة كوكيز الجلسة قبل أي طلب تالٍ (مهم للـ middleware)

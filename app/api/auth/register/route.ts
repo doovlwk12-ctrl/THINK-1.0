@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
-import { createClientForAuthActions } from '@/lib/supabase/server'
+import { createClientForAuthActions, createAdminClient } from '@/lib/supabase/server'
 
 const USE_SUPABASE_AUTH =
   process.env.USE_SUPABASE_AUTH === 'true' ||
@@ -76,6 +76,14 @@ export async function POST(request: NextRequest) {
           { error: 'فشل إنشاء الحساب. يرجى المحاولة لاحقاً.' },
           { status: 500 }
         )
+      }
+
+      // تسجيل عادي: تأكيد البريد فوراً حتى يستطيع المستخدم الدخول دون انتظار رسالة التأكيد
+      const admin = createAdminClient()
+      if (admin) {
+        await admin.auth.admin.updateUserById(supabaseUser.id, { email_confirm: true }).catch((e) => {
+          logger.warn('Supabase admin confirm email failed', { message: e?.message })
+        })
       }
 
       const hashedPassword = await bcrypt.hash(validatedData.password, 10)
