@@ -40,13 +40,13 @@
 ### المتطلبات
 
 - Node.js 18+
-- قاعدة البيانات: **SQLite** للتطوير (افتراضي) أو **PostgreSQL** للإنتاج
+- قاعدة البيانات: **PostgreSQL** (المخطط الحالي في `prisma/schema.prisma` يستخدم `provider = "postgresql"`)
 - npm أو yarn
 
 ### قاعدة البيانات
 
-- **التطوير (افتراضي):** المخطط يستخدم `provider = "sqlite"` في `prisma/schema.prisma` مع `DATABASE_URL="file:./dev.db"` في `.env`. لا حاجة لتثبيت خادم قاعدة بيانات.
-- **الإنتاج:** للانتقال إلى PostgreSQL غيّر في `prisma/schema.prisma`: `provider = "postgresql"` وضبط `DATABASE_URL` في `.env` على رابط PostgreSQL (راجع `.env.example`).
+- المخطط يستخدم **PostgreSQL**. ضبط `DATABASE_URL` في `.env` على رابط الاتصال (مثلاً من Supabase: Project Settings → Database → Connection string URI). راجع `.env.example`.
+- للتطوير المحلي: استخدم قاعدة Supabase أو PostgreSQL محلياً، ثم `npx prisma db push` أو `npx prisma migrate deploy`.
 
 ### التثبيت
 
@@ -56,7 +56,7 @@ npm install
 
 # 2. إعداد البيئة
 cp .env.example .env
-# عدّل .env: NEXTAUTH_SECRET، NEXTAUTH_URL؛ DATABASE_URL للـ SQLite يكون file:./dev.db
+# عدّل .env: NEXTAUTH_SECRET، NEXTAUTH_URL، DATABASE_URL (رابط PostgreSQL)
 
 # 3. إنشاء قاعدة البيانات ومزامنة المخطط
 npx prisma generate
@@ -193,8 +193,8 @@ npm run db:seed      # إنشاء بيانات تجريبية
 
 - **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **Database**: SQLite (التطوير، افتراضي) / PostgreSQL (للإنتاج) مع Prisma ORM — المخطط في `prisma/schema.prisma` يحدد الـ provider
-- **Authentication**: NextAuth.js
+- **Database**: PostgreSQL مع Prisma ORM (المخطط في `prisma/schema.prisma`)
+- **Authentication**: NextAuth.js أو Supabase Auth (حسب `NEXT_PUBLIC_USE_SUPABASE_AUTH`)، راجع [docs/AUTH.md](./docs/AUTH.md)
 - **Forms**: react-hook-form + zod
 - **Image Compression**: browser-image-compression
 - **Notifications**: react-hot-toast (In-App), Web Push API (قيد التطوير)
@@ -210,11 +210,13 @@ npm run db:seed      # إنشاء بيانات تجريبية
 
 ### الوثائق الأساسية
 - [DOCUMENTATION.md](./DOCUMENTATION.md) - التوثيق الكامل
+- [docs/AUTH.md](./docs/AUTH.md) - المصادقة والصلاحيات (NextAuth / Supabase)
+- [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) - دليل النشر (Vercel + Supabase)
 - [STATUS_REPORT.md](./STATUS_REPORT.md) - تقرير الحالة (ما تم إنجازه وما تبقى)
 - [IMPLEMENTED.md](./IMPLEMENTED.md) - تفاصيل ما تم تنفيذه
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - المعمارية
 - [API.md](./API.md) - API Documentation
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - دليل النشر
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - ملخص النشر (راجع [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) للتفاصيل)
 
 ### وثائق التصميم
 - [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) - نظام التصميم الجديد
@@ -228,9 +230,9 @@ npm run db:seed      # إنشاء بيانات تجريبية
 - [GIT_SETUP.md](./GIT_SETUP.md) - إعداد Git (اختياري)
 - [README_CHECKPOINT.md](./README_CHECKPOINT.md) - ملخص نقطة الحفظ
 
-### النشر (Firebase Hosting)
+### النشر
 
-المشروع يتضمن إعداد Firebase Hosting (`firebase.json`): مجلد `public` يُخدم كموقع ثابت. لتشغيل تطبيق Next.js كاملاً (SSR و API) استخدم بيئة تدعم Node (مثل Vercel أو خادم خاص)، أو راجع [DEPLOYMENT.md](./DEPLOYMENT.md) لخيارات النشر.
+لنشر المنصة على **Vercel** مع **Supabase** (قاعدة بيانات + مصادقة): راجع [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) لشرح خطوة نشر Vercel ومتغيرات البيئة. المشروع يدعم أيضاً Firebase Hosting للمحتوى الثابت؛ لتشغيل Next.js كاملاً (SSR و API) استخدم Vercel أو خادم Node.
 
 ### الاختبار
 - [TESTING.md](./TESTING.md) - دليل تشغيل الاختبارات (وحدة + E2E)

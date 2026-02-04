@@ -23,9 +23,9 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then((res) => {
       setCheckingSession(false)
-      setHasRecoverySession(!!session?.user)
+      setHasRecoverySession(!!res.data.session?.user)
     })
   }, [])
 
