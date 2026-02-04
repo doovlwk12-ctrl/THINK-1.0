@@ -1,0 +1,117 @@
+import { NextRequest } from 'next/server'
+import { getApiAuth } from '@/lib/getApiAuth'
+import { prisma } from '@/lib/prisma'
+import { handleApiError } from '@/lib/errors'
+import { uploadFile, deleteFileByUrl } from '@/lib/storage'
+
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024   // 10MB لكل ملف عند الرفع
+const MAX_FILE_SIZE_AFTER_SAVE_BYTES = 5 * 1024 * 1024  // 5MB حد أقصى بعد الحفظ
+
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await getApiAuth(request)
+
+    if (!auth) {
+      return Response.json(
+        { error: 'غير مصرح' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is engineer or admin (نفس حدود الحجم تنطبق على المهندس والأدمن)
+    if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {
+      return Response.json(
+        { error: 'غير مصرح - فقط المهندسين والأدمن يمكنهم رفع المخططات' },
+        { status: 403 }
+      )
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('file') as File
+    const orderId = formData.get('orderId') as string
+
+    if (!file || !orderId) {
+      return Response.json(
+        { error: 'بيانات غير مكتملة' },
+        { status: 400 }
+      )
+    }
+
+    // Check order
+    const order = await prisma.order.findUnique({
+      where: { id: orderId }
+    })
+
+    if (!order) {
+      return Response.json(
+        { error: 'الطلب غير موجود' },
+        { status: 404 }
+      )
+    }
+
+    // Check if user is engineer assigned to this order
+    if (auth.role === 'ENGINEER' && order.engineerId !== auth.userId) {
+      return Response.json(
+        { error: 'غير مصرح' },
+        { status: 403 }
+      )
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      return Response.json(
+        { error: 'نوع الملف غير مدعوم. يرجى رفع صورة (JPG, PNG) أو ملف PDF' },
+        { status: 400 }
+      )
+    }
+
+    // Validate file size (max 10MB per file)
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return Response.json(
+        { error: 'حجم الملف كبير جداً. الحد الأقصى 10MB لكل ملف. يُنصح بتقليل حجم الملف (ضغط الصورة أو PDF أصغر) قبل الرفع.' },
+        { status: 400 }
+      )
+    }
+
+    // Upload file using storage service
+    const uploadResult = await uploadFile(file, {
+      folder: 'plans',
+      maxSize: MAX_FILE_SIZE_BYTES,
+      allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
+    })
+
+    // حد الحجم بعد الحفظ: إذا تجاوز الملف المحفوظ 5MB نرفض ونحذف الملف
+    if (uploadResult.fileSize > MAX_FILE_SIZE_AFTER_SAVE_BYTES) {
+      await deleteFileByUrl(uploadResult.url)
+      return Response.json(
+        {
+          error: `حجم الملف بعد الحفظ كبير (${(uploadResult.fileSize / (1024 * 1024)).toFixed(1)}MB). الحد الأقصى بعد الحفظ 5MB. يُرجى تقليل حجم الملف (ضغط الصورة أو استخدام PDF أصغر) ثم إعادة الرفع.`,
+        },
+        { status: 413 }
+      )
+    }
+
+    // Determine file type
+    const fileType = file.type.startsWith('image/') ? 'image' : 'pdf'
+
+    // Create new plan (isActive: false until sent via /api/plans/send; do not deactivate other plans here so multiple can be uploaded then sent in one batch)
+    const plan = await prisma.plan.create({
+      data: {
+        orderId,
+        fileUrl: uploadResult.url,
+        fileType,
+        fileName: uploadResult.fileName,
+        fileSize: uploadResult.fileSize,
+        isActive: false, // Set to false initially, will be activated when sent
+      }
+    })
+
+    return Response.json({
+      success: true,
+      plan
+    })
+  } catch (error: unknown) {
+    return handleApiError(error)
+  }
+}
