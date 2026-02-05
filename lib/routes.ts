@@ -21,6 +21,7 @@ const PUBLIC_PAGES = [
 const PUBLIC_API_EXACT = [
   '/api/auth/forgot-email',
   '/api/auth/register',
+  '/api/auth/session', // NextAuth session check — must not redirect so client gets JSON not HTML
   '/api/packages',
   '/api/content/homepage',
 ] as const

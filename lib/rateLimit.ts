@@ -33,11 +33,7 @@ export function rateLimit(options: RateLimitOptions) {
   return async (request: Request): Promise<{ success: boolean; remaining: number; resetTime: number }> => {
     const now = Date.now()
     const key = keyGenerator ? keyGenerator(request) : getClientIP(request)
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:24',message:'Rate limit check entry',data:{key,now,storeSize:Object.keys(store).length,existingEntry:store[key]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B'})}).catch(()=>{});
-    // #endregion
-    
+
     // Clean up expired entries
     cleanupExpiredEntries(now)
 
@@ -49,9 +45,6 @@ export function rateLimit(options: RateLimitOptions) {
         count: 1,
         resetTime: now + windowMs,
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:33',message:'New rate limit entry created',data:{key,count:1,resetTime:now+windowMs,max,remaining:max-1},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       return {
         success: true,
         remaining: max - 1,
@@ -60,9 +53,6 @@ export function rateLimit(options: RateLimitOptions) {
     }
 
     if (entry.count >= max) {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:46',message:'Rate limit exceeded',data:{key,count:entry.count,max,resetTime:entry.resetTime,timeUntilReset:entry.resetTime-now},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       return {
         success: false,
         remaining: 0,
@@ -72,9 +62,6 @@ export function rateLimit(options: RateLimitOptions) {
 
     // Increment count
     entry.count++
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:55',message:'Rate limit incremented',data:{key,count:entry.count,max,remaining:max-entry.count,resetTime:entry.resetTime},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     return {
       success: true,
       remaining: max - entry.count,
@@ -87,25 +74,14 @@ function getClientIP(request: Request): string {
   // Try to get IP from headers (for proxies/load balancers)
   const forwarded = request.headers.get('x-forwarded-for')
   if (forwarded) {
-    const ip = forwarded.split(',')[0].trim()
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:66',message:'IP from x-forwarded-for',data:{ip,forwarded},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    return ip
+    return forwarded.split(',')[0].trim()
   }
 
   const realIP = request.headers.get('x-real-ip')
   if (realIP) {
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:73',message:'IP from x-real-ip',data:{ip:realIP},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     return realIP
   }
 
-  // Fallback to a default key (in production, this should never happen)
-  // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/rateLimit.ts:77',message:'IP fallback to unknown',data:{allHeaders:Object.fromEntries(request.headers.entries())},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   return 'unknown'
 }
 
@@ -126,8 +102,12 @@ export const apiRateLimit = rateLimit({
 })
 
 export const authRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute — بعد 5 محاولات ينتظر دقيقة ثم يقدر يحاول مرة ثانية
-  max: 5, // 5 محاولات (تسجيل / نسيت البريد) في الدقيقة
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 محاولات لكل مسار (تسجيل، نسيت البريد، إلخ) في الدقيقة — لتقليل ظهور "انتظر"
+  keyGenerator: (request) => {
+    const path = new URL(request.url).pathname
+    return `${getClientIP(request)}:${path}`
+  },
 })
 
 // Lighter rate limit for polling endpoints (messages, notifications)

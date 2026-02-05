@@ -60,10 +60,6 @@ export async function GET() {
       }
     )
   } catch (error: unknown) {
-    // #region agent log
-    const code = error && typeof error === 'object' && 'code' in error ? (error as { code?: string }).code : undefined
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'content/homepage/route.ts:catch', message: 'GET error', data: { code, errorMessage: error instanceof Error ? error.message : String(error) }, timestamp: Date.now(), sessionId: 'debug-session' }) }).catch(() => {})
-    // #endregion
     return handleApiError(error)
   }
 }

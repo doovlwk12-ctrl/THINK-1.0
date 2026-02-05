@@ -64,10 +64,13 @@ export async function POST(request: NextRequest) {
 
       if (signUpError) {
         logger.warn('Supabase signUp error', { message: signUpError.message, status: signUpError.status })
-        return Response.json(
-          { error: supabaseAuthErrorMessage(signUpError) },
-          { status: 400 }
-        )
+        const userMessage = supabaseAuthErrorMessage(signUpError)
+        // في التطوير: إظهار سبب الرفض الفعلي من Supabase لمعرفة أساس "بريد غير صحيح" أو عدم القدرة على التسجيل
+        const error =
+          process.env.NODE_ENV === 'development'
+            ? `${userMessage} (Supabase: ${signUpError.message})`
+            : userMessage
+        return Response.json({ error }, { status: 400 })
       }
 
       const supabaseUser = signUpData?.user

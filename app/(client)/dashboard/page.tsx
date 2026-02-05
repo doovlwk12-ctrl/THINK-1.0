@@ -81,23 +81,15 @@ export default function ClientDashboard() {
     }
   }
 
-  if (status === 'loading' || !roleReady || loading) {
+  if (status === 'loading' || status === 'unauthenticated' || !roleReady || loading) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
-        <Loading text="جاري التحميل..." />
+        <Loading text={status === 'unauthenticated' ? 'جاري التحويل لتسجيل الدخول...' : 'جاري التحميل...'} />
       </div>
     )
   }
 
-  if (status === 'unauthenticated') {
-    return (
-      <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
-        <Loading text="جاري التحويل لتسجيل الدخول..." />
-      </div>
-    )
-  }
-
-  if (status === 'authenticated' && (session?.user?.role === 'ENGINEER' || session?.user?.role === 'ADMIN')) {
+  if (session?.user?.role === 'ENGINEER' || session?.user?.role === 'ADMIN') {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحويل للوحة التحكم..." />

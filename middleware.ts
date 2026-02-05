@@ -34,7 +34,7 @@ function applyRateLimitHeaders(
     path === '/api/auth/session' ||
     path === '/api/auth/_log'
   let limitValue = '2000'
-  if (isStrictAuthPath(path)) limitValue = '5'
+  if (isStrictAuthPath(path)) limitValue = '10'
   else if (isPollingEndpoint) limitValue = 'unlimited'
   response.headers.set('X-RateLimit-Limit', limitValue)
   response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining))
@@ -67,7 +67,7 @@ async function runRateLimit(path: string, req: NextRequestWithAuth) {
         { success: false, error: authMessage },
         { status: 429, headers: {
           'Retry-After': String(retryAfterSec),
-          'X-RateLimit-Limit': isStrictAuthPath(path) ? '5' : '2000',
+          'X-RateLimit-Limit': isStrictAuthPath(path) ? '10' : '2000',
           'X-RateLimit-Remaining': String(result.remaining),
           'X-RateLimit-Reset': String(result.resetTime),
         } }
@@ -125,7 +125,8 @@ async function supabaseMiddleware(req: NextRequestWithAuth, event: NextFetchEven
   const response = NextResponse.next()
   const { response: resWithAuth, user } = await getSupabaseSession(req, response)
 
-  if (!user && !isPublicPath(path)) {
+  // لا نوجّه طلبات الـ API إلى صفحة تسجيل الدخول — نوجّه الصفحات فقط حتى /api/auth/session وغيره يرجع JSON
+  if (!user && !isPublicPath(path) && !path.startsWith('/api/')) {
     const loginUrl = new URL('/login', req.url)
     return NextResponse.redirect(loginUrl)
   }

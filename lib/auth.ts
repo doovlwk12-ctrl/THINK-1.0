@@ -12,53 +12,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // #region agent log
-        try {
-          if (typeof fetch !== 'undefined') {
-            fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'H3',
-                location: 'lib/auth.ts:authorize-start',
-                message: 'authorize called',
-                data: { hasEmail: !!credentials?.email, hasPassword: !!credentials?.password },
-                timestamp: Date.now(),
-              }),
-            }).catch(() => {})
-          }
-        } catch {
-          // ignore logging errors
-        }
-        // #endregion
-
         if (!credentials?.email || !credentials?.password) {
           throw new Error('البريد الإلكتروني وكلمة المرور مطلوبان')
         }
-
-        // #region agent log
-        try {
-          if (typeof fetch !== 'undefined') {
-            fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                sessionId: 'debug-session',
-                runId: 'run1',
-                hypothesisId: 'H1',
-                location: 'lib/auth.ts:before-find-unique',
-                message: 'before prisma.user.findUnique',
-                data: { emailProvided: true },
-                timestamp: Date.now(),
-              }),
-            }).catch(() => {})
-          }
-        } catch {
-          // ignore logging errors
-        }
-        // #endregion
 
         let user
         try {
@@ -66,29 +22,6 @@ export const authOptions: NextAuthOptions = {
             where: { email: credentials.email },
           })
         } catch (error) {
-          // #region agent log
-          try {
-            if (typeof fetch !== 'undefined') {
-              fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  sessionId: 'debug-session',
-                  runId: 'run1',
-                  hypothesisId: 'H1',
-                  location: 'lib/auth.ts:find-unique-error',
-                  message: 'prisma.user.findUnique failed',
-                  data: {
-                    errorMessage: error instanceof Error ? error.message : String(error),
-                  },
-                  timestamp: Date.now(),
-                }),
-              }).catch(() => {})
-            }
-          } catch {
-            // ignore logging errors
-          }
-          // #endregion
           throw error
         }
 

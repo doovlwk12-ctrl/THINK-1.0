@@ -202,7 +202,7 @@ export default function RegisterPage() {
           <Button
             type="submit"
             loading={loading}
-            disabled={waitSecondsRemaining != null && waitSecondsRemaining > 0}
+            disabled={loading || (waitSecondsRemaining != null && waitSecondsRemaining > 0)}
             className="w-full"
           >
             {waitSecondsRemaining != null && waitSecondsRemaining > 0

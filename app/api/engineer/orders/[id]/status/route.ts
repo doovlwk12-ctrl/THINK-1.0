@@ -36,31 +36,6 @@ export async function PUT(
       },
     })
 
-    // #region agent log
-    fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'api/engineer/orders/[id]/status/route.ts:order-fetched',
-        message: 'order engineerId vs auth.userId',
-        data: {
-          orderId,
-          hasOrder: !!order,
-          orderEngineerId: order?.engineerId ?? null,
-          authUserId: auth.userId,
-          strictEqual: order?.engineerId === auth.userId,
-          engineerIdType: typeof order?.engineerId,
-          userIdType: typeof auth.userId,
-          engineerIdLen: (order?.engineerId ?? '').length,
-          userIdLen: (auth.userId ?? '').length,
-        },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        hypothesisId: 'H1_H2_H5',
-      }),
-    }).catch(() => {})
-    // #endregion
-
     if (!order) {
       return Response.json(
         { success: false, error: 'الطلب غير موجود' },
@@ -71,20 +46,6 @@ export async function PUT(
     // Check if engineer is assigned to this order (unless admin).
     // If order has no engineer assigned, allow this engineer to update (they are "taking" the order).
     if (auth.role !== 'ADMIN' && order.engineerId != null && order.engineerId !== auth.userId) {
-      // #region agent log
-      fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'api/engineer/orders/[id]/status/route.ts:403-branch',
-          message: '403 this order not assigned to you',
-          data: { orderEngineerId: order.engineerId, authUserId: auth.userId, authRole: auth.role },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          hypothesisId: 'H1_H2_H5',
-        }),
-      }).catch(() => {})
-      // #endregion
       return Response.json(
         { success: false, error: 'غير مصرح - هذا الطلب غير مخصص لك' },
         { status: 403 }

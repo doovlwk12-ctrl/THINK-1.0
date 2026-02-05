@@ -7,29 +7,6 @@ const globalForPrisma = globalThis as unknown as {
 let prismaClient = globalForPrisma.prisma
 
 if (!prismaClient) {
-  // #region agent log
-  try {
-    const rawUrl = typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined
-    let dbHost = ''
-    let dbPort = ''
-    if (rawUrl) {
-      try {
-        const parsed = new URL(rawUrl)
-        dbHost = parsed.hostname || ''
-        dbPort = parsed.port || ''
-      } catch {
-        dbHost = ''
-        dbPort = ''
-      }
-    }
-    if (typeof fetch !== 'undefined') {
-      fetch('http://127.0.0.1:7244/ingest/a8eee1e4-a2b5-45ab-8ecd-ef5f28c71af1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/prisma.ts:prisma-init',message:'prisma init',data:{hasDatabaseUrl:!!rawUrl,dbHost,dbPort},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{})
-    }
-  } catch {
-    // ignore logging errors
-  }
-  // #endregion
-
   prismaClient = new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
