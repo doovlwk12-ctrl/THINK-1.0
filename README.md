@@ -214,7 +214,8 @@ npm run db:seed      # إنشاء بيانات تجريبية
 ### الوثائق الأساسية
 - [DOCUMENTATION.md](./DOCUMENTATION.md) - التوثيق الكامل
 - [docs/AUTH.md](./docs/AUTH.md) - المصادقة والصلاحيات (NextAuth / Supabase)
-- [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) - دليل النشر (Vercel + Supabase)
+- [docs/VERCEL-SUPABASE-CHECKLIST.md](./docs/VERCEL-SUPABASE-CHECKLIST.md) - قائمة تحقق لتشغيل المشروع على Vercel + Supabase بشكل صحيح بدون مشاكل
+- [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) - دليل النشر التفصيلي (Vercel + Supabase)
 - [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) - استكشاف الأخطاء وحلها — تفادي الإشكاليات الشائعة ومعالجتها
 - [docs/VERCEL-BUILD-WARNINGS-PLAN.md](./docs/VERCEL-BUILD-WARNINGS-PLAN.md) - خطة حل تحذيرات بناء Vercel (npm deprecated، webpack)
 - [docs/PROJECT-AUDIT-REPORT.md](./docs/PROJECT-AUDIT-REPORT.md) - تقرير فحص وتحليل المشروع مع Vercel وسير العمل والإشكاليات والحلول
