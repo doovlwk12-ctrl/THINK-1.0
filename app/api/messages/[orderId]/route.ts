@@ -24,14 +24,14 @@ export async function OPTIONS() {
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ orderId: string }> | { orderId: string } }
+  context?: { params?: Promise<{ orderId: string }> | { orderId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const params = await Promise.resolve(context.params).catch(() => ({}))
+    const params = await Promise.resolve(context?.params ?? {}).catch(() => ({}))
     const orderId =
       params != null &&
       typeof params === 'object' &&
@@ -137,31 +137,33 @@ export async function GET(
     try {
       logger.error('messages_get_error', { errorMessage: err.message }, err)
     } catch {
-      // ignore logging errors
+      // ignore
     }
-    const res = handleApiError(error)
-    const status = res.status
-    if (status >= 500) {
+    try {
+      const res = handleApiError(error)
+      if (res.status >= 500) throw new Error('use 503')
+      if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
+      return res
+    } catch {
+      // أي خطأ أو رد 5xx → نرجع 503 فقط (لا 500 أبداً)
       return Response.json(
         { success: false, error: 'تعذر تحميل المحادثة. تحقق من الاتصال وأعد المحاولة.' },
         { status: 503, headers: ALLOW_HEADERS }
       )
     }
-    if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
-    return res
   }
 }
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ orderId: string }> | { orderId: string } }
+  context?: { params?: Promise<{ orderId: string }> | { orderId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const params = await Promise.resolve(context.params).catch(() => ({}))
+    const params = await Promise.resolve(context?.params ?? {}).catch(() => ({}))
     const orderId =
       params != null &&
       typeof params === 'object' &&
