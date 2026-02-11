@@ -88,6 +88,9 @@ export default function RegisterPage() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'فشل إنشاء الحساب'
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[Register]', errorMessage)
+      }
       const isRateLimit = /محاولات كثيرة|دقيقة|تجاوز الحد/.test(errorMessage)
       if (isRateLimit) {
         setWaitSecondsRemaining(parseWaitSeconds(errorMessage))

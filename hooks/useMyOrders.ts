@@ -24,9 +24,13 @@ const fetcher = async (): Promise<MyOrdersResponse> => {
 
 const KEY = '/orders/my-orders'
 
+/** Error with optional HTTP status (set by api.ts). */
+type ApiError = Error & { status?: number }
+
 /**
  * Client-side cached order list with SWR.
  * Revalidates on focus and can be invalidated via mutate() after order create/update.
+ * Does not retry on 503 (service unavailable) to avoid console spam and repeated failed requests.
  */
 export function useMyOrders(enabled = true) {
   const { data, error, isLoading, mutate } = useSWR<MyOrdersResponse>(
@@ -36,6 +40,11 @@ export function useMyOrders(enabled = true) {
       revalidateOnFocus: true,
       dedupingInterval: 2000,
       revalidateOnReconnect: true,
+      onErrorRetry(err, _key, _config, revalidate, { retryCount }) {
+        if ((err as ApiError)?.status === 503) return
+        if (retryCount >= 3) return
+        setTimeout(() => revalidate({ retryCount }), 2000 * (retryCount + 1))
+      },
     }
   )
 

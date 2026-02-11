@@ -2,18 +2,7 @@ const API_BASE = '/api'
 const MAX_RETRIES = 3
 const RETRY_DELAY = 1000 // 1 second
 
-function isFirebaseApi(): boolean {
-  if (typeof process === 'undefined') return false
-  return process.env.NEXT_PUBLIC_USE_FIREBASE_AUTH === 'true'
-}
-
-// When Firebase: only /auth/register goes to Functions URL; all other endpoints stay same-origin (/api/...).
 function getApiUrl(endpoint: string): string {
-  if (isFirebaseApi() && typeof process !== 'undefined' && process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL) {
-    const base = process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL.replace(/\/$/, '')
-    if (endpoint === '/auth/register') return `${base}/apiRegister`
-    // Data routes (packages, orders, etc.) stay on same-origin Next.js API
-  }
   if (typeof window !== 'undefined') {
     return `${window.location.origin}${API_BASE}${endpoint}`
   }
@@ -29,16 +18,10 @@ export async function api<T = unknown>(
   retryCount = 0
 ): Promise<T> {
   const url = getApiUrl(endpoint)
-  const firebaseMode = isFirebaseApi()
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
-  }
-  if (firebaseMode && typeof window !== 'undefined') {
-    const { getApiToken } = await import('@/lib/apiTokenGetter')
-    const token = await getApiToken()
-    if (token) headers['Authorization'] = `Bearer ${token}`
   }
 
   let response: Response
@@ -51,7 +34,7 @@ export async function api<T = unknown>(
       response = await fetch(url, {
         ...options,
         signal: controller.signal,
-        credentials: firebaseMode ? 'omit' : 'include',
+        credentials: 'include',
         headers,
         // عدم استخدام الكاش عند التنقّل لظهور أحدث التحديثات
         ...(options.method === 'GET' || !options.method ? { cache: 'no-store' as RequestCache } : {}),
@@ -102,10 +85,14 @@ export async function api<T = unknown>(
         ? 'غير مصرح'
         : response.status === 404
         ? 'غير موجود'
+        : response.status === 503
+        ? 'تعذر الاتصال بقاعدة البيانات. يرجى المحاولة لاحقاً.'
         : response.status >= 500
         ? 'خطأ في الخادم'
         : 'فشل تحليل استجابة الخادم'
-      throw new Error(errorMessage)
+      const err = new Error(errorMessage) as Error & { status?: number }
+      err.status = response.status
+      throw err
     }
     throw new Error('فشل تحليل استجابة الخادم')
   }
@@ -113,7 +100,9 @@ export async function api<T = unknown>(
   if (!response.ok) {
     const errorData = data as { error?: string; message?: string }
     const errorMessage = errorData?.error || errorData?.message || 'حدث خطأ ما'
-    throw new Error(errorMessage)
+    const err = new Error(errorMessage) as Error & { status?: number }
+    err.status = response.status
+    throw err
   }
 
   return data as T
@@ -122,13 +111,6 @@ export async function api<T = unknown>(
 /** POST FormData (e.g. file upload) with auth. Do not set Content-Type; browser sets it with boundary. */
 export async function apiPostFormData<T = unknown>(endpoint: string, formData: FormData): Promise<T> {
   const url = getApiUrl(endpoint)
-  const firebaseMode = isFirebaseApi()
-  const headers: Record<string, string> = {}
-  if (firebaseMode && typeof window !== 'undefined') {
-    const { getApiToken } = await import('@/lib/apiTokenGetter')
-    const token = await getApiToken()
-    if (token) headers['Authorization'] = `Bearer ${token}`
-  }
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 60000)
   let response: Response
@@ -137,8 +119,7 @@ export async function apiPostFormData<T = unknown>(endpoint: string, formData: F
       method: 'POST',
       body: formData,
       signal: controller.signal,
-      credentials: firebaseMode ? 'omit' : 'include',
-      headers: Object.keys(headers).length ? headers : undefined,
+      credentials: 'include',
     })
   } finally {
     clearTimeout(timeoutId)

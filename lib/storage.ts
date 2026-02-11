@@ -1,6 +1,6 @@
 /**
  * File storage service
- * Supports local storage (for MVP), Firebase Storage (Phase 4), and S3/Cloudinary (for production)
+ * Supports local storage, Supabase Storage (bucket "orders"), S3, and Cloudinary.
  * NOTE: This is a SERVER-ONLY module. Do not import in client components.
  */
 
@@ -8,6 +8,7 @@ import { writeFile, mkdir, unlink } from 'fs/promises'
 import { join } from 'path'
 import { randomUUID } from 'crypto'
 import { env } from './env'
+import { uploadToSupabaseBucket, deleteFromSupabaseBucket, SUPABASE_BUCKETS } from './supabase'
 
 export interface UploadOptions {
   folder: string
@@ -39,19 +40,20 @@ export async function uploadFile(
     throw new Error(`File type ${file.type} not allowed`)
   }
 
-  // For MVP: use local storage
-  // In production: switch to S3 or Cloudinary based on env vars
   try {
     const envVars = env
+    // Supabase Storage (bucket "orders") عند توفر المفتاح والرابط
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      return uploadToSupabaseStorage(file, options)
+    }
     if (envVars.AWS_S3_BUCKET && envVars.AWS_ACCESS_KEY_ID && envVars.AWS_SECRET_ACCESS_KEY) {
       return uploadToS3(file, options)
-    } else if (envVars.CLOUDINARY_CLOUD_NAME && envVars.CLOUDINARY_API_KEY && envVars.CLOUDINARY_API_SECRET) {
-      return uploadToCloudinary(file, options)
-    } else {
-      return uploadToLocal(file, options)
     }
+    if (envVars.CLOUDINARY_CLOUD_NAME && envVars.CLOUDINARY_API_KEY && envVars.CLOUDINARY_API_SECRET) {
+      return uploadToCloudinary(file, options)
+    }
+    return uploadToLocal(file, options)
   } catch {
-    // If env validation fails, fallback to local storage
     return uploadToLocal(file, options)
   }
 }
@@ -89,16 +91,56 @@ async function uploadToLocal(file: File, options: UploadOptions): Promise<Upload
 }
 
 /**
- * Delete a file from local storage by its public URL (e.g. /uploads/plans/uuid.ext).
- * No-op if file does not exist. Used when upload exceeds post-save size limit.
+ * Delete a file by its public URL.
+ * يدعم: التخزين المحلي (/uploads/...) و Supabase Storage (رابط *.supabase.co/storage/...).
  */
 export async function deleteFileByUrl(url: string): Promise<void> {
-  if (!url || !url.startsWith('/uploads/')) return
-  const path = join(process.cwd(), 'public', url.replace(/^\//, ''))
-  try {
-    await unlink(path)
-  } catch {
-    // Ignore if file not found or other error
+  if (!url) return
+  if (url.startsWith('/uploads/')) {
+    const filePath = join(process.cwd(), 'public', url.replace(/^\//, ''))
+    try {
+      await unlink(filePath)
+    } catch {
+      // Ignore if file not found or other error
+    }
+    return
+  }
+  // Supabase Storage: استخراج bucket و path من الرابط ثم حذف
+  const supabaseMatch = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/)
+  if (supabaseMatch && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const [, bucket, objectPath] = supabaseMatch
+    try {
+      await deleteFromSupabaseBucket(bucket, objectPath)
+    } catch {
+      // Ignore if file not found or other error
+    }
+  }
+}
+
+/**
+ * رفع ملف إلى Supabase Storage — bucket "orders" مع مسار فرعي (مثل plans/uuid.ext).
+ */
+async function uploadToSupabaseStorage(file: File, options: UploadOptions): Promise<UploadResult> {
+  if (options.maxSize && file.size > options.maxSize) {
+    throw new Error(`File size exceeds ${options.maxSize} bytes`)
+  }
+  if (options.allowedTypes && !options.allowedTypes.includes(file.type)) {
+    throw new Error(`File type ${file.type} not allowed`)
+  }
+  const extension = file.name.split('.').pop() || 'bin'
+  const fileName = `${randomUUID()}.${extension}`
+  const objectPath = `${options.folder}/${fileName}`
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const { url } = await uploadToSupabaseBucket(
+    SUPABASE_BUCKETS.ORDERS,
+    objectPath,
+    buffer,
+    { contentType: file.type }
+  )
+  return {
+    url,
+    fileName: file.name,
+    fileSize: file.size,
   }
 }
 

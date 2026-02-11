@@ -1,5 +1,5 @@
 /**
- * Stub: returns no token. Replace with Firebase Auth getIdToken() when using NEXT_PUBLIC_USE_FIREBASE_AUTH.
+ * Returns the API Bearer token. Currently unused (NextAuth/Supabase use session cookies).
  */
 export async function getApiToken(): Promise<string | null> {
   return Promise.resolve(null)

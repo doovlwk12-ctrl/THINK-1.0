@@ -110,8 +110,8 @@ const nextConfig = {
               "font-src 'self' data:",
               // worker-src blob: required for browser-image-compression (Web Workers)
               "worker-src 'self' blob:",
-              // Same-origin /api + Supabase Auth; in dev allow localhost/127.0.0.1 for hot reload
-              `connect-src 'self' https://*.supabase.co wss://*.supabase.co${process.env.NODE_ENV === 'development' ? ' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*' : ''}`,
+              // Same-origin /api + Supabase Auth
+              `connect-src 'self' https://*.supabase.co wss://*.supabase.co ${process.env.NODE_ENV === 'development' ? ' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*' : ''}`,
               "frame-ancestors 'none'",
             ].join('; '),
           },

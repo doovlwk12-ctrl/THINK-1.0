@@ -4,6 +4,10 @@ import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { uploadFile, deleteFileByUrl, STORAGE_NOT_CONFIGURED_MESSAGE } from '@/lib/storage'
+import {
+  uploadEngineerFileToOrders,
+  isSupabaseStorageConfigured,
+} from '@/lib/uploadEngineerFile'
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024   // 10MB لكل ملف عند الرفع
 const MAX_FILE_SIZE_AFTER_SAVE_BYTES = 5 * 1024 * 1024  // 5MB حد أقصى بعد الحفظ
@@ -62,16 +66,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Upload file using storage service
-    const uploadResult = await uploadFile(file, {
-      folder: 'plans',
-      maxSize: MAX_FILE_SIZE_BYTES,
-      allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
-    })
+    // رفع الملف: إن وُجد Supabase Storage نرفع إلى bucket "orders" ونسجل في file_expiry_tracker
+    let uploadResult: { url: string; fileName: string; fileSize: number }
+    if (isSupabaseStorageConfigured()) {
+      const result = await uploadEngineerFileToOrders(file, {
+        folder: 'plans',
+        maxSizeBytes: MAX_FILE_SIZE_BYTES,
+      })
+      uploadResult = { url: result.url, fileName: result.fileName, fileSize: result.fileSize }
+    } else {
+      uploadResult = await uploadFile(file, {
+        folder: 'plans',
+        maxSize: MAX_FILE_SIZE_BYTES,
+        allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
+      })
+    }
 
-    // حد الحجم بعد الحفظ: إذا تجاوز الملف المحفوظ 5MB نرفض ونحذف الملف
+    // حد الحجم بعد الحفظ: إذا تجاوز الملف المحفوظ 5MB نرفض ونحذف الملف (ومع Supabase نزيل سجل التتبع)
     if (uploadResult.fileSize > MAX_FILE_SIZE_AFTER_SAVE_BYTES) {
       await deleteFileByUrl(uploadResult.url)
+      if (isSupabaseStorageConfigured()) {
+        const pathMatch = uploadResult.url.match(/\/object\/public\/[^/]+\/(.+)$/)
+        if (pathMatch?.[1]) {
+          await prisma.fileExpiryTracker.deleteMany({ where: { filePath: pathMatch[1] } })
+        }
+      }
       return Response.json(
         {
           error: `حجم الملف بعد الحفظ كبير (${(uploadResult.fileSize / (1024 * 1024)).toFixed(1)}MB). الحد الأقصى بعد الحفظ 5MB. يُرجى تقليل حجم الملف (ضغط الصورة أو استخدام PDF أصغر) ثم إعادة الرفع.`,

@@ -41,7 +41,7 @@ model Package {
   updatedAt     DateTime  @updatedAt
   
   orders        Order[]
-  
+
   @@index([isActive])
 }
 
@@ -236,9 +236,21 @@ model EngineerApplication {
   @@index([createdAt])
 }
 
-// Single-row config for homepage editable content (hero, faq, cta, footer, social links). Stored as JSON string for SQLite.
+// Single-row config for homepage editable content (hero, faq, cta, footer, social links). Stored as JSON string.
 model HomepageContent {
   id        String   @id @default(cuid())
   content   String   // JSON: { hero, faq, cta, footer }
   updatedAt DateTime @updatedAt
+}
+
+// تتبع انتهاء صلاحية الملفات المرفوعة إلى Supabase Storage (مثلاً لحذفها بعد 30 يوماً).
+model FileExpiryTracker {
+  id         String   @id @default(cuid())
+  filePath   String   // مسار الملف داخل الـ bucket (مثل plans/uuid.pdf)
+  expiryDate DateTime // تاريخ الحذف المقترح (يُحسب عند الرفع: الآن + 30 يوماً)
+  isDeleted  Boolean  @default(false) // true بعد حذف الملف أو تعطيل التتبع
+  createdAt  DateTime @default(now())
+
+  @@index([expiryDate])
+  @@index([isDeleted])
 }

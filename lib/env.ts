@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   // Database
-  DATABASE_URL: z.string().url().or(z.string().startsWith('file:')),
+  DATABASE_URL: z.string().min(1).refine((s) => s.startsWith('postgresql://') || s.startsWith('postgres://'), 'DATABASE_URL must be a PostgreSQL connection string'),
 
   // NextAuth
   NEXTAUTH_SECRET: z.string().min(32, 'NEXTAUTH_SECRET must be at least 32 characters'),

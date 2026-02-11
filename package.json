@@ -11,6 +11,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
+    "clean": "node scripts/clean-artifacts.js",
+    "clean:full": "node scripts/clean-artifacts.js --next",
     "check-routes": "node scripts/check-routes.js",
     "prebuild": "npm run check-routes",
     "db:push": "prisma db push",
@@ -21,8 +23,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate-apply-features": "node scripts/apply-features-migration.js",
     "db:migrate-resolve-features": "prisma migrate resolve --applied 20250201000000_add_package_features_json",
-    "firebase:migrate-users": "tsx scripts/migrate-users-to-firebase-auth.ts",
-    "firebase:migrate-data": "tsx scripts/migrate-data-to-firestore.ts"
+    "db:migrate-sqlite-to-postgres": "tsx scripts/migrate-sqlite-to-postgres.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -36,8 +37,6 @@
     "cookie": "^1.1.1",
     "critters": "^0.0.23",
     "date-fns": "^3.0.6",
-    "firebase": "^10.7.0",
-    "firebase-admin": "^11.11.0",
     "isomorphic-dompurify": "^2.35.0",
     "lucide-react": "^0.303.0",
     "next": "^14.0.4",
@@ -53,12 +52,14 @@
   "devDependencies": {
     "@playwright/test": "^1.49.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "autoprefixer": "^10.4.16",
+    "better-sqlite3": "^12.6.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.35",
     "postcss": "^8.4.32",

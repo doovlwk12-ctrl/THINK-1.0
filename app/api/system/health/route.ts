@@ -12,6 +12,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { getApiAuth } from '@/lib/getApiAuth'
 
 const HEALTH_SECRET = process.env.HEALTH_CHECK_SECRET
+const USE_SUPABASE_AUTH = process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH === 'true'
 
 type CheckResult<T = unknown> =
   | { ok: true; latencyMs?: number; detail?: T }
@@ -73,11 +74,15 @@ export async function GET(request: NextRequest) {
     report.summary.push('Env: DATABASE_URL is missing')
     report.success = false
   }
-  if (!report.env.supabaseUrl) report.summary.push('Env: NEXT_PUBLIC_SUPABASE_URL is missing')
-  if (!report.env.supabaseAnon) report.summary.push('Env: NEXT_PUBLIC_SUPABASE_ANON_KEY is missing')
-  if (!report.env.serviceRoleKey) {
-    report.summary.push('Env: SUPABASE_SERVICE_ROLE_KEY is missing')
-    report.success = false
+  if (USE_SUPABASE_AUTH) {
+    if (!report.env.supabaseUrl) report.summary.push('Env: NEXT_PUBLIC_SUPABASE_URL is missing')
+    if (!report.env.supabaseAnon) report.summary.push('Env: NEXT_PUBLIC_SUPABASE_ANON_KEY is missing')
+    if (!report.env.serviceRoleKey) {
+      report.summary.push('Env: SUPABASE_SERVICE_ROLE_KEY is missing')
+      report.success = false
+    }
+  } else {
+    report.summary.push('Mode: Local only (NextAuth); Supabase checks skipped.')
   }
 
   // ---- 2. Database connection (latency) ----
@@ -105,7 +110,14 @@ export async function GET(request: NextRequest) {
   // ---- 3. Authentication (Supabase Service Role + session validation) ----
   const authStart = Date.now()
   try {
-    if (!report.env.serviceRoleKey || !report.env.supabaseUrl) {
+    if (!USE_SUPABASE_AUTH) {
+      report.auth = {
+        ok: true,
+        latencyMs: Date.now() - authStart,
+        detail: { sessionValidation: 'Local mode: NextAuth only.' },
+      }
+      report.summary.push('Auth: Skipped (local mode — NextAuth)')
+    } else if (!report.env.serviceRoleKey || !report.env.supabaseUrl) {
       report.auth = {
         ok: false,
         error: 'SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL not set',
@@ -155,7 +167,10 @@ export async function GET(request: NextRequest) {
   // ---- 4. Storage (Supabase Storage buckets list) ----
   const storageStart = Date.now()
   try {
-    if (!report.env.serviceRoleKey || !report.env.supabaseUrl) {
+    if (!USE_SUPABASE_AUTH) {
+      report.storage = { ok: true, latencyMs: 0, detail: { buckets: [] } }
+      report.summary.push('Storage: Skipped (local mode)')
+    } else if (!report.env.serviceRoleKey || !report.env.supabaseUrl) {
       report.storage = { ok: false, error: 'Supabase env not set; storage check skipped.' }
       report.summary.push('Storage: Skipped (missing Supabase env)')
     } else {
