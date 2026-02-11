@@ -142,25 +142,6 @@ export default async function middleware(
   req: NextRequestWithAuth,
   event: NextFetchEvent
 ) {
-  // #region agent log
-  if (req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/') {
-    fetch('http://127.0.0.1:7242/ingest/dea19849-5605-4cf4-baa5-fd295f0b235a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'middleware.ts:default',
-        message: 'auth mode',
-        data: {
-          useSupabaseAuth,
-          envValue: process.env.NEXT_PUBLIC_USE_SUPABASE_AUTH ?? '(unset)',
-          path: req.nextUrl.pathname,
-        },
-        timestamp: Date.now(),
-        hypothesisId: 'H1',
-      }),
-    }).catch(() => {})
-  }
-  // #endregion
   if (useSupabaseAuth) return supabaseMiddleware(req, event)
   return authMiddleware(req, event)
 }

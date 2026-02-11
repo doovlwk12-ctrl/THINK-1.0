@@ -8,68 +8,65 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String
-  phone         String    @unique
-  role          String    @default("CLIENT") // CLIENT, ENGINEER, ADMIN
-  pushSubscription String? // JSON string for Web Push subscription
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  clientOrders  Order[]   @relation("ClientOrders")
-  engineerOrders Order[]  @relation("EngineerOrders")
-  messages      Message[] @relation("MessageSender")
-  notifications Notification[]
-  
+  id               String         @id @default(cuid())
+  email            String         @unique
+  password         String
+  name             String
+  phone            String         @unique
+  role             String         @default("CLIENT")
+  pushSubscription String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  messages         Message[]      @relation("MessageSender")
+  notifications    Notification[]
+  clientOrders     Order[]        @relation("ClientOrders")
+  engineerOrders   Order[]        @relation("EngineerOrders")
+
   @@index([email])
   @@index([phone])
   @@index([role])
 }
 
 model Package {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   nameAr        String
   nameEn        String?
   price         Float
-  revisions     Int       @default(2)
-  executionDays Int       @default(7)
-  isActive      Boolean   @default(true)
-  featuresJson  String?   // JSON array of feature strings e.g. ["دعم فني متواصل"]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  revisions     Int      @default(2)
+  executionDays Int      @default(7)
+  isActive      Boolean  @default(true)
+  featuresJson  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   orders        Order[]
 
   @@index([isActive])
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  orderNumber       String      @unique
-  clientId          String
-  client            User        @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
-  engineerId        String?
-  engineer          User?       @relation("EngineerOrders", fields: [engineerId], references: [id], onDelete: SetNull)
-  packageId         String
-  package           Package     @relation(fields: [packageId], references: [id])
-  status            String      @default("PENDING") // PENDING, IN_PROGRESS, REVIEW, COMPLETED, CLOSED (منتهي)، ARCHIVED
-  formData          String      // JSON string
-  remainingRevisions Int        @default(0)
-  deadline          DateTime
-  completedAt      DateTime?
-  plansPurgedAt    DateTime?   // بعد 45 يوم من الموعد النهائي تُحذف الملفات
-  archivedWarningSentAt DateTime? // آخر تحذير أُرسل للعميل قبل حذف الملفات
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-
-  messages          Message[]
-  plans             Plan[]
-  payments          Payment[]
-  revisionRequests  RevisionRequest[]
-  pinPackPurchases  PinPackPurchase[]
-  auditLogs         OrderAuditLog[]
+  id                    String            @id @default(cuid())
+  orderNumber           String            @unique
+  clientId              String
+  engineerId            String?
+  packageId             String
+  status                String            @default("PENDING")
+  formData              String
+  remainingRevisions    Int               @default(0)
+  deadline              DateTime
+  completedAt           DateTime?
+  plansPurgedAt         DateTime?
+  archivedWarningSentAt DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  messages              Message[]
+  client                User              @relation("ClientOrders", fields: [clientId], references: [id], onDelete: Cascade)
+  engineer              User?             @relation("EngineerOrders", fields: [engineerId], references: [id])
+  package               Package           @relation(fields: [packageId], references: [id])
+  auditLogs             OrderAuditLog[]
+  payments              Payment[]
+  pinPackPurchases      PinPackPurchase[]
+  plans                 Plan[]
+  revisionRequests      RevisionRequest[]
 
   @@index([clientId])
   @@index([engineerId])
@@ -83,43 +80,43 @@ model Order {
 model OrderAuditLog {
   id        String   @id @default(cuid())
   orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   userId    String
-  action    String   // e.g. status_change, form_data_edit
-  oldValue  String?  // JSON or text
-  newValue  String?  // JSON or text
+  action    String
+  oldValue  String?
+  newValue  String?
   createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([createdAt])
 }
 
 model Plan {
-  id          String    @id @default(cuid())
-  orderId     String
-  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  fileUrl     String    // فارغ بعد الحذف من الأرشيف
-  fileType    String    // 'image' or 'pdf'
-  fileName    String?
-  fileSize    Int?      // in bytes
-  isActive    Boolean   @default(true)
-  purgedAt    DateTime? // عند حذف الملف من الأرشيف (بعد 45 يوم من الموعد النهائي)
-  createdAt   DateTime  @default(now())
+  id        String    @id @default(cuid())
+  orderId   String
+  fileUrl   String
+  fileType  String
+  fileName  String?
+  fileSize  Int?
+  isActive  Boolean   @default(true)
+  purgedAt  DateTime?
+  createdAt DateTime  @default(now())
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([isActive])
 }
 
 model Message {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  senderId    String
-  sender      User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  content     String
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  
+  id        String   @id @default(cuid())
+  orderId   String
+  senderId  String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
   @@index([orderId])
   @@index([senderId])
   @@index([orderId, createdAt])
@@ -130,14 +127,14 @@ model Message {
 model Payment {
   id            String   @id @default(cuid())
   orderId       String
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount        Float
   method        String   @default("card")
-  status        String   @default("pending") // pending, completed, failed
+  status        String   @default("pending")
   transactionId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
   @@index([orderId])
   @@index([status])
   @@index([createdAt])
@@ -154,15 +151,15 @@ model PaymentIdempotency {
 }
 
 model RevisionRequest {
-  id            String   @id @default(cuid())
-  orderId       String
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  planId         String?  // The plan being revised (optional, can be null if plan was deleted)
-  pins           String   // JSON string containing array of pins: [{x, y, color, note}]
-  status         String   @default("pending") // pending, in_progress, completed, rejected
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  orderId   String
+  planId    String?
+  pins      String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
   @@index([orderId])
   @@index([status])
   @@index([createdAt])
@@ -171,64 +168,62 @@ model RevisionRequest {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      String
   title     String
   message   String
-  data      String?  // JSON string
+  data      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
   @@index([createdAt])
 }
 
-// Single-row config for pin pack pricing (admin-editable).
 model PinPackConfig {
   id                     String   @id @default(cuid())
-  pinPackPrice           Float    // سعر مجموعة الدبابيس (6 دبابيس)
-  pinPackOldPrice        Float?   // سعر قديم للعرض مع خط - اختياري
-  pinPackDiscountPercent Float?   // نسبة الخصم - اختياري
-  messageWhen1Left       String?  // رسالة عند 1/6
-  messageWhen0Left       String?  // رسالة عند 0/6
+  pinPackPrice           Float
+  pinPackOldPrice        Float?
+  pinPackDiscountPercent Float?
+  messageWhen1Left       String?
+  messageWhen0Left       String?
   updatedAt              DateTime @updatedAt
 }
 
-// Single-row config for buying additional revisions (admin-editable).
 model RevisionsPurchaseConfig {
-  id                     String   @id @default(cuid())
-  pricePerRevision       Float    // سعر التعديل الواحد (ريال)
-  maxRevisionsPerPurchase Int      @default(20) // الحد الأقصى لعدد التعديلات في عملية شراء واحدة
-  updatedAt              DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  pricePerRevision        Float
+  maxRevisionsPerPurchase Int      @default(20)
+  updatedAt               DateTime @updatedAt
 }
 
 model PinPackPurchase {
-  id             String   @id @default(cuid())
-  orderId        String
-  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount         Float
-  status         String   @default("completed")
-  transactionId  String?
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  orderId       String
+  amount        Float
+  status        String   @default("completed")
+  transactionId String?
+  createdAt     DateTime @default(now())
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([createdAt])
 }
 
 model EngineerApplication {
-  id          String   @id @default(cuid())
-  token       String   @unique // Unique token for the application link
-  name        String
-  email       String
-  phone       String
-  password    String   // Hashed password
-  status      String   @default("pending") // pending, approved, rejected
-  adminId     String?  // Admin who approved/rejected
-  adminNotes  String?  // Notes from admin
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  reviewedAt  DateTime? // When admin reviewed the application
+  id         String    @id @default(cuid())
+  token      String    @unique
+  name       String
+  email      String
+  phone      String
+  password   String
+  status     String    @default("pending")
+  adminId    String?
+  adminNotes String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
 
   @@index([status])
   @@index([email])
@@ -236,19 +231,17 @@ model EngineerApplication {
   @@index([createdAt])
 }
 
-// Single-row config for homepage editable content (hero, faq, cta, footer, social links). Stored as JSON string.
 model HomepageContent {
   id        String   @id @default(cuid())
-  content   String   // JSON: { hero, faq, cta, footer }
+  content   String
   updatedAt DateTime @updatedAt
 }
 
-// تتبع انتهاء صلاحية الملفات المرفوعة إلى Supabase Storage (مثلاً لحذفها بعد 30 يوماً).
 model FileExpiryTracker {
   id         String   @id @default(cuid())
-  filePath   String   // مسار الملف داخل الـ bucket (مثل plans/uuid.pdf)
-  expiryDate DateTime // تاريخ الحذف المقترح (يُحسب عند الرفع: الآن + 30 يوماً)
-  isDeleted  Boolean  @default(false) // true بعد حذف الملف أو تعطيل التتبع
+  filePath   String
+  expiryDate DateTime
+  isDeleted  Boolean  @default(false)
   createdAt  DateTime @default(now())
 
   @@index([expiryDate])

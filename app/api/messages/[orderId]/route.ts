@@ -131,9 +131,23 @@ export async function GET(
     )
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    logger.error('messages_get_error', { errorMessage: err.message }, err)
+    const errWithCode = error as { code?: string }
+    console.error('[messages GET]', err.message, errWithCode?.code != null ? { code: errWithCode.code } : '')
+    if (process.env.NODE_ENV === 'development' && err.stack) console.error(err.stack)
+    try {
+      logger.error('messages_get_error', { errorMessage: err.message }, err)
+    } catch {
+      // ignore logging errors
+    }
     const res = handleApiError(error)
-    ALLOW_HEADERS.Allow && res.headers.set('Allow', ALLOW_HEADERS.Allow)
+    const status = res.status
+    if (status >= 500) {
+      return Response.json(
+        { success: false, error: 'تعذر تحميل المحادثة. تحقق من الاتصال وأعد المحاولة.' },
+        { status: 503, headers: ALLOW_HEADERS }
+      )
+    }
+    if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
     return res
   }
 }
@@ -235,8 +249,18 @@ export async function POST(
       { headers: ALLOW_HEADERS }
     )
   } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error))
+    const errWithCode = error as { code?: string }
+    console.error('[messages POST]', err.message, errWithCode?.code != null ? { code: errWithCode.code } : '')
+    if (process.env.NODE_ENV === 'development' && err.stack) console.error(err.stack)
     const res = handleApiError(error)
-    ALLOW_HEADERS.Allow && res.headers.set('Allow', ALLOW_HEADERS.Allow)
+    if (res.status >= 500) {
+      return Response.json(
+        { success: false, error: 'تعذر إرسال الرسالة. تحقق من الاتصال وأعد المحاولة.' },
+        { status: 503, headers: ALLOW_HEADERS }
+      )
+    }
+    if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
     return res
   }
 }
