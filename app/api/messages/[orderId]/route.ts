@@ -107,8 +107,11 @@ export async function GET(
       logger.error('messages_mark_read_failed', { orderId }, err instanceof Error ? err : new Error(String(err)))
     })
 
+    // Safe: handle empty or invalid data (never crash on empty)
+    const list = Array.isArray(messages) ? messages : []
+
     // Serialize to plain objects so JSON response never fails (e.g. Date/BigInt on serverless)
-    const serialized = messages.map((m) => ({
+    const serialized = list.map((m) => ({
       id: m.id,
       orderId: m.orderId,
       senderId: m.senderId,
@@ -127,7 +130,7 @@ export async function GET(
         success: true,
         messages: serialized,
         ...(serialized.length > 0 && {
-          cursor: serialized[serialized.length - 1].createdAt,
+          cursor: serialized[serialized.length - 1]?.createdAt,
         }),
       },
       { headers: ALLOW_HEADERS }

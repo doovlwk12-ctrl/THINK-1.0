@@ -42,7 +42,7 @@ export function useOrderChat(
           `/messages/${orderId}`
         )
         if (result.success) {
-          setMessages(result.messages)
+          setMessages(Array.isArray(result.messages) ? result.messages : [])
           consecutiveFailuresRef.current = 0
         }
       } catch (e) {

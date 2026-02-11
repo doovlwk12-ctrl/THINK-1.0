@@ -149,7 +149,18 @@ export default function EngineerChatPage() {
         )}
         <Card className="flex-1 flex flex-col dark:bg-charcoal-800 dark:border-charcoal-600">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
+            {loading && messages.length === 0 && !fetchError ? (
+              <div className="flex flex-col items-center justify-center min-h-[200px] py-12">
+                <Loading />
+                <p className="text-sm mt-3 text-blue-gray dark:text-greige">جاري تحميل المحادثة...</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-[200px] text-blue-gray dark:text-greige py-12">
+                <p className="text-lg">لا توجد رسائل بعد</p>
+                <p className="text-sm mt-2">ابدأ المحادثة مع العميل</p>
+              </div>
+            ) : (
+            messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.sender.role === 'ENGINEER' ? 'justify-end' : 'justify-start'}`}
@@ -183,7 +194,8 @@ export default function EngineerChatPage() {
                   </p>
                 </div>
               </div>
-            ))}
+            ))
+            )}
             <div ref={messagesEndRef} />
           </div>
 

@@ -108,6 +108,8 @@ const authMiddleware = withAuth(
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname
         if (isPublicPath(path)) return true
+        // Allow all API requests to pass; routes return 401/403 when unauthenticated (avoids redirect loop)
+        if (path.startsWith('/api/')) return true
         return !!token
       },
     },
