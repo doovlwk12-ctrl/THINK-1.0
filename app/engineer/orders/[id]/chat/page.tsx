@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { useOrderChat } from '@/hooks/useOrderChat'
 import { Send } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
@@ -15,70 +16,34 @@ import { parseModificationPointMessage } from '@/lib/parseModificationPointMessa
 import { ModificationPointMessage } from '@/components/chat/ModificationPointMessage'
 import toast from 'react-hot-toast'
 
-interface Message {
-  id: string
-  content: string
-  senderId: string
-  sender: {
-    name: string
-    role: string
-  }
-  createdAt: string
-}
+const engineerOrAdmin = (role: string | undefined) =>
+  role === 'ENGINEER' || role === 'ADMIN'
 
 export default function EngineerChatPage() {
   const params = useParams()
   const router = useRouter()
   const { data: session, status } = useAuth()
   const orderId = params.id as string
-  
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
-  const [fetchError, setFetchError] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const POLL_INTERVAL_MS = 3000
 
-  const fetchMessages = useCallback(async (isInitial = false) => {
-    try {
-      setFetchError(null)
-      const result = await apiClient.get<{ success: boolean; messages: Message[] }>(`/messages/${orderId}`)
-      if (result.success) {
-        setMessages(result.messages)
-      }
-    } catch (e) {
-      const err = e as Error & { status?: number }
-      const msg =
-        err.status === 503
-          ? 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
-          : e instanceof Error
-            ? e.message
-            : 'فشل تحميل المحادثة'
-      if (isInitial) setFetchError(msg)
-    } finally {
-      setLoading(false)
-    }
-  }, [orderId])
+  const chatEnabled = status === 'authenticated' && engineerOrAdmin(session?.user?.role)
+  const { messages, setMessages, loading, fetchError, fetchMessages } = useOrderChat(orderId, {
+    enabled: chatEnabled,
+  })
+
+  const [newMessage, setNewMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
       return
     }
-
-    if (status === 'authenticated') {
-      if (session?.user?.role !== 'ENGINEER' && session?.user?.role !== 'ADMIN') {
-        router.push('/dashboard')
-        return
-      }
-      fetchMessages(true)
-      const interval = setInterval(() => {
-        fetchMessages(false)
-      }, POLL_INTERVAL_MS)
-      return () => clearInterval(interval)
+    if (status === 'authenticated' && !engineerOrAdmin(session?.user?.role)) {
+      router.push('/dashboard')
+      return
     }
-  }, [status, session, router, fetchMessages])
+  }, [status, session?.user?.role, router])
 
   useEffect(() => {
     scrollToBottom()
@@ -116,7 +81,7 @@ export default function EngineerChatPage() {
 
     // Optimistic: add temporary message (reverted on failure)
     const optimisticId = `opt-${Date.now()}`
-    const optimisticMessage: Message = {
+    const optimisticMessage = {
       id: optimisticId,
       content: text,
       senderId: '',

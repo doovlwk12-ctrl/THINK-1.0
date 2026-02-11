@@ -15,7 +15,7 @@ const nextConfig = {
   },
   
   // Enable experimental features for better performance
-  // Note: optimizeCss requires 'critters' package - disabled for now
+  // experimental: { optimizeCss: true } — disabled
   // experimental: {
   //   optimizeCss: true,
   // },

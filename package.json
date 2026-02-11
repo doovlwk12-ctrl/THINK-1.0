@@ -38,7 +38,6 @@
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.0.0",
     "cookie": "^1.1.1",
-    "critters": "^0.0.23",
     "date-fns": "^3.0.6",
     "isomorphic-dompurify": "^2.35.0",
     "lucide-react": "^0.303.0",

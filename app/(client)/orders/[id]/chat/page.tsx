@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { useOrderChat, type ChatMessage } from '@/hooks/useOrderChat'
 import Image from 'next/image'
 import { Send, Download, User, MessageSquare, X, MapPin, Eye } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
@@ -16,18 +17,6 @@ import { formatDateHijriMiladi, formatDateTimeHijriMiladi, isOrderExpired } from
 import { parseModificationPointMessage } from '@/lib/parseModificationPointMessage'
 import { ModificationPointMessage } from '@/components/chat/ModificationPointMessage'
 import toast from 'react-hot-toast'
-
-interface Message {
-  id: string
-  content: string
-  senderId: string
-  sender: {
-    name: string
-    role: string
-  }
-  createdAt: string
-  isRead: boolean
-}
 
 interface Plan {
   id: string
@@ -58,43 +47,22 @@ export default function ChatPage() {
   const router = useRouter()
   const { status } = useAuth()
   const orderId = params.id as string
-  
-  const [messages, setMessages] = useState<Message[]>([])
+
+  const chatEnabled = status === 'authenticated'
+  const { messages, setMessages, loading, fetchError, fetchMessages } = useOrderChat(orderId, {
+    enabled: chatEnabled,
+  })
+
   const [plans, setPlans] = useState<Plan[]>([])
   const [revisions, setRevisions] = useState<RevisionRequest[]>([])
   const [newMessage, setNewMessage] = useState('')
-  const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const [fetchError, setFetchError] = useState<string | null>(null)
-  const POLL_INTERVAL_MS = 3000
   const [selectedRevision, setSelectedRevision] = useState<RevisionRequest | null>(null)
   const [showRevisionModal, setShowRevisionModal] = useState(false)
   const [orderInfo, setOrderInfo] = useState<{ deadline: string; status: string } | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const revisionImageRef = useRef<HTMLImageElement>(null)
   const revisionContainerRef = useRef<HTMLDivElement>(null)
-
-  const fetchMessages = useCallback(async (isInitial = false) => {
-    try {
-      setFetchError(null)
-      const result = await apiClient.get<{ success: boolean; messages: Message[] }>(`/messages/${orderId}`)
-      if (result.success) {
-        setMessages(result.messages)
-      }
-    } catch (e) {
-      const err = e as Error & { status?: number }
-      const msg =
-        err.status === 503
-          ? 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
-          : e instanceof Error
-            ? e.message
-            : 'فشل تحميل المحادثة'
-      if (isInitial) setFetchError(msg)
-      // عند الاستطلاع: إخفاء الخطأ بعد نجاح لاحق
-    } finally {
-      setLoading(false)
-    }
-  }, [orderId])
 
   const fetchPlans = useCallback(async () => {
     try {
@@ -148,20 +116,12 @@ export default function ChatPage() {
       router.push('/login')
       return
     }
-
     if (status === 'authenticated') {
-      fetchMessages(true)
       fetchPlans()
       fetchRevisions()
       fetchOrderInfo()
-      
-      const interval = setInterval(() => {
-        fetchMessages(false)
-      }, POLL_INTERVAL_MS)
-      
-      return () => clearInterval(interval)
     }
-  }, [status, router, fetchMessages, fetchPlans, fetchRevisions, fetchOrderInfo])
+  }, [status, router, fetchPlans, fetchRevisions, fetchOrderInfo])
 
   useEffect(() => {
     scrollToBottom()
@@ -210,7 +170,7 @@ export default function ChatPage() {
 
     // Optimistic: add temporary message (reverted on failure)
     const optimisticId = `opt-${Date.now()}`
-    const optimisticMessage: Message = {
+    const optimisticMessage: ChatMessage = {
       id: optimisticId,
       content: text,
       senderId: '',
@@ -221,7 +181,7 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, optimisticMessage])
 
     try {
-      const result = await apiClient.post<{ success: boolean; message?: Message }>(`/messages/${orderId}`, {
+      const result = await apiClient.post<{ success: boolean; message?: ChatMessage }>(`/messages/${orderId}`, {
         content: text,
       })
 
