@@ -32,8 +32,7 @@ export async function GET(
   context?: { params?: Promise<{ orderId: string }> | { orderId: string } }
 ): Promise<Response> {
   try {
-  try {
-    // استخراج orderId كـ String نقي من المسار (بدون تحويل UUID)
+    // استخراج orderId كـ String نقي من المسار (CUID)
     const rawParams = context?.params
     type ParamsBox = { orderId?: string }
     const resolvedParams: ParamsBox =

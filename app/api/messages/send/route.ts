@@ -31,13 +31,23 @@ export async function HEAD() {
   return new NextResponse(null, { status: 204, headers: { Allow: 'GET, HEAD, POST, OPTIONS' } })
 }
 
+const ALLOW_HEADERS = { Allow: 'GET, HEAD, POST, OPTIONS' } as const
+
 export async function POST(request: NextRequest) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const body = await request.json()
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'تنسيق الطلب غير صالح' },
+        { status: 400, headers: ALLOW_HEADERS }
+      )
+    }
     const validatedData = sendMessageSchema.parse(body)
 
     // Check order access: ADMIN any, ENGINEER only assigned, CLIENT only own
@@ -116,11 +126,19 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return Response.json({
-      success: true,
-      message
-    })
+    return NextResponse.json(
+      { success: true, message },
+      { headers: ALLOW_HEADERS }
+    )
   } catch (error: unknown) {
-    return handleApiError(error)
+    const res = handleApiError(error)
+    if (res.status >= 500) {
+      return NextResponse.json(
+        { success: false, error: 'تعذر إرسال الرسالة. تحقق من الاتصال وأعد المحاولة.' },
+        { status: 503, headers: ALLOW_HEADERS }
+      )
+    }
+    if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
+    return res
   }
 }
