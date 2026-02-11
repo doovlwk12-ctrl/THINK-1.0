@@ -13,6 +13,8 @@ const ALLOW_HEADERS = { Allow: 'GET, POST, OPTIONS' } as const
 
 /** Force dynamic so GET/POST are always available on Vercel (avoids 405 for POST). */
 export const dynamic = 'force-dynamic'
+/** Use Node runtime so both GET and POST are correctly routed (avoids 405 on serverless). */
+export const runtime = 'nodejs'
 
 const postMessageSchema = z.object({
   content: z.string().min(1, 'محتوى الرسالة مطلوب'),
@@ -56,10 +58,16 @@ export async function GET(
       auth = result.auth
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      select: { id: true, clientId: true, engineerId: true },
-    })
+    let order: { id: string; clientId: string; engineerId: string | null } | null = null
+    try {
+      order = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, clientId: true, engineerId: true },
+      })
+    } catch (orderErr) {
+      console.error('[messages GET] findUnique order failed', orderErr)
+      return Response.json({ success: true, messages: [] }, { status: 200, headers: ALLOW_HEADERS })
+    }
 
     if (!order) {
       return Response.json({ success: true, messages: [] }, { status: 200, headers: ALLOW_HEADERS })
