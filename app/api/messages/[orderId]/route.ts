@@ -164,9 +164,10 @@ export async function GET(
     }
     try {
       const res = handleApiError(error)
-      if (res.status >= 500) throw new Error('use 503')
-      if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
-      return res
+      if (res.status >= 500) return Response.json(FALLBACK_503, FALLBACK_503_HEADERS)
+      const headers = new Headers(res.headers)
+      headers.set('Allow', ALLOW_HEADERS.Allow)
+      return new NextResponse(res.body, { status: res.status, headers })
     } catch {
       return Response.json(FALLBACK_503, FALLBACK_503_HEADERS)
     }
