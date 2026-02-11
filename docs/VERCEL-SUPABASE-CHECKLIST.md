@@ -20,6 +20,34 @@
 
 ---
 
+## حل نهائي: عدم القدرة على إنشاء حساب أو تسجيل الدخول
+
+اتبع الخطوات بالترتيب ثم أعد النشر والتحقق:
+
+1. **Supabase**
+   - تأكد أن المشروع **غير Paused** (من لوحة Supabase).
+   - **Authentication → URL Configuration:** ضع **Site URL** و **Redirect URLs** = رابط موقعك على Vercel (مثل `https://اسم-المشروع.vercel.app` و `/login`, `/reset-password`).
+   - **Authentication → Providers → Email:** فعّل **Enable Email Signup** حتى يقبل Supabase طلبات التسجيل من الموقع.
+
+2. **Vercel → Settings → Environment Variables**
+   - تأكد وجود كل المتغيرات المطلوبة. **DATABASE_URL** = رابط **Transaction (منفذ 6543)** مع **`?pgbouncer=true`** في النهاية، **بدون مسافات** قبل أو بعد القيمة، وبدون أقواس حول كلمة المرور في الرابط.
+   - تأكد: **NEXT_PUBLIC_SUPABASE_URL**, **NEXT_PUBLIC_SUPABASE_ANON_KEY**, **USE_SUPABASE_AUTH**, **NEXT_PUBLIC_USE_SUPABASE_AUTH**. لتفعيل تأكيد البريد تلقائياً بعد التسجيل: **SUPABASE_SERVICE_ROLE_KEY**.
+
+3. **مرة واحدة (من جهازك)**
+   - في `.env` ضع نفس **DATABASE_URL** المستخدم على Vercel.
+   - نفّذ: `npx prisma generate` ثم `npx prisma db push` (أو `prisma migrate deploy` إن كنت تستخدم migrations) حتى تكون جداول التطبيق موجودة في قاعدة Supabase.
+
+4. **Redeploy**
+   - من **Vercel → Deployments** اختر آخر نشر → **⋯ → Redeploy** (بعد أي تعديل على المتغيرات).
+
+5. **التحقق**
+   - استدعِ `GET /api/system/health` مع هيدر `x-health-secret` أو `?secret=` يساوي `HEALTH_CHECK_SECRET`. تأكد أن **database.ok** و **auth.ok** = true.
+   - جرّب إنشاء حساب من **/register** وتسجيل الدخول من **/login**.
+
+إن استمر الفشل راجع جدول **"أخطاء شائعة وحلولها"** في نهاية هذا الملف، أو **Vercel → Deployments → Logs** لطلب `POST /api/auth/register` وسطر "Register failed" لمعرفة الرسالة أو رمز الخطأ الفعلي.
+
+---
+
 ## فهم أخطاء الكونسول (Console) الشائعة
 
 | الرسالة | المعنى | الحل |
@@ -155,6 +183,7 @@ npx prisma migrate deploy
 | رفع الملفات لا يعمل على Vercel | عدم وجود **SUPABASE_SERVICE_ROLE_KEY** أو bucket **orders** | أضف المتغير على Vercel وأنشئ bucket **orders** (القسم 5). |
 | خطأ Prisma "prepared statement" | استخدام Transaction mode بدون `pgbouncer=true` | أضف `?pgbouncer=true` إلى نهاية `DATABASE_URL`. |
 | شاشة بيضاء أو خطأ عند فتح /login أو /register | `NEXT_PUBLIC_USE_SUPABASE_AUTH=true` مع غياب `NEXT_PUBLIC_SUPABASE_URL` أو `NEXT_PUBLIC_SUPABASE_ANON_KEY` | أضف المتغيرين على Vercel (Production/Preview حسب بيئة البناء) ثم Redeploy. إن كان البناء ينجح رغم النقص، شغّل `npm run verify-env` محلياً قبل الدفع؛ مع prebuild سيفشل البناء على Vercel عند تركيب env غير مكتمل. |
+| **إضافة مستخدم من لوحة Supabase (Authentication) فقط ثم تسجيل الدخول يظهر خطأ والصفحة تبقى تحمّل** | المستخدم موجود في Supabase Auth لكن التطبيق لا يستطيع إنشاء/قراءة سجله في جدول `User` (غالباً فشل اتصال قاعدة البيانات: `DATABASE_URL` خاطئ أو بدون `?pgbouncer=true`). | 1) تأكد أن **DATABASE_URL** على Vercel = رابط **Transaction (6543)** مع **`?pgbouncer=true`**. 2) **Redeploy**. 3) بعد تسجيل الدخول ينشئ التطبيق سجلاً في جدول User تلقائياً عند أول طلب. إن استمر الخطأ راجع Vercel Logs لـ `/api/auth/me`. |
 
 ---
 

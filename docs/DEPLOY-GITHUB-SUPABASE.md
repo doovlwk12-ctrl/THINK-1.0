@@ -116,6 +116,8 @@ npx prisma db push
 
 (يمكن تحديثها لاحقاً بعد أول نشر على Vercel لمعرفة الرابط الفعلي.)
 
+من **Authentication** → **Providers** → **Email:** تأكد أن **Enable Email Signup** مفعّل إن أردت أن يستطيع الزوار إنشاء حساب من الموقع. إن كان معطّلاً سيرفض Supabase طلبات التسجيل.
+
 ### 2.5 إنشاء bucket التخزين
 
 من **Storage** → **New bucket** → الاسم: **`orders`** (بالضبط). احفظ. (اختياري: حدد حجم أو أنواع ملفات إن رغبت.)
@@ -172,7 +174,9 @@ npx prisma db push
 - [ ] لوحة التحكم والطلبات تعمل (اتصال قاعدة البيانات ناجح).
 - [ ] رفع ملف من قسم المهندس يعمل (Storage bucket **orders**).
 
+في حال فشل إنشاء الحساب أو تسجيل الدخول، اتبع قسم **"حل نهائي: عدم القدرة على إنشاء حساب أو تسجيل الدخول"** في [docs/VERCEL-SUPABASE-CHECKLIST.md](VERCEL-SUPABASE-CHECKLIST.md).
+
 للتفاصيل والأخطاء الشائعة راجع:
 
-- **[docs/VERCEL-SUPABASE-CHECKLIST.md](VERCEL-SUPABASE-CHECKLIST.md)** — قائمة تحقق كاملة وعلاج 500/503.
+- **[docs/VERCEL-SUPABASE-CHECKLIST.md](VERCEL-SUPABASE-CHECKLIST.md)** — قائمة تحقق كاملة وعلاج 500/503 وقسم الحل النهائي.
 - **[docs/TESTING-PLAN.md](TESTING-PLAN.md)** — خطة الفحص والتأكد.

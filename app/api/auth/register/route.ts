@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
-        throw prismaErr
+        return handleApiError(prismaErr)
       }
     }
 

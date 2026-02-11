@@ -13,7 +13,12 @@ export async function GET(request: Request) {
       select: { id: true, name: true, email: true, role: true },
     })
     if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json(
+        {
+          error: 'تعذر العثور على بيانات المستخدم. إن كنت قد أضفت الحساب من لوحة Supabase فقط، تأكد من ضبط DATABASE_URL على Vercel ثم أعد تحميل الصفحة.',
+        },
+        { status: 503 }
+      )
     }
     return NextResponse.json({
       user: {

@@ -48,45 +48,48 @@ export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
     }
     if (!user?.id) return null
 
-    let dbUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      select: { role: true },
-    })
-    if (!dbUser) {
-      const email = user.email ?? `user-${user.id}@supabase.local`
-      const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? email.split('@')[0]
-      const phone = `supabase-${user.id.slice(0, 8)}`
-      const placeholderPassword = await bcrypt.hash(user.id + (process.env.NEXTAUTH_SECRET ?? ''), 10)
-      try {
-        await prisma.user.create({
-          data: {
-            id: user.id,
-            email,
-            name,
-            phone,
-            password: placeholderPassword,
-            role: 'CLIENT',
-          },
-        })
-        dbUser = { role: 'CLIENT' }
-      } catch {
-        const existingByEmail = await prisma.user.findFirst({
-          where: { email },
-          select: { id: true, role: true },
-        })
-        if (existingByEmail) {
-          dbUser = { role: existingByEmail.role }
-          return { userId: existingByEmail.id, source: 'supabase', role: (existingByEmail.role as ApiRole) ?? 'CLIENT' }
+    try {
+      let dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { role: true },
+      })
+      if (!dbUser) {
+        const email = user.email ?? `user-${user.id}@supabase.local`
+        const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? email.split('@')[0]
+        const phone = `supabase-${user.id.slice(0, 8)}`
+        const placeholderPassword = await bcrypt.hash(user.id + (process.env.NEXTAUTH_SECRET ?? ''), 10)
+        try {
+          await prisma.user.create({
+            data: {
+              id: user.id,
+              email,
+              name,
+              phone,
+              password: placeholderPassword,
+              role: 'CLIENT',
+            },
+          })
+          dbUser = { role: 'CLIENT' }
+        } catch (createErr) {
+          const existingByEmail = await prisma.user.findFirst({
+            where: { email },
+            select: { id: true, role: true },
+          })
+          if (existingByEmail) {
+            return { userId: existingByEmail.id, source: 'supabase', role: (existingByEmail.role as ApiRole) ?? 'CLIENT' }
+          }
+          dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { role: true },
+          }) ?? null
         }
-        dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { role: true },
-        }) ?? null
       }
+      if (!dbUser) return null
+      const role = (dbUser.role as ApiRole) ?? 'CLIENT'
+      return { userId: user.id, source: 'supabase', role }
+    } catch {
+      return null
     }
-    if (!dbUser) return null
-    const role = (dbUser.role as ApiRole) ?? 'CLIENT'
-    return { userId: user.id, source: 'supabase', role }
   }
 
   const session = await getServerSession(authOptions)

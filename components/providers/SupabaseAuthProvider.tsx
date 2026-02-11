@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import type { AuthRole, AuthSession } from '@/hooks/useAuth'
 
@@ -28,7 +29,18 @@ export const SupabaseAuthContext = createContext<SupabaseAuthContextValue | null
 
 async function fetchMe(): Promise<AuthSession | null> {
   const res = await fetch('/api/auth/me', { credentials: 'include' })
-  if (!res.ok) return null
+  if (!res.ok) {
+    if (res.status >= 500) {
+      try {
+        const json = await res.json()
+        const msg = json?.error ?? 'تعذر تحميل بيانات الحساب. تحقق من إعداد قاعدة البيانات (DATABASE_URL) على Vercel ثم أعد المحاولة.'
+        toast.error(msg)
+      } catch {
+        toast.error('تعذر تحميل بيانات الحساب. أعد تحميل الصفحة أو سجّل الخروج ثم الدخول مرة أخرى.')
+      }
+    }
+    return null
+  }
   const json = await res.json()
   const u = json?.user
   if (!u?.id) return null
