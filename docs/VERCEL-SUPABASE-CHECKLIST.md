@@ -4,6 +4,22 @@
 
 ---
 
+## إذا ظهر 500 على التسجيل أو الباقات أو المحتوى (إصلاح سريع)
+
+غالباً السبب **عدم اتصال التطبيق بقاعدة البيانات** على Vercel:
+
+1. **Vercel → مشروعك → Settings → Environment Variables**
+   - تأكد وجود **`DATABASE_URL`**.
+   - القيمة يجب أن تكون رابط **Supabase** بوضع **Transaction** (منفذ **6543**) وليس المباشر (5432).
+   - في **نهاية** الرابط يجب أن يكون: **`?pgbouncer=true`**  
+     مثال: `postgres://postgres:كلمة_المرور@db.xxxxx.supabase.co:6543/postgres?pgbouncer=true`
+2. احفظ ثم من **Deployments** اختر آخر نشر → **⋯ → Redeploy**.
+3. بعد انتهاء البناء جرّب التسجيل أو الصفحة الرئيسية مرة أخرى.
+
+إن استمر الخطأ راجع القسم 2 (قاعدة البيانات) والجدول "أخطاء شائعة" في نهاية الملف.
+
+---
+
 ## 1. متطلبات مسبقة
 
 - [ ] مشروع Supabase منشأ ونشط (غير Paused).
@@ -97,9 +113,11 @@ npx prisma migrate deploy
 
 ## 7. النشر على Vercel
 
-1. من Vercel: **Deploy** (أو **Redeploy** بعد إضافة/تعديل المتغيرات).
-2. بعد انتهاء البناء، افتح رابط المشروع (مثلاً `https://اسم-المشروع.vercel.app`).
-3. عدّل **NEXTAUTH_URL** إن كان الرابط الفعلي مختلفاً، ثم **Redeploy** مرة واحدة.
+1. (اختياري) تشغيل سكربت التحقق من متغيرات البيئة قبل الدفع: `npm run verify-env`. على Vercel يُشغَّل تلقائياً مع `npm run build` (prebuild). إن كان `NEXT_PUBLIC_USE_SUPABASE_AUTH=true` يجب وجود `NEXT_PUBLIC_SUPABASE_URL` و `NEXT_PUBLIC_SUPABASE_ANON_KEY`؛ وعلى Vercel يجب أن يحتوي `DATABASE_URL` على `?pgbouncer=true`.
+2. من Vercel: **Deploy** (أو **Redeploy** بعد إضافة/تعديل المتغيرات).
+3. بعد انتهاء البناء، افتح رابط المشروع (مثلاً `https://اسم-المشروع.vercel.app`).
+4. عدّل **NEXTAUTH_URL** إن كان الرابط الفعلي مختلفاً، ثم **Redeploy** مرة واحدة.
+5. للتحقق بعد النشر (صحة النظام، التسجيل، رفع الملفات) راجع **docs/TESTING-PLAN.md**.
 
 ---
 
@@ -116,11 +134,18 @@ npx prisma migrate deploy
 
 | المشكلة | السبب المحتمل | الحل |
 |---------|----------------|------|
-| 503 أو "تعذر الاتصال بقاعدة البيانات" | استخدام رابط اتصال **مباشر** (منفذ 5432) بدل **Transaction** (منفذ 6543) | استخدم رابط Pooler مع `?pgbouncer=true` في `DATABASE_URL` (انظر القسم 2). |
+| **500 على التسجيل أو /api/packages أو /api/content/homepage** | غالباً **فشل الاتصال بقاعدة البيانات**: `DATABASE_URL` غير مضبوط على Vercel، أو استخدام رابط **مباشر** (منفذ 5432) بدل **Transaction** (منفذ 6543). | 1) من Vercel → Settings → Environment Variables تأكد وجود **DATABASE_URL**. 2) استخدم رابط **Transaction** من Supabase (منفذ **6543**) مع **`?pgbouncer=true`** في نهاية الرابط (انظر القسم 2). 3) Redeploy بعد التعديل. |
+| 503 أو "تعذر الاتصال بقاعدة البيانات" | نفس أعلاه: رابط خاطئ أو مفقود. | استخدم رابط Pooler مع `?pgbouncer=true` في `DATABASE_URL` (انظر القسم 2). |
+| 404 على مسار API | مسار خاطئ أو مشروع لم يُبنَ من آخر commit. | تأكد من الرابط (مثلاً `/api/packages` وليس `api/packages`). وتأكد أن Vercel يبني من الفرع الصحيح (مثلاً main). |
 | فشل تسجيل الدخول أو إعادة تعيين كلمة المرور | Site URL أو Redirect URLs غير مضبوطين في Supabase | راجع القسم 4. |
 | رفع الملفات لا يعمل على Vercel | عدم وجود **SUPABASE_SERVICE_ROLE_KEY** أو bucket **orders** | أضف المتغير على Vercel وأنشئ bucket **orders** (القسم 5). |
 | خطأ Prisma "prepared statement" | استخدام Transaction mode بدون `pgbouncer=true` | أضف `?pgbouncer=true` إلى نهاية `DATABASE_URL`. |
+| شاشة بيضاء أو خطأ عند فتح /login أو /register | `NEXT_PUBLIC_USE_SUPABASE_AUTH=true` مع غياب `NEXT_PUBLIC_SUPABASE_URL` أو `NEXT_PUBLIC_SUPABASE_ANON_KEY` | أضف المتغيرين على Vercel (Production/Preview حسب بيئة البناء) ثم Redeploy. إن كان البناء ينجح رغم النقص، شغّل `npm run verify-env` محلياً قبل الدفع؛ مع prebuild سيفشل البناء على Vercel عند تركيب env غير مكتمل. |
 
 ---
 
-للتفاصيل الإضافية (خطوات إنشاء المشروع على Vercel، إعداد Git، إلخ) راجع **docs/DEPLOYMENT.md**.
+## وثائق ذات صلة
+
+- **docs/DEPLOY-GITHUB-SUPABASE.md** — رفع المشروع خطوة بخطوة عبر GitHub و Supabase ثم النشر.
+- **docs/TESTING-PLAN.md** — خطة الفحص والتأكد من عمل المشروع بشكل صحيح وخالٍ من الأخطاء (محلياً وعلى Vercel).
+- **docs/DEPLOYMENT.md** — خطوات إنشاء المشروع على Vercel وإعداد Git (إن وُجد).

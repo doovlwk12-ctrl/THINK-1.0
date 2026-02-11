@@ -73,6 +73,10 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const supabase = createClient()
+    if (!supabase) {
+      setStatus('unauthenticated')
+      return
+    }
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event: string, session: { user?: { id: string; email?: string; user_metadata?: { name?: string } } } | null) => {
@@ -101,6 +105,9 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(
     async (email: string, password: string): Promise<SignInResult> => {
       const supabase = createClient()
+      if (!supabase) {
+        return { ok: false, error: 'إعداد المصادقة غير مكتمل. تحقق من متغيرات Supabase على Vercel ثم أعد النشر.' }
+      }
       const { data: result, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         const msg = (error.message ?? '').toLowerCase()
@@ -130,7 +137,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(
     async (options?: { callbackUrl?: string }) => {
       const supabase = createClient()
-      await supabase.auth.signOut()
+      if (supabase) await supabase.auth.signOut()
       setData(null)
       setStatus('unauthenticated')
       router.push(options?.callbackUrl ?? '/login')

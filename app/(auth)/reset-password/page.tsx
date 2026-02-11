@@ -23,6 +23,11 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     const supabase = createClient()
+    if (!supabase) {
+      setCheckingSession(false)
+      setHasRecoverySession(false)
+      return
+    }
     supabase.auth.getSession().then((res: { data: { session: { user?: unknown } | null } }) => {
       setCheckingSession(false)
       setHasRecoverySession(!!res.data.session?.user)
@@ -44,6 +49,10 @@ export default function ResetPasswordPage() {
     setLoading(true)
     try {
       const supabase = createClient()
+      if (!supabase) {
+        toast.error('إعداد المصادقة غير مكتمل. تحقق من متغيرات Supabase على Vercel ثم أعد النشر.')
+        return
+      }
       const { error } = await supabase.auth.updateUser({ password: p })
       if (error) {
         toast.error(error.message)

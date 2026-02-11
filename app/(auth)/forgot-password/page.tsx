@@ -34,6 +34,10 @@ export default function ForgotPasswordPage() {
     try {
       if (useSupabaseAuth) {
         const supabase = createClient()
+        if (!supabase) {
+          toast.error('إعداد المصادقة غير مكتمل. تحقق من متغيرات Supabase على Vercel ثم أعد النشر.')
+          return
+        }
         const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/reset-password`
         const { error } = await supabase.auth.resetPasswordForEmail(data.email.trim(), { redirectTo })
         if (error) {

@@ -214,6 +214,7 @@ npm run db:seed      # إنشاء بيانات تجريبية
 ### الوثائق الأساسية
 - [DOCUMENTATION.md](./DOCUMENTATION.md) - التوثيق الكامل
 - [docs/AUTH.md](./docs/AUTH.md) - المصادقة والصلاحيات (NextAuth / Supabase)
+- [docs/DEPLOY-GITHUB-SUPABASE.md](./docs/DEPLOY-GITHUB-SUPABASE.md) - رفع المشروع خطوة بخطوة عبر GitHub و Supabase
 - [docs/VERCEL-SUPABASE-CHECKLIST.md](./docs/VERCEL-SUPABASE-CHECKLIST.md) - قائمة تحقق لتشغيل المشروع على Vercel + Supabase بشكل صحيح بدون مشاكل
 - [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) - دليل النشر التفصيلي (Vercel + Supabase)
 - [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) - استكشاف الأخطاء وحلها — تفادي الإشكاليات الشائعة ومعالجتها
@@ -239,7 +240,7 @@ npm run db:seed      # إنشاء بيانات تجريبية
 
 ### النشر
 
-لنشر المنصة على **Vercel** مع **Supabase** (قاعدة بيانات + مصادقة): راجع [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) لشرح خطوة نشر Vercel ومتغيرات البيئة.
+لرفع المشروع عبر **GitHub** و **Supabase** ثم النشر: راجع [docs/DEPLOY-GITHUB-SUPABASE.md](./docs/DEPLOY-GITHUB-SUPABASE.md). لنشر المنصة على **Vercel** مع **Supabase** (قاعدة بيانات + مصادقة): راجع [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) لشرح خطوة نشر Vercel ومتغيرات البيئة.
 
 ### الاختبار
 - [TESTING.md](./TESTING.md) - دليل تشغيل الاختبارات (وحدة + E2E)

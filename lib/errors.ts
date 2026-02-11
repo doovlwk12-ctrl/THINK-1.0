@@ -68,10 +68,23 @@ export function handleApiError(error: unknown): Response {
         return Response.json(
           {
             success: false,
-            error: 'جدول غير موجود في قاعدة البيانات. نفّذ: npx tsx scripts/ensure-homepage-content-table.ts',
+            error: 'جدول غير موجود في قاعدة البيانات. نفّذ: npx prisma db push',
             ...(process.env.NODE_ENV === 'development' && { errorId, code: error.code }),
           },
           { status: 500 }
+        )
+      case 'P1000':
+        // Authentication failed against database (wrong password or URL)
+        logger.error('Database authentication failed (P1000)', {}, error as Error)
+        return Response.json(
+          {
+            success: false,
+            error:
+              process.env.NODE_ENV === 'production'
+                ? 'تعذر الاتصال بقاعدة البيانات. تحقق من DATABASE_URL على Vercel (كلمة المرور ورابط Pooler).'
+                : error.message,
+          },
+          { status: 503 }
         )
       default:
         return Response.json(
@@ -110,6 +123,24 @@ export function handleApiError(error: unknown): Response {
     )
   }
 
+  // Supabase / env missing (often on Vercel when env vars not loaded)
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase()
+    if (msg.includes('missing next_public_supabase') || msg.includes('supabase_url') || msg.includes('anon_key')) {
+      logger.error('Supabase env missing', {}, error)
+      return Response.json(
+        {
+          success: false,
+          error:
+            process.env.NODE_ENV === 'production'
+              ? 'إعداد Supabase غير مكتمل. تحقق من NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY على Vercel ثم Redeploy.'
+              : error.message,
+        },
+        { status: 503 }
+      )
+    }
+  }
+
   // Prisma / database connection errors (generic Error, not PrismaClientKnownRequestError)
   if (error instanceof Error) {
     const msg = error.message.toLowerCase()
@@ -119,7 +150,13 @@ export function handleApiError(error: unknown): Response {
       msg.includes('connection timed out') ||
       msg.includes('econnrefused') ||
       msg.includes('econnreset') ||
-      msg.includes('p1001') // Prisma P1001: Can't reach database server
+      msg.includes('p1001') || // Prisma P1001: Can't reach database server
+      msg.includes('p1000') || // Authentication failed
+      msg.includes('authentication failed') ||
+      msg.includes('database server') ||
+      msg.includes('connection pool') ||
+      msg.includes('connect econnrefused') ||
+      msg.includes('connect etimedout')
     if (isConnectionError) {
       logger.error('Database connection error', {}, error)
       return Response.json(
@@ -127,7 +164,7 @@ export function handleApiError(error: unknown): Response {
           success: false,
           error:
             process.env.NODE_ENV === 'production'
-              ? 'تعذر الاتصال بقاعدة البيانات. يرجى المحاولة لاحقاً.'
+              ? 'تعذر الاتصال بقاعدة البيانات. يرجى التحقق من إعداد DATABASE_URL على Vercel (استخدم وضع Transaction مع ?pgbouncer=true).'
               : error.message,
         },
         { status: 503 }

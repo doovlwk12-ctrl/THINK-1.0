@@ -49,6 +49,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (USE_SUPABASE_AUTH) {
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        logger.error('Supabase Auth enabled but env vars missing', {
+          hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+          hasAnon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        })
+        return Response.json(
+          { error: 'إعداد المصادقة غير مكتمل. تحقق من متغيرات Supabase على Vercel ثم أعد النشر.' },
+          { status: 503 }
+        )
+      }
       const supabase = createClientForAuthActions()
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: validatedData.email,
@@ -143,6 +153,10 @@ export async function POST(request: NextRequest) {
       user,
     })
   } catch (error: unknown) {
+    logger.error('Register failed', {
+      message: error instanceof Error ? error.message : String(error),
+      code: error && typeof error === 'object' && 'code' in error ? (error as { code: string }).code : undefined,
+    })
     return handleApiError(error)
   }
 }
