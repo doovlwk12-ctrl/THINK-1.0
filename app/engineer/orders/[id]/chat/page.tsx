@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { useOrderChat } from '@/hooks/useOrderChat'
+import { useOrderChat, type ChatMessage } from '@/hooks/useOrderChat'
 import { Send } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
@@ -26,7 +26,7 @@ export default function EngineerChatPage() {
   const orderId = params.id as string
 
   const chatEnabled = status === 'authenticated' && engineerOrAdmin(session?.user?.role)
-  const { messages, setMessages, loading, fetchError, fetchMessages } = useOrderChat(orderId, {
+  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages } = useOrderChat(orderId, {
     enabled: chatEnabled,
   })
 
@@ -91,7 +91,7 @@ export default function EngineerChatPage() {
     setMessages((prev) => [...prev, optimisticMessage])
 
     try {
-      const result = await apiClient.post<{ success: boolean; message?: Message }>(`/messages/${orderId}`, {
+      const result = await apiClient.post<{ success: boolean; message?: ChatMessage }>(`/messages/${orderId}`, {
         content: text,
       })
 

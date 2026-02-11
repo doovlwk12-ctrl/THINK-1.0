@@ -49,7 +49,7 @@ export default function ChatPage() {
   const orderId = params.id as string
 
   const chatEnabled = status === 'authenticated'
-  const { messages, setMessages, loading, fetchError, fetchMessages } = useOrderChat(orderId, {
+  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages } = useOrderChat(orderId, {
     enabled: chatEnabled,
   })
 

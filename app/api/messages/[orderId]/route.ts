@@ -22,24 +22,27 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: ALLOW_HEADERS })
 }
 
+const FALLBACK_503 = { success: false, error: 'تعذر تحميل المحادثة. تحقق من الاتصال وأعد المحاولة.' as const }
+const FALLBACK_503_HEADERS = { status: 503 as const, headers: ALLOW_HEADERS }
+
 export async function GET(
   request: NextRequest,
   context?: { params?: Promise<{ orderId: string }> | { orderId: string } }
-) {
+): Promise<Response> {
+  try {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const params = await Promise.resolve(context?.params ?? {}).catch(() => ({}))
-    const orderId =
-      params != null &&
-      typeof params === 'object' &&
-      'orderId' in params &&
-      typeof (params as { orderId: unknown }).orderId === 'string'
-        ? (params as { orderId: string }).orderId
-        : undefined
-    if (!orderId || typeof orderId !== 'string') {
+    const rawParams = context?.params
+    type ParamsShape = { orderId?: string }
+    const params: ParamsShape =
+      rawParams != null && typeof (rawParams as Promise<unknown>)?.then === 'function'
+        ? await (rawParams as Promise<ParamsShape>).catch((): ParamsShape => ({}))
+        : (rawParams ?? {}) as ParamsShape
+    const orderId = typeof params.orderId === 'string' ? params.orderId : undefined
+    if (!orderId) {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
 
@@ -131,9 +134,13 @@ export async function GET(
     )
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    const errWithCode = error as { code?: string }
-    console.error('[messages GET]', err.message, errWithCode?.code != null ? { code: errWithCode.code } : '')
-    if (process.env.NODE_ENV === 'development' && err.stack) console.error(err.stack)
+    const errWithCode = error as { code?: string; meta?: unknown }
+    console.error('[messages GET]', err.message, {
+      code: errWithCode?.code,
+      meta: errWithCode?.meta,
+      name: err.name,
+    })
+    if (err.stack) console.error('[messages GET] stack:', err.stack)
     try {
       logger.error('messages_get_error', { errorMessage: err.message }, err)
     } catch {
@@ -145,12 +152,12 @@ export async function GET(
       if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
       return res
     } catch {
-      // أي خطأ أو رد 5xx → نرجع 503 فقط (لا 500 أبداً)
-      return Response.json(
-        { success: false, error: 'تعذر تحميل المحادثة. تحقق من الاتصال وأعد المحاولة.' },
-        { status: 503, headers: ALLOW_HEADERS }
-      )
+      return Response.json(FALLBACK_503, FALLBACK_503_HEADERS)
     }
+  }
+  } catch (outer: unknown) {
+    console.error('[messages GET outer]', outer instanceof Error ? outer.message : String(outer))
+    return Response.json(FALLBACK_503, FALLBACK_503_HEADERS)
   }
 }
 
@@ -163,15 +170,14 @@ export async function POST(
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const params = await Promise.resolve(context?.params ?? {}).catch(() => ({}))
-    const orderId =
-      params != null &&
-      typeof params === 'object' &&
-      'orderId' in params &&
-      typeof (params as { orderId: unknown }).orderId === 'string'
-        ? (params as { orderId: string }).orderId
-        : undefined
-    if (!orderId || typeof orderId !== 'string') {
+    const rawParams = context?.params
+    type ParamsShape = { orderId?: string }
+    const params: ParamsShape =
+      rawParams != null && typeof (rawParams as Promise<unknown>)?.then === 'function'
+        ? await (rawParams as Promise<ParamsShape>).catch((): ParamsShape => ({}))
+        : (rawParams ?? {}) as ParamsShape
+    const orderId = typeof params.orderId === 'string' ? params.orderId : undefined
+    if (!orderId) {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
     const body = await request.json()
@@ -252,17 +258,23 @@ export async function POST(
     )
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    const errWithCode = error as { code?: string }
-    console.error('[messages POST]', err.message, errWithCode?.code != null ? { code: errWithCode.code } : '')
-    if (process.env.NODE_ENV === 'development' && err.stack) console.error(err.stack)
-    const res = handleApiError(error)
-    if (res.status >= 500) {
+    const errWithCode = error as { code?: string; meta?: unknown }
+    console.error('[messages POST]', err.message, {
+      code: errWithCode?.code,
+      meta: errWithCode?.meta,
+      name: err.name,
+    })
+    if (err.stack) console.error('[messages POST] stack:', err.stack)
+    try {
+      const res = handleApiError(error)
+      if (res.status >= 500) throw new Error('use 503')
+      if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
+      return res
+    } catch {
       return Response.json(
         { success: false, error: 'تعذر إرسال الرسالة. تحقق من الاتصال وأعد المحاولة.' },
         { status: 503, headers: ALLOW_HEADERS }
       )
     }
-    if (ALLOW_HEADERS.Allow) res.headers.set('Allow', ALLOW_HEADERS.Allow)
-    return res
   }
 }

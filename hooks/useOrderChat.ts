@@ -17,7 +17,7 @@ export interface ChatMessage {
 
 const DEFAULT_POLL_INTERVAL_MS = 3000
 const MAX_CONSECUTIVE_FAILURES = 3
-const FETCH_ERROR_503 = 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
+const FETCH_ERROR_SERVER = 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
 
 export function useOrderChat(
   orderId: string,
@@ -47,20 +47,19 @@ export function useOrderChat(
         }
       } catch (e) {
         const err = e as Error & { status?: number }
-        const msg =
-          err.status === 503
-            ? FETCH_ERROR_503
-            : e instanceof Error
-              ? e.message
-              : 'فشل تحميل المحادثة'
-        if (isInitial) {
-          setFetchError(msg)
+        const isServerError = err.status === 503 || err.status === 500
+        const msg = isServerError
+          ? FETCH_ERROR_SERVER
+          : e instanceof Error
+            ? e.message
+            : 'فشل تحميل المحادثة'
+        setFetchError(msg)
+        if (isInitial || isServerError) {
           setPollingStopped(true)
         }
         consecutiveFailuresRef.current += 1
         if (consecutiveFailuresRef.current >= MAX_CONSECUTIVE_FAILURES) {
           setPollingStopped(true)
-          setFetchError(msg)
         }
       } finally {
         setLoading(false)
@@ -79,5 +78,5 @@ export function useOrderChat(
     return () => clearInterval(interval)
   }, [enabled, orderId, pollIntervalMs, pollingStopped, fetchMessages])
 
-  return { messages, setMessages, loading, fetchError, fetchMessages }
+  return { messages, setMessages, loading, setLoading, fetchError, fetchMessages }
 }
