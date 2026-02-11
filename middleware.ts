@@ -123,6 +123,14 @@ async function supabaseMiddleware(req: NextRequestWithAuth, event: NextFetchEven
   if (rateLimitOut && 'response' in rateLimitOut) return rateLimitOut.response
   const rateLimitResult = rateLimitOut?.rateLimitResult ?? null
 
+  // طلبات Polling: تخطي فحص الجلسة في الـ Middleware لتسريع الاستجابة وتقليل الضغط على Auth (الـ API يتحقق لاحقاً)
+  const isPollingApi = path.startsWith('/api/messages/') || path.startsWith('/api/notifications')
+  if (isPollingApi) {
+    const response = NextResponse.next()
+    if (rateLimitResult) applyRateLimitHeaders(response, path, rateLimitResult)
+    return response
+  }
+
   const response = NextResponse.next()
   let user: { id: string } | null = null
   let resWithAuth = response

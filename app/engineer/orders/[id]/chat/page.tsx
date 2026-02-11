@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useOrderChat, type ChatMessage } from '@/hooks/useOrderChat'
-import { Send } from 'lucide-react'
+import { Send, Loader2 } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
 import { Loading } from '@/components/shared/Loading'
@@ -26,7 +26,7 @@ export default function EngineerChatPage() {
   const orderId = params.id as string
 
   const chatEnabled = status === 'authenticated' && engineerOrAdmin(session?.user?.role)
-  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages } = useOrderChat(orderId, {
+  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages, fetchingMore } = useOrderChat(orderId, {
     enabled: chatEnabled,
   })
 
@@ -73,7 +73,7 @@ export default function EngineerChatPage() {
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim()) return
+    if (!newMessage.trim() || sending) return
 
     const text = newMessage.trim()
     setNewMessage('')
@@ -147,7 +147,13 @@ export default function EngineerChatPage() {
             </Button>
           </div>
         )}
-        <Card className="flex-1 flex flex-col dark:bg-charcoal-800 dark:border-charcoal-600">
+        <Card className="flex-1 flex flex-col dark:bg-charcoal-800 dark:border-charcoal-600 relative">
+          {fetchingMore && (
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-3 py-1.5 rounded-full bg-rocky-blue/90 dark:bg-rocky-blue-600/90 text-cream text-xs shadow-md">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>جاري التحقق من رسائل جديدة...</span>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {loading && messages.length === 0 && !fetchError ? (
               <div className="flex flex-col items-center justify-center min-h-[200px] py-12">

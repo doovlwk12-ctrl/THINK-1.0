@@ -18,6 +18,8 @@ export interface ChatMessage {
 /** كل 15 ثانية لتقليل الحمل على السيرفر والطلبات في الـ Terminal */
 const DEFAULT_POLL_INTERVAL_MS = 15000
 const MAX_CONSECUTIVE_FAILURES = 3
+/** بعد خطأ 500/503 لا نستأنف المحاولة إلا بعد دقيقة أو تحديث الصفحة */
+const RETRY_AFTER_MS = 60_000
 const FETCH_ERROR_SERVER = 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
 
 export function useOrderChat(
@@ -28,16 +30,23 @@ export function useOrderChat(
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [pollingStopped, setPollingStopped] = useState(false)
+  const [fetchingMore, setFetchingMore] = useState(false)
   const consecutiveFailuresRef = useRef(0)
+  const retryAfterTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { enabled, pollIntervalMs = DEFAULT_POLL_INTERVAL_MS } = options
 
   const fetchMessages = useCallback(
     async (isInitial = false) => {
+      if (!isInitial) setFetchingMore(true)
       try {
         if (isInitial) {
           setFetchError(null)
           consecutiveFailuresRef.current = 0
           setPollingStopped(false)
+          if (retryAfterTimeoutRef.current) {
+            clearTimeout(retryAfterTimeoutRef.current)
+            retryAfterTimeoutRef.current = null
+          }
         }
         const result = await apiClient.get<{ success: boolean; messages: ChatMessage[] }>(
           `/messages/${orderId}`
@@ -57,6 +66,13 @@ export function useOrderChat(
         setFetchError(msg)
         if (isInitial || isServerError) {
           setPollingStopped(true)
+          if (isServerError) {
+            if (retryAfterTimeoutRef.current) clearTimeout(retryAfterTimeoutRef.current)
+            retryAfterTimeoutRef.current = setTimeout(() => {
+              setPollingStopped(false)
+              retryAfterTimeoutRef.current = null
+            }, RETRY_AFTER_MS)
+          }
         }
         consecutiveFailuresRef.current += 1
         if (consecutiveFailuresRef.current >= MAX_CONSECUTIVE_FAILURES) {
@@ -64,6 +80,7 @@ export function useOrderChat(
         }
       } finally {
         setLoading(false)
+        setFetchingMore(false)
       }
     },
     [orderId]
@@ -74,12 +91,17 @@ export function useOrderChat(
     fetchMessages(true)
     const interval = setInterval(() => {
       if (consecutiveFailuresRef.current >= MAX_CONSECUTIVE_FAILURES) return
-      // عدم الطلب عند عدم ظهور تبويب المحادثة (يقلل العمليات في الـ Terminal)
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
       fetchMessages(false)
     }, pollIntervalMs)
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      if (retryAfterTimeoutRef.current) {
+        clearTimeout(retryAfterTimeoutRef.current)
+        retryAfterTimeoutRef.current = null
+      }
+    }
   }, [enabled, orderId, pollIntervalMs, pollingStopped, fetchMessages])
 
-  return { messages, setMessages, loading, setLoading, fetchError, fetchMessages }
+  return { messages, setMessages, loading, setLoading, fetchError, fetchMessages, fetchingMore }
 }

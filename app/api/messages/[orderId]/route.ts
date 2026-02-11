@@ -42,8 +42,10 @@ export async function GET(
         : (rawParams ?? {}) as ParamsBox
     const orderId = resolvedParams.orderId != null ? String(resolvedParams.orderId).trim() : ''
     console.log('Fetching messages for order:', orderId)
+
+    // حماية: orderId غير صالح أو طلب غير موجود → 200 مع مصفوفة فارغة (بدون 500 أو 404)
     if (!orderId) {
-      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
+      return Response.json({ success: true, messages: [] }, { status: 200, headers: ALLOW_HEADERS })
     }
 
     let auth: { userId: string; role: string }
@@ -55,17 +57,13 @@ export async function GET(
       auth = result.auth
     }
 
-    // Check order exists; access check skipped when SKIP_MESSAGES_AUTH
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, clientId: true, engineerId: true },
     })
 
     if (!order) {
-      return Response.json(
-        { error: 'الطلب غير موجود' },
-        { status: 404, headers: ALLOW_HEADERS }
-      )
+      return Response.json({ success: true, messages: [] }, { status: 200, headers: ALLOW_HEADERS })
     }
 
     if (!SKIP_MESSAGES_AUTH) {
@@ -88,12 +86,18 @@ export async function GET(
       }
     }
 
-    // الربط عبر حقل orderId في جدول Message
-    const messages = await prisma.message.findMany({
-      where: { orderId },
-      include: { sender: true },
-      orderBy: { createdAt: 'asc' },
-    })
+    // فلترة دقيقة بـ orderId (CUID) — الربط عبر حقل orderId في جدول Message
+    let messages: Awaited<ReturnType<typeof prisma.message.findMany>>
+    try {
+      messages = await prisma.message.findMany({
+        where: { orderId },
+        include: { sender: true },
+        orderBy: { createdAt: 'asc' },
+      })
+    } catch (findErr) {
+      console.error('[messages GET] findMany failed', findErr)
+      return Response.json({ success: true, messages: [] }, { status: 200, headers: ALLOW_HEADERS })
+    }
 
     // Mark messages as read (non-blocking); تخطي عند تعطيل Auth
     if (auth.userId) {
@@ -175,17 +179,24 @@ export async function POST(
     if (result instanceof NextResponse) return result
     const { auth } = result
 
+    // استخراج orderId كـ String نقي (CUID) من المسار
     const rawParams = context?.params
-    type ParamsShape = { orderId?: string }
-    const params: ParamsShape =
+    type ParamsBox = { orderId?: string }
+    const resolvedParams: ParamsBox =
       rawParams != null && typeof (rawParams as Promise<unknown>)?.then === 'function'
-        ? await (rawParams as Promise<ParamsShape>).catch((): ParamsShape => ({}))
-        : (rawParams ?? {}) as ParamsShape
-    const orderId = typeof params.orderId === 'string' ? params.orderId : undefined
+        ? await (rawParams as Promise<ParamsBox>).catch((): ParamsBox => ({}))
+        : (rawParams ?? {}) as ParamsBox
+    const orderId = resolvedParams.orderId != null ? String(resolvedParams.orderId).trim() : ''
     if (!orderId) {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
-    const body = await request.json()
+
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return Response.json({ error: 'تنسيق الطلب غير صالح' }, { status: 400, headers: ALLOW_HEADERS })
+    }
     const { content } = postMessageSchema.parse(body)
 
     const order = await prisma.order.findUnique({
