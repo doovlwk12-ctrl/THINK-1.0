@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { handleApiError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
-import { sanitizeText } from '@/lib/sanitize'
+import { sanitizeText } from '@/lib/sanitizeText'
 import { notifyMessageReceived } from '@/lib/notifications'
 import { isOrderExpired } from '@/lib/utils'
 

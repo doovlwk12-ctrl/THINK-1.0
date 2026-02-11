@@ -16,6 +16,19 @@
 
 ---
 
+## 1.1 السبب الفعلي من سجلات Vercel (ERR_REQUIRE_ESM)
+
+في سجلات Runtime Logs على Vercel يظهر الخطأ:
+
+- **`[ERR_REQUIRE_ESM]: require() of ES Module ... @exodus/bytes/encoding-lite.js from html-encoding-sniffer not supported`**
+- **FUNCTION_INVOCATION_FAILED** للطلب (GET 500 و POST 405).
+
+**السبب:** مسار `/api/messages/[orderId]` كان يستورد `sanitizeText` من `@/lib/sanitize`. ملف `sanitize.ts` يستورد `isomorphic-dompurify` في بداية الملف، وهذا يسحب `html-encoding-sniffer` ثم `@exodus/bytes` (وحدة ESM فقط). على بيئة Vercel Serverless يتم استخدام `require()` لتحميل السلسلة، فيفشل التحميل قبل تنفيذ الـ handler فيُرجع 500/405.
+
+**الإصلاح المطبّق:** إنشاء وحدة خفيفة `lib/sanitizeText.ts` تحتوي فقط على دالة `sanitizeText` (نفس المنطق بنظام regex، بدون أي استيراد لـ DOMPurify). استبدال استيراد مساري الرسائل من `@/lib/sanitize` إلى `@/lib/sanitizeText`. بهذا لا يُحمّل مسار الرسائل `isomorphic-dompurify` ولا يحدث ERR_REQUIRE_ESM.
+
+---
+
 ## 2. ترتيب الأسباب (من الأعلى إلى الأقل)
 
 ### خطأ 500 (GET)
