@@ -49,9 +49,8 @@ export default function ChatPage() {
   const orderId = params.id as string
 
   const chatEnabled = status === 'authenticated'
-  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages, fetchingMore } = useOrderChat(orderId, {
-    enabled: chatEnabled,
-  })
+  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages, fetchingMore, broadcastMessage } =
+    useOrderChat(orderId, { enabled: chatEnabled })
 
   const [plans, setPlans] = useState<Plan[]>([])
   const [revisions, setRevisions] = useState<RevisionRequest[]>([])
@@ -181,12 +180,14 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, optimisticMessage])
 
     try {
-      const result = await apiClient.post<{ success: boolean; message?: ChatMessage }>(`/messages/${orderId}`, {
+      const result = await apiClient.post<{ success: boolean; message?: ChatMessage }>('/chat/send', {
+        orderId,
         content: text,
       })
 
       if (result.success && result.message) {
         setMessages((prev) => prev.map((m) => (m.id === optimisticId ? result.message! : m)))
+        broadcastMessage(result.message)
         fetchMessages(false)
       } else if (result.success) {
         fetchMessages(false)

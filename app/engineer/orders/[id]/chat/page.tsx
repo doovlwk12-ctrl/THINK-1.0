@@ -26,9 +26,8 @@ export default function EngineerChatPage() {
   const orderId = params.id as string
 
   const chatEnabled = status === 'authenticated' && engineerOrAdmin(session?.user?.role)
-  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages, fetchingMore } = useOrderChat(orderId, {
-    enabled: chatEnabled,
-  })
+  const { messages, setMessages, loading, setLoading, fetchError, fetchMessages, fetchingMore, broadcastMessage } =
+    useOrderChat(orderId, { enabled: chatEnabled })
 
   const [newMessage, setNewMessage] = useState('')
   const [sending, setSending] = useState(false)
@@ -91,12 +90,14 @@ export default function EngineerChatPage() {
     setMessages((prev) => [...prev, optimisticMessage])
 
     try {
-      const result = await apiClient.post<{ success: boolean; message?: ChatMessage }>(`/messages/${orderId}`, {
+      const result = await apiClient.post<{ success: boolean; message?: ChatMessage }>('/chat/send', {
+        orderId,
         content: text,
       })
 
       if (result.success && result.message) {
         setMessages((prev) => prev.map((m) => (m.id === optimisticId ? result.message! : m)))
+        broadcastMessage(result.message)
         fetchMessages(false)
       } else if (result.success) {
         fetchMessages(false)

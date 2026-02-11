@@ -22,6 +22,7 @@ function applyRateLimitHeaders(
   if (!path.startsWith('/api/') || !rateLimitResult) return
   const isPollingEndpoint =
     path.includes('/messages/') ||
+    path.includes('/chat/') ||
     path.includes('/notifications') ||
     path.includes('/orders/my-orders') ||
     path.includes('/engineer/orders') ||
@@ -44,6 +45,7 @@ async function runRateLimit(path: string, req: NextRequestWithAuth) {
   if (!path.startsWith('/api/')) return null
   const isPollingEndpoint =
     path.includes('/messages/') ||
+    path.includes('/chat/') ||
     path.includes('/notifications') ||
     path.includes('/orders/my-orders') ||
     path.includes('/engineer/orders') ||
@@ -124,7 +126,10 @@ async function supabaseMiddleware(req: NextRequestWithAuth, event: NextFetchEven
   const rateLimitResult = rateLimitOut?.rateLimitResult ?? null
 
   // طلبات Polling: تخطي فحص الجلسة في الـ Middleware لتسريع الاستجابة وتقليل الضغط على Auth (الـ API يتحقق لاحقاً)
-  const isPollingApi = path.startsWith('/api/messages/') || path.startsWith('/api/notifications')
+  const isPollingApi =
+    path.startsWith('/api/messages/') ||
+    path.startsWith('/api/chat/') ||
+    path.startsWith('/api/notifications')
   if (isPollingApi) {
     const response = NextResponse.next()
     if (rateLimitResult) applyRateLimitHeaders(response, path, rateLimitResult)
