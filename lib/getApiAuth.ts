@@ -24,32 +24,33 @@ export interface ApiAuth {
 }
 
 export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
-  if (USE_SUPABASE_AUTH) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!url || !anonKey) {
-      return null
-    }
-    type SupabaseUser = { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } | null }
-    let user: SupabaseUser | null = null
-    try {
-      if (request) {
-        const supabaseReq = createClientFromRequest(request)
-        const { data } = await supabaseReq.auth.getUser()
-        user = data?.user as SupabaseUser ?? null
+  try {
+    if (USE_SUPABASE_AUTH) {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      if (!url || !anonKey) {
+        return null
       }
-      if (!user?.id) {
-        const supabase = await createSupabaseServer()
-        const { data } = await supabase.auth.getUser()
-        user = data?.user as SupabaseUser ?? null
+      type SupabaseUser = { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string } | null }
+      let user: SupabaseUser | null = null
+      try {
+        if (request) {
+          const supabaseReq = createClientFromRequest(request)
+          const { data } = await supabaseReq.auth.getUser()
+          user = data?.user as SupabaseUser ?? null
+        }
+        if (!user?.id) {
+          const supabase = await createSupabaseServer()
+          const { data } = await supabase.auth.getUser()
+          user = data?.user as SupabaseUser ?? null
+        }
+      } catch {
+        return null
       }
-    } catch {
-      return null
-    }
-    if (!user?.id) return null
+      if (!user?.id) return null
 
-    try {
-      let dbUser = await prisma.user.findUnique({
+      try {
+        let dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         select: { id: true, role: true },
       })
@@ -97,16 +98,19 @@ export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
       if (!dbUser) return null
       const role = (dbUser.role as ApiRole) ?? 'CLIENT'
       return { userId: dbUser.id, source: 'supabase', role }
-    } catch {
-      return null
+      } catch {
+        return null
+      }
     }
-  }
 
-  const session = await getServerSession(authOptions)
-  if (session?.user?.id) {
-    const role = (session.user.role as ApiRole) ?? 'CLIENT'
-    return { userId: session.user.id, source: 'nextauth', role }
-  }
+    const session = await getServerSession(authOptions)
+    if (session?.user?.id) {
+      const role = (session.user.role as ApiRole) ?? 'CLIENT'
+      return { userId: session.user.id, source: 'nextauth', role }
+    }
 
-  return null
+    return null
+  } catch {
+    return null
+  }
 }

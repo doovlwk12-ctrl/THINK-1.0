@@ -21,9 +21,18 @@ export type RequireAuthResponse = RequireAuthResult | NextResponse
 
 /**
  * Returns current auth or 401 response.
+ * If getApiAuth throws (e.g. env or Supabase client error), returns 503 to avoid 500.
  */
 export async function requireAuth(request: Request): Promise<RequireAuthResponse> {
-  const auth = await getApiAuth(request)
+  let auth: Awaited<ReturnType<typeof getApiAuth>>
+  try {
+    auth = await getApiAuth(request)
+  } catch {
+    return NextResponse.json(
+      { error: 'تعذر التحقق من الجلسة. تحقق من إعداد Supabase و DATABASE_URL على Vercel ثم أعد المحاولة.' },
+      { status: 503 }
+    )
+  }
   if (!auth) return UNAUTHORIZED
   return { auth }
 }

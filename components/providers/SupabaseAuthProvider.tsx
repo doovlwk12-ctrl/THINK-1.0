@@ -120,21 +120,46 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) {
         return { ok: false, error: 'إعداد المصادقة غير مكتمل. تحقق من متغيرات Supabase على Vercel ثم أعد النشر.' }
       }
-      const { data: result, error } = await supabase.auth.signInWithPassword({ email, password })
+      let { data: result, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         const msg = (error.message ?? '').toLowerCase()
+        const isInvalidCreds =
+          msg.includes('invalid login') ||
+          msg.includes('invalid credentials') ||
+          msg.includes('user not found') ||
+          msg.includes('invalid_grant')
+        if (isInvalidCreds) {
+          try {
+            const ensureRes = await fetch('/api/auth/ensure-supabase-user', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password }),
+              credentials: 'include',
+            })
+            const ensureData = await ensureRes.json().catch(() => ({}))
+            if (ensureRes.ok && ensureData?.success) {
+              const retry = await supabase.auth.signInWithPassword({ email, password })
+              if (!retry.error && retry.data?.user) {
+                await new Promise((r) => setTimeout(r, 400))
+                const session = await fetchMe()
+                setData(session)
+                setStatus(session ? 'authenticated' : 'unauthenticated')
+                return { ok: true, user: session?.user }
+              }
+            }
+          } catch {
+            // fall through to generic error
+          }
+        }
         const arabicError =
           msg.includes('email not confirmed') || msg.includes('confirm your signup')
             ? 'البريد الإلكتروني غير مؤكد. إن كنت قد سجّلت للتو، فعّل خيار «عدم طلب تأكيد البريد» من لوحة Supabase (Authentication → Email → Confirm email) لتسجيل دخول عادي.'
-            : msg.includes('invalid login') || msg.includes('invalid credentials')
+            : isInvalidCreds
               ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
-              : msg.includes('user not found')
-                ? 'لا يوجد حساب بهذا البريد'
-                : error.message
+              : error.message
         return { ok: false, error: arabicError }
       }
       if (result?.user) {
-        // إعطاء المتصفح وقتاً لكتابة كوكيز الجلسة قبل أي طلب تالٍ (مهم للـ middleware)
         await new Promise((r) => setTimeout(r, 400))
         const session = await fetchMe()
         setData(session)

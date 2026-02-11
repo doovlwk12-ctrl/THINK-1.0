@@ -24,22 +24,22 @@ export async function OPTIONS() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> | { orderId: string } }
+  context: { params: Promise<{ orderId: string }> | { orderId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const resolvedParams = await Promise.resolve(params).catch(() => ({}))
+    const params = await Promise.resolve(context.params).catch(() => ({}))
     const orderId =
-      resolvedParams != null &&
-      typeof resolvedParams === 'object' &&
-      'orderId' in resolvedParams &&
-      typeof (resolvedParams as { orderId: unknown }).orderId === 'string'
-        ? (resolvedParams as { orderId: string }).orderId
+      params != null &&
+      typeof params === 'object' &&
+      'orderId' in params &&
+      typeof (params as { orderId: unknown }).orderId === 'string'
+        ? (params as { orderId: string }).orderId
         : undefined
-    if (!orderId) {
+    if (!orderId || typeof orderId !== 'string') {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
 
@@ -140,22 +140,22 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> | { orderId: string } }
+  context: { params: Promise<{ orderId: string }> | { orderId: string } }
 ) {
   try {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const resolvedParams = await Promise.resolve(params).catch(() => ({}))
+    const params = await Promise.resolve(context.params).catch(() => ({}))
     const orderId =
-      resolvedParams != null &&
-      typeof resolvedParams === 'object' &&
-      'orderId' in resolvedParams &&
-      typeof (resolvedParams as { orderId: unknown }).orderId === 'string'
-        ? (resolvedParams as { orderId: string }).orderId
+      params != null &&
+      typeof params === 'object' &&
+      'orderId' in params &&
+      typeof (params as { orderId: unknown }).orderId === 'string'
+        ? (params as { orderId: string }).orderId
         : undefined
-    if (!orderId) {
+    if (!orderId || typeof orderId !== 'string') {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
     const body = await request.json()
