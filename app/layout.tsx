@@ -30,6 +30,7 @@ const cairo = Cairo({
 export const metadata: Metadata = {
   title: 'منصة فكرة - التخطيط المعماري',
   description: 'منصة هندسية معمارية للتخطيط - ربط العملاء بالمهندسين المعماريين',
+  icons: { icon: '/icon' },
 }
 
 export default function RootLayout({
