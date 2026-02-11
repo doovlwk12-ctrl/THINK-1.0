@@ -24,7 +24,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate-apply-features": "node scripts/apply-features-migration.js",
     "db:migrate-resolve-features": "prisma migrate resolve --applied 20250201000000_add_package_features_json",
-    "db:migrate-sqlite-to-postgres": "tsx scripts/migrate-sqlite-to-postgres.ts"
+    "db:migrate-sqlite-to-postgres": "tsx scripts/migrate-sqlite-to-postgres.ts",
+    "export:users-csv": "tsx scripts/export-users-csv.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
