@@ -50,7 +50,10 @@ async function main() {
 
   if (!url || !serviceRoleKey) {
     console.error('المتغيرات المطلوبة: NEXT_PUBLIC_SUPABASE_URL (أو SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY')
+    if (!url) console.error('  → الناقص: NEXT_PUBLIC_SUPABASE_URL أو SUPABASE_URL (رابط مشروع Supabase)')
+    if (!serviceRoleKey) console.error('  → الناقص: SUPABASE_SERVICE_ROLE_KEY (مفتاح service_role من لوحة Supabase)')
     console.error('الملف المُحمّل من:', path.join(root, '.env'))
+    console.error('تأكد أن السطور غير معلّقة في .env وأن القيم بدون مسافات زائدة.')
     process.exit(1)
   }
   if (!tempPassword || tempPassword.length < 6) {

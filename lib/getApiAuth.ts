@@ -81,7 +81,7 @@ export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
             },
           })
           dbUser = { id: user.id, role: 'CLIENT' }
-        } catch (createErr) {
+        } catch {
           const existingByEmail = await prisma.user.findFirst({
             where: { email },
             select: { id: true, role: true },

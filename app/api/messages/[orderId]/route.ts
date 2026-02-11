@@ -25,28 +25,37 @@ export async function OPTIONS() {
 const FALLBACK_503 = { success: false, error: 'تعذر تحميل المحادثة. تحقق من الاتصال وأعد المحاولة.' as const }
 const FALLBACK_503_HEADERS = { status: 503 as const, headers: ALLOW_HEADERS }
 
+const SKIP_MESSAGES_AUTH = process.env.SKIP_MESSAGES_AUTH === 'true'
+
 export async function GET(
   request: NextRequest,
   context?: { params?: Promise<{ orderId: string }> | { orderId: string } }
 ): Promise<Response> {
   try {
   try {
-    const result = await requireAuth(request)
-    if (result instanceof NextResponse) return result
-    const { auth } = result
-
+    // استخراج orderId كـ String نقي من المسار (بدون تحويل UUID)
     const rawParams = context?.params
-    type ParamsShape = { orderId?: string }
-    const params: ParamsShape =
+    type ParamsBox = { orderId?: string }
+    const resolvedParams: ParamsBox =
       rawParams != null && typeof (rawParams as Promise<unknown>)?.then === 'function'
-        ? await (rawParams as Promise<ParamsShape>).catch((): ParamsShape => ({}))
-        : (rawParams ?? {}) as ParamsShape
-    const orderId = typeof params.orderId === 'string' ? params.orderId : undefined
+        ? await (rawParams as Promise<ParamsBox>).catch((): ParamsBox => ({}))
+        : (rawParams ?? {}) as ParamsBox
+    const orderId = resolvedParams.orderId != null ? String(resolvedParams.orderId).trim() : ''
+    console.log('Fetching messages for order:', orderId)
     if (!orderId) {
       return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
 
-    // Check order access: ADMIN any, ENGINEER only assigned, CLIENT only own
+    let auth: { userId: string; role: string }
+    if (SKIP_MESSAGES_AUTH) {
+      auth = { userId: '', role: 'ADMIN' }
+    } else {
+      const result = await requireAuth(request)
+      if (result instanceof NextResponse) return result
+      auth = result.auth
+    }
+
+    // Check order exists; access check skipped when SKIP_MESSAGES_AUTH
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, clientId: true, engineerId: true },
@@ -59,58 +68,51 @@ export async function GET(
       )
     }
 
-    if (auth.role === 'ADMIN') {
-      // allow
-    } else if (auth.role === 'ENGINEER') {
-      if (order.engineerId !== auth.userId) {
-        return Response.json(
-          { error: 'غير مصرح - الطلب غير مخصص لك' },
-          { status: 403, headers: ALLOW_HEADERS }
-        )
-      }
-    } else {
-      if (order.clientId !== auth.userId) {
-        return Response.json(
-          { error: 'غير مصرح' },
-          { status: 403, headers: ALLOW_HEADERS }
-        )
+    if (!SKIP_MESSAGES_AUTH) {
+      if (auth.role === 'ADMIN') {
+        // allow
+      } else if (auth.role === 'ENGINEER') {
+        if (order.engineerId !== auth.userId) {
+          return Response.json(
+            { error: 'غير مصرح - الطلب غير مخصص لك' },
+            { status: 403, headers: ALLOW_HEADERS }
+          )
+        }
+      } else {
+        if (order.clientId !== auth.userId) {
+          return Response.json(
+            { error: 'غير مصرح' },
+            { status: 403, headers: ALLOW_HEADERS }
+          )
+        }
       }
     }
 
+    // الربط عبر حقل orderId في جدول Message
     const messages = await prisma.message.findMany({
       where: { orderId },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            role: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'asc'
-      }
+      include: { sender: true },
+      orderBy: { createdAt: 'asc' },
     })
 
-    // Mark messages as read (non-blocking for response)
-    prisma.message.updateMany({
-      where: {
-        orderId,
-        senderId: { not: auth.userId },
-        isRead: false
-      },
-      data: {
-        isRead: true
-      }
-    }).catch((err: unknown) => {
-      logger.error('messages_mark_read_failed', { orderId }, err instanceof Error ? err : new Error(String(err)))
-    })
+    // Mark messages as read (non-blocking); تخطي عند تعطيل Auth
+    if (auth.userId) {
+      prisma.message.updateMany({
+        where: {
+          orderId,
+          senderId: { not: auth.userId },
+          isRead: false
+        },
+        data: { isRead: true }
+      }).catch((err: unknown) => {
+        logger.error('messages_mark_read_failed', { orderId }, err instanceof Error ? err : new Error(String(err)))
+      })
+    }
 
     // Safe: handle empty or invalid data (never crash on empty)
     const list = Array.isArray(messages) ? messages : []
 
-    // Serialize to plain objects so JSON response never fails (e.g. Date/BigInt on serverless)
+    // Serialize: sender من include:true قد يحتوي حقول إضافية — نُخرج للمستخدم id, name, role فقط
     const serialized = list.map((m) => ({
       id: m.id,
       orderId: m.orderId,

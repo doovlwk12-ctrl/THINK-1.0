@@ -15,7 +15,8 @@ export interface ChatMessage {
   isRead?: boolean
 }
 
-const DEFAULT_POLL_INTERVAL_MS = 3000
+/** كل 15 ثانية لتقليل الحمل على السيرفر والطلبات في الـ Terminal */
+const DEFAULT_POLL_INTERVAL_MS = 15000
 const MAX_CONSECUTIVE_FAILURES = 3
 const FETCH_ERROR_SERVER = 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
 
@@ -73,6 +74,8 @@ export function useOrderChat(
     fetchMessages(true)
     const interval = setInterval(() => {
       if (consecutiveFailuresRef.current >= MAX_CONSECUTIVE_FAILURES) return
+      // عدم الطلب عند عدم ظهور تبويب المحادثة (يقلل العمليات في الـ Terminal)
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
       fetchMessages(false)
     }, pollIntervalMs)
     return () => clearInterval(interval)

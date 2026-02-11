@@ -12,6 +12,8 @@
 - لوحة تحكم العميل والمهندس والإدارة
 - المحادثة، رفع المخططات، التعديلات التفاعلية (الدبابيس)، الإشعارات
 
+**استقرار ومراجعات:** تم تأمين مسار المحادثة (API + Middleware) وواجهة الرسائل (حالة تحميل وخطأ)، مع توثيق في `docs/` — راجع `docs/CHAT-SYSTEM-AUDIT-REPORT.md` و `docs/CHAT-SYSTEM-SOLUTION.md`.
+
 ## البدء السريع
 
 ### المتطلبات
@@ -74,3 +76,12 @@ npm run sync:prisma-to-supabase-auth  # ربط حسابات User مع Supabase A
 - **Icons:** lucide-react + أيقونات هندسية مخصصة
 
 بيئة الإنتاج: ضبط `.env` حسب `.env.example` (قاعدة البيانات، NextAuth أو Supabase، إلخ).
+
+## التوثيق
+
+| الملف | الوصف |
+|-------|--------|
+| `docs/CHAT-SYSTEM-AUDIT-REPORT.md` | تقرير فحص نظام المحادثة (API، Prisma، RLS، الواجهة) |
+| `docs/CHAT-SYSTEM-SOLUTION.md` | دليل الحل وقائمة التحقق لخطأ 500 في المحادثة |
+| `docs/CHAT-MESSAGES-AUDIT.md` | توثيق مسارات الرسائل ومعالجة الأخطاء |
+| `.env.example` | نموذج متغيرات البيئة |

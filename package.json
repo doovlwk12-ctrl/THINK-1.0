@@ -74,6 +74,9 @@
     "vitest": "^2.0.0"
   },
   "overrides": {
-    "rimraf": "^5.0.5"
+    "rimraf": "^5.0.5",
+    "glob": "^13.0.0",
+    "@humanwhocodes/config-array": "npm:@eslint/config-array@^0.18.0",
+    "@humanwhocodes/object-schema": "npm:@eslint/object-schema@^0.18.0"
   }
 }

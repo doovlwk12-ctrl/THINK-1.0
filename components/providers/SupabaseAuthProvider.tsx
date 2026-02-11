@@ -120,7 +120,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) {
         return { ok: false, error: 'إعداد المصادقة غير مكتمل. تحقق من متغيرات Supabase على Vercel ثم أعد النشر.' }
       }
-      let { data: result, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: result, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         const msg = (error.message ?? '').toLowerCase()
         const isInvalidCreds =

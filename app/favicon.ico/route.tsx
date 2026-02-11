@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 
+// Edge required for next/og ImageResponse; Vercel warning about static generation is expected
 export const runtime = 'edge'
 
 export async function GET() {
