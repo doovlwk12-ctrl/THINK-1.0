@@ -9,12 +9,17 @@ import { sanitizeText } from '@/lib/sanitize'
 import { notifyMessageReceived } from '@/lib/notifications'
 import { isOrderExpired } from '@/lib/utils'
 
+const ALLOW_HEADERS = { Allow: 'GET, POST, OPTIONS' } as const
+
+/** Force dynamic so GET/POST are always available on Vercel (avoids 405 for POST). */
+export const dynamic = 'force-dynamic'
+
 const postMessageSchema = z.object({
   content: z.string().min(1, 'محتوى الرسالة مطلوب'),
 })
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: { Allow: 'GET, POST, OPTIONS' } })
+  return new NextResponse(null, { status: 204, headers: ALLOW_HEADERS })
 }
 
 export async function GET(
@@ -35,7 +40,7 @@ export async function GET(
         ? (resolvedParams as { orderId: string }).orderId
         : undefined
     if (!orderId) {
-      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
 
     // Check order access: ADMIN any, ENGINEER only assigned, CLIENT only own
@@ -47,7 +52,7 @@ export async function GET(
     if (!order) {
       return Response.json(
         { error: 'الطلب غير موجود' },
-        { status: 404 }
+        { status: 404, headers: ALLOW_HEADERS }
       )
     }
 
@@ -57,14 +62,14 @@ export async function GET(
       if (order.engineerId !== auth.userId) {
         return Response.json(
           { error: 'غير مصرح - الطلب غير مخصص لك' },
-          { status: 403 }
+          { status: 403, headers: ALLOW_HEADERS }
         )
       }
     } else {
       if (order.clientId !== auth.userId) {
         return Response.json(
           { error: 'غير مصرح' },
-          { status: 403 }
+          { status: 403, headers: ALLOW_HEADERS }
         )
       }
     }
@@ -107,20 +112,29 @@ export async function GET(
       content: m.content,
       isRead: m.isRead,
       createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
-      sender: m.sender,
+      sender: {
+        id: String(m.sender?.id ?? ''),
+        name: String(m.sender?.name ?? ''),
+        role: String(m.sender?.role ?? ''),
+      },
     }))
 
-    return Response.json({
-      success: true,
-      messages: serialized,
-      ...(serialized.length > 0 && {
-        cursor: serialized[serialized.length - 1].createdAt,
-      })
-    })
+    return Response.json(
+      {
+        success: true,
+        messages: serialized,
+        ...(serialized.length > 0 && {
+          cursor: serialized[serialized.length - 1].createdAt,
+        }),
+      },
+      { headers: ALLOW_HEADERS }
+    )
   } catch (error: unknown) {
     const err = error instanceof Error ? error : new Error(String(error))
-    logger.error('messages_get_error', {}, err)
-    return handleApiError(error)
+    logger.error('messages_get_error', { errorMessage: err.message }, err)
+    const res = handleApiError(error)
+    ALLOW_HEADERS.Allow && res.headers.set('Allow', ALLOW_HEADERS.Allow)
+    return res
   }
 }
 
@@ -142,7 +156,7 @@ export async function POST(
         ? (resolvedParams as { orderId: string }).orderId
         : undefined
     if (!orderId) {
-      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400 })
+      return Response.json({ error: 'معرف الطلب مطلوب' }, { status: 400, headers: ALLOW_HEADERS })
     }
     const body = await request.json()
     const { content } = postMessageSchema.parse(body)
@@ -155,7 +169,7 @@ export async function POST(
     if (!order) {
       return Response.json(
         { error: 'الطلب غير موجود' },
-        { status: 404 }
+        { status: 404, headers: ALLOW_HEADERS }
       )
     }
 
@@ -165,14 +179,14 @@ export async function POST(
       if (order.engineerId !== auth.userId) {
         return Response.json(
           { error: 'غير مصرح - الطلب غير مخصص لك' },
-          { status: 403 }
+          { status: 403, headers: ALLOW_HEADERS }
         )
       }
     } else {
       if (order.clientId !== auth.userId) {
         return Response.json(
           { error: 'غير مصرح' },
-          { status: 403 }
+          { status: 403, headers: ALLOW_HEADERS }
         )
       }
     }
@@ -180,7 +194,7 @@ export async function POST(
     if (auth.role === 'CLIENT' && isOrderExpired(order.deadline) && order.status === 'ARCHIVED') {
       return Response.json(
         { error: 'انتهى وقت الطلب. يمكنك شراء تمديد لإعادة تفعيل المحادثة' },
-        { status: 400 }
+        { status: 400, headers: ALLOW_HEADERS }
       )
     }
 
@@ -216,11 +230,13 @@ export async function POST(
     }
 
     logger.info('message_sent', { orderId, userId: auth.userId, messageId: message.id })
-    return Response.json({
-      success: true,
-      message
-    })
+    return Response.json(
+      { success: true, message },
+      { headers: ALLOW_HEADERS }
+    )
   } catch (error: unknown) {
-    return handleApiError(error)
+    const res = handleApiError(error)
+    ALLOW_HEADERS.Allow && res.headers.set('Allow', ALLOW_HEADERS.Allow)
+    return res
   }
 }

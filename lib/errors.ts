@@ -150,13 +150,20 @@ export function handleApiError(error: unknown): Response {
       msg.includes('connection timed out') ||
       msg.includes('econnrefused') ||
       msg.includes('econnreset') ||
+      msg.includes('etimedout') ||
+      msg.includes('socket hang up') ||
+      msg.includes('timeout') ||
       msg.includes('p1001') || // Prisma P1001: Can't reach database server
       msg.includes('p1000') || // Authentication failed
       msg.includes('authentication failed') ||
       msg.includes('database server') ||
       msg.includes('connection pool') ||
+      msg.includes('transaction pool') ||
+      msg.includes('too many clients') ||
+      msg.includes('remaining connection slots') ||
       msg.includes('connect econnrefused') ||
-      msg.includes('connect etimedout')
+      msg.includes('connect etimedout') ||
+      (msg.includes('pool') && (msg.includes('timeout') || msg.includes('connection')))
     if (isConnectionError) {
       logger.error('Database connection error', {}, error)
       return Response.json(

@@ -51,8 +51,18 @@ export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
     try {
       let dbUser = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { role: true },
+        select: { id: true, role: true },
       })
+      if (!dbUser && user.email) {
+        // Legacy/synced account: Supabase auth user exists but Prisma user has different id (e.g. cuid). Match by email.
+        const existingByEmail = await prisma.user.findFirst({
+          where: { email: user.email },
+          select: { id: true, role: true },
+        })
+        if (existingByEmail) {
+          return { userId: existingByEmail.id, source: 'supabase', role: (existingByEmail.role as ApiRole) ?? 'CLIENT' }
+        }
+      }
       if (!dbUser) {
         const email = user.email ?? `user-${user.id}@supabase.local`
         const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? email.split('@')[0]
@@ -69,7 +79,7 @@ export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
               role: 'CLIENT',
             },
           })
-          dbUser = { role: 'CLIENT' }
+          dbUser = { id: user.id, role: 'CLIENT' }
         } catch (createErr) {
           const existingByEmail = await prisma.user.findFirst({
             where: { email },
@@ -80,13 +90,13 @@ export async function getApiAuth(request: Request): Promise<ApiAuth | null> {
           }
           dbUser = await prisma.user.findUnique({
             where: { id: user.id },
-            select: { role: true },
+            select: { id: true, role: true },
           }) ?? null
         }
       }
       if (!dbUser) return null
       const role = (dbUser.role as ApiRole) ?? 'CLIENT'
-      return { userId: user.id, source: 'supabase', role }
+      return { userId: dbUser.id, source: 'supabase', role }
     } catch {
       return null
     }

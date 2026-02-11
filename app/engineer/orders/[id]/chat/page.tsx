@@ -48,7 +48,13 @@ export default function EngineerChatPage() {
         setMessages(result.messages)
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'فشل تحميل المحادثة'
+      const err = e as Error & { status?: number }
+      const msg =
+        err.status === 503
+          ? 'تعذر الاتصال بالخادم. تحقق من الاتصال وأعد المحاولة.'
+          : e instanceof Error
+            ? e.message
+            : 'فشل تحميل المحادثة'
       if (isInitial) setFetchError(msg)
     } finally {
       setLoading(false)

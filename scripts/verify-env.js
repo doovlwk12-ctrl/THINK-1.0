@@ -35,7 +35,7 @@ if (isVercel) {
       failed = true
     }
     if (!dbUrl.includes('pgbouncer=true')) {
-      console.error('[verify-env] On Vercel, DATABASE_URL should use Transaction pooler and include ?pgbouncer=true (see docs/VERCEL-SUPABASE-CHECKLIST.md)')
+      console.error('[verify-env] On Vercel, DATABASE_URL should use Transaction pooler (port 6543) and include ?pgbouncer=true. See README.')
       failed = true
     }
   }
