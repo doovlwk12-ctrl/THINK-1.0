@@ -122,7 +122,20 @@ async function supabaseMiddleware(req: NextRequestWithAuth, event: NextFetchEven
   const rateLimitResult = rateLimitOut?.rateLimitResult ?? null
 
   const response = NextResponse.next()
-  const { response: resWithAuth, user } = await getSupabaseSession(req, response)
+  let user: { id: string } | null = null
+  let resWithAuth = response
+  try {
+    const sessionResult = await getSupabaseSession(req, response)
+    user = sessionResult.user
+    resWithAuth = sessionResult.response
+  } catch {
+    if (path.startsWith('/api/')) {
+      return NextResponse.json(
+        { success: false, error: 'تعذر التحقق من الجلسة. أعد المحاولة لاحقاً.' },
+        { status: 503 }
+      )
+    }
+  }
 
   // لا نوجّه طلبات الـ API إلى صفحة تسجيل الدخول — نوجّه الصفحات فقط حتى /api/auth/session وغيره يرجع JSON
   if (!user && !isPublicPath(path) && !path.startsWith('/api/')) {
@@ -142,8 +155,19 @@ export default async function middleware(
   req: NextRequestWithAuth,
   event: NextFetchEvent
 ) {
-  if (useSupabaseAuth) return supabaseMiddleware(req, event)
-  return authMiddleware(req, event)
+  const path = req.nextUrl.pathname
+  try {
+    if (useSupabaseAuth) return await supabaseMiddleware(req, event)
+    return await authMiddleware(req, event)
+  } catch {
+    if (path.startsWith('/api/')) {
+      return NextResponse.json(
+        { success: false, error: 'خطأ مؤقت. أعد المحاولة لاحقاً.' },
+        { status: 503 }
+      )
+    }
+    return NextResponse.next()
+  }
 }
 
 export const config = {
