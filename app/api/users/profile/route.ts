@@ -166,7 +166,7 @@ export async function PUT(request: NextRequest) {
         if (updateError) {
           return Response.json(
             { success: false, error: 'فشل تحديث كلمة المرور. يرجى المحاولة لاحقاً.' },
-            { status: 500 }
+            { status: 503 }
           )
         }
         updateData.password = await bcrypt.hash(validatedData.newPassword, 10)

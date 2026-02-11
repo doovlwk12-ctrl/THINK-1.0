@@ -117,7 +117,7 @@ export function useOrderChat(
     const channel = supabase.channel(`order:${orderId}`)
     channelRef.current = channel
     channel
-      .on('broadcast', { event: 'message' }, ({ payload }) => {
+      .on('broadcast', { event: 'message' }, ({ payload }: { payload: unknown }) => {
         const msg = payload as ChatMessage
         if (msg?.id) {
           setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]))

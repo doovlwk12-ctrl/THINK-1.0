@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       if (!supabaseUser?.id) {
         return Response.json(
           { error: 'فشل إنشاء الحساب. يرجى المحاولة لاحقاً.' },
-          { status: 500 }
+          { status: 503 }
         )
       }
 

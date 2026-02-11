@@ -94,7 +94,7 @@ export async function GET(
     }
 
     // فلترة دقيقة بـ orderId (CUID) — الربط عبر حقل orderId في جدول Message
-    let messages: Awaited<ReturnType<typeof prisma.message.findMany>>
+    let messages: Array<{ id: string; orderId: string; senderId: string; content: string; isRead: boolean; createdAt: Date; sender: { id: string; name: string; role: string } | null }>
     try {
       messages = await prisma.message.findMany({
         where: { orderId },
@@ -171,10 +171,6 @@ export async function GET(
     } catch {
       return Response.json(FALLBACK_503, FALLBACK_503_HEADERS)
     }
-  }
-  } catch (outer: unknown) {
-    console.error('[messages GET outer]', outer instanceof Error ? outer.message : String(outer))
-    return Response.json(FALLBACK_503, FALLBACK_503_HEADERS)
   }
 }
 

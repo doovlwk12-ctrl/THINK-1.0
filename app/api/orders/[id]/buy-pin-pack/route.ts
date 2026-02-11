@@ -61,8 +61,8 @@ export async function POST(
 
     if (!config) {
       return Response.json(
-        { success: false, error: 'إعدادات مجموعة الدبابيس غير متوفرة' },
-        { status: 500 }
+        { success: false, error: 'إعدادات مجموعة الدبابيس غير متوفرة. يرجى المحاولة لاحقاً.' },
+        { status: 503 }
       )
     }
 

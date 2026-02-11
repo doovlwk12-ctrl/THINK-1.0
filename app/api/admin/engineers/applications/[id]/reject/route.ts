@@ -29,8 +29,8 @@ export async function POST(
     if (!prisma.engineerApplication) {
       console.error('Prisma Client does not include EngineerApplication model. Please run: npx prisma generate')
       return Response.json(
-        { success: false, error: 'خطأ في النظام. يرجى إعادة تشغيل الخادم' },
-        { status: 500 }
+        { success: false, error: 'خطأ مؤقت في النظام. يرجى المحاولة لاحقاً.' },
+        { status: 503 }
       )
     }
 
