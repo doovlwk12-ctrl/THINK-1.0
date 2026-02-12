@@ -474,7 +474,7 @@ export default function ChatPage() {
                         const result = await apiClient.post<{ success: boolean; message: string }>(`/orders/${orderId}/buy-extension`)
                         if (result.success) {
                           toast.success(result.message)
-                          fetchOrderInfo()
+                          fetchInitialData()
                         }
                       } catch (error: unknown) {
                         const errorMessage = error instanceof Error ? error.message : 'فشل شراء التمديد'

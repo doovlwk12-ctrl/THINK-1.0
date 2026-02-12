@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
 
     if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {
       return Response.json(
-        { error: 'دور غير كافٍ - يلزم أن تكون مهندساً أو مسؤولاً لرفع المخططات' },
+        {
+          error: 'دور غير كافٍ - يلزم أن تكون مهندساً أو مسؤولاً لرفع المخططات',
+          errorCode: 'INSUFFICIENT_ROLE',
+        },
         { status: 403 }
       )
     }
@@ -36,9 +39,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check order
+    // جلب الطلب مع بيانات المهندس المعيّن (للمطابقة بالبريد عند اختلاف userId)
     const order = await prisma.order.findUnique({
-      where: { id: orderId }
+      where: { id: orderId },
+      include: {
+        engineer: { select: { id: true, email: true } },
+      },
     })
 
     if (!order) {
@@ -48,12 +54,36 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // المهندس فقط المعيّن على الطلب يمكنه الرفع (المسؤول يتخطى)
-    if (auth.role === 'ENGINEER' && order.engineerId !== auth.userId) {
-      return Response.json(
-        { error: 'غير مصرح - المهندس غير معيّن على هذا الطلب' },
-        { status: 403 }
-      )
+    // المهندس: إما معيّن على الطلب، أو الطلب غير معيّن (نُعيِّنه)، أو نفس الشخص بآيدي مختلف (مطابقة بالبريد)
+    if (auth.role === 'ENGINEER') {
+      if (order.engineerId === null) {
+        await prisma.order.update({
+          where: { id: orderId },
+          data: { engineerId: auth.userId },
+        })
+      } else if (order.engineerId !== auth.userId) {
+        // احتمال ازدواج سجلات: نفس الشخص بآيدي مختلف (مثلاً بعد Supabase). نتحقق بالبريد.
+        const currentUser = await prisma.user.findUnique({
+          where: { id: auth.userId },
+          select: { email: true },
+        })
+        const samePersonByEmail =
+          currentUser?.email && order.engineer?.email && currentUser.email === order.engineer.email
+        if (samePersonByEmail) {
+          await prisma.order.update({
+            where: { id: orderId },
+            data: { engineerId: auth.userId },
+          })
+        } else {
+          return Response.json(
+            {
+              error: 'غير مصرح - المهندس غير معيّن على هذا الطلب',
+              errorCode: 'ENGINEER_NOT_ASSIGNED',
+            },
+            { status: 403 }
+          )
+        }
+      }
     }
 
     // Validate file type

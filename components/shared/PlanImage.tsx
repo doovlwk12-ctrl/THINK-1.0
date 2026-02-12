@@ -1,23 +1,25 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 
 const BLUR_PLACEHOLDER =
   'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='
 
-/** نطاقات التخزين المعروفة: أي رابط يحتويها نعرضه بـ <img> مباشرة لتجنب 400 من _next/image */
+/** نطاقات التخزين المعروفة: أي رابط يحتويها نعرضه بـ <img> مباشرة */
 const STORAGE_HOSTS = ['supabase.co', 'amazonaws.com', 'cloudinary.com', 'res.cloudinary.com']
 
-/** أي رابط خارجي أو تخزين لا نمرره لـ Next/Image لتجنب 400 على Vercel */
-function isExternalUrl(url: string): boolean {
+/** مسار محلي فقط (مثل /uploads/...) نمرره لـ Next/Image؛ غير ذلك نستخدم <img> لتجنب 400 على Vercel */
+function isLocalPath(url: string): boolean {
   if (typeof url !== 'string' || !url.trim()) return false
   const u = url.trim()
-  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('//')) return true
-  return STORAGE_HOSTS.some((host) => u.includes(host))
+  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('//')) return false
+  if (STORAGE_HOSTS.some((host) => u.includes(host))) return false
+  return u.startsWith('/')
 }
 
 /** تطبيع الرابط: //... → https://... */
-function normalizeProxyUrl(url: string): string {
+function normalizeImageSrc(url: string): string {
   const u = url.trim()
   if (u.startsWith('//')) return `https:${u}`
   return u
@@ -37,8 +39,8 @@ export interface PlanImageProps {
   quality?: number
   /** للصفحات التي تحتاج ref (مثل صفحة التعديلات) */
   imageRef?: React.RefObject<HTMLImageElement | null>
-  onClick?: () => void
-  onLoad?: () => void
+  onClick?: React.MouseEventHandler<HTMLImageElement>
+  onLoad?: React.ReactEventHandler<HTMLImageElement>
   draggable?: boolean
   onMouseMove?: (e: React.MouseEvent<HTMLImageElement>) => void
   onMouseUp?: () => void
@@ -46,9 +48,9 @@ export interface PlanImageProps {
   onTouchEnd?: () => void
 }
 
-/** مصدر العرض: روابط Supabase مباشرة (بدون وكيل) لتظهر الصورة حتى بدون متغيرات بيئة */
+/** مصدر العرض: روابط التخزين مباشرة (بدون وكيل) لتظهر الصورة */
 function getImageSrc(fileUrl: string): string {
-  return normalizeProxyUrl(fileUrl)
+  return normalizeImageSrc(fileUrl)
 }
 
 /**
@@ -77,10 +79,28 @@ export function PlanImage({
   onTouchMove,
   onTouchEnd,
 }: PlanImageProps) {
+  const [loadError, setLoadError] = useState(false)
+
   if (fileType !== 'image' || !fileUrl) return null
 
-  if (isExternalUrl(fileUrl)) {
+  // روابط التخزين (Supabase وغيرها) أو أي رابط غير محلي: <img> مباشرة لتجنب 400 ومنع تكسر الصور
+  if (!isLocalPath(fileUrl)) {
+    if (loadError) {
+      return (
+        <div
+          className={className}
+          style={{ width, height, minHeight: height }}
+          role="img"
+          aria-label={alt}
+        >
+          <div className="w-full h-full flex items-center justify-center bg-greige/20 dark:bg-charcoal-600 rounded text-blue-gray dark:text-greige text-sm text-center p-4">
+            لم تُحمّل الصورة — استخدم &quot;تحميل المخطط&quot; أدناه
+          </div>
+        </div>
+      )
+    }
     return (
+      /* eslint-disable-next-line @next/next/no-img-element -- روابط تخزين خارجية، next/image يسبب 400 على Vercel */
       <img
         ref={imageRef as React.RefObject<HTMLImageElement>}
         src={getImageSrc(fileUrl)}
@@ -90,6 +110,8 @@ export function PlanImage({
         className={className}
         loading={priority ? 'eager' : loading}
         decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setLoadError(true)}
         onLoad={onLoad}
         onClick={onClick}
         draggable={draggable}

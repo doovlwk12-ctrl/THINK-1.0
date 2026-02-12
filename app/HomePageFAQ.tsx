@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MessageCircle, Layers, Target, PenTool, Clock, Shield, ChevronDown } from 'lucide-react'
+import { MessageCircle, ChevronDown } from 'lucide-react'
 
 export interface FAQItem {
   question: string
