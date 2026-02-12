@@ -2,6 +2,10 @@
  * Get current user id and role for API routes.
  * Supports NextAuth or Supabase Auth based on env.
  * With Supabase: creates Prisma User on first login if missing (sync from auth.users).
+ *
+ * مهم لصلاحيات المهندس: Order.engineerId يُعيَّن من auth.userId عند تعيين المهندس على الطلب.
+ * يجب أن يكون مصدر userId هنا مطابقاً لمصدر التعيين (تجنب وجود مستخدمين مكررين بنفس البريد
+ * بآيديات مختلفة؛ عند المطابقة بالبريد نُرجع نفس سجل Prisma المستخدم في التعيين).
  */
 import { getServerSession } from 'next-auth'
 import bcrypt from 'bcryptjs'

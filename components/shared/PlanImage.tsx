@@ -5,11 +5,15 @@ import Image from 'next/image'
 const BLUR_PLACEHOLDER =
   'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='
 
-/** أي رابط خارجي لا نمرره لـ Next/Image لتجنب 400 على Vercel */
+/** نطاقات التخزين المعروفة: أي رابط يحتويها نعرضه بـ <img> مباشرة لتجنب 400 من _next/image */
+const STORAGE_HOSTS = ['supabase.co', 'amazonaws.com', 'cloudinary.com', 'res.cloudinary.com']
+
+/** أي رابط خارجي أو تخزين لا نمرره لـ Next/Image لتجنب 400 على Vercel */
 function isExternalUrl(url: string): boolean {
   if (typeof url !== 'string' || !url.trim()) return false
   const u = url.trim()
-  return u.startsWith('http://') || u.startsWith('https://') || u.startsWith('//')
+  if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('//')) return true
+  return STORAGE_HOSTS.some((host) => u.includes(host))
 }
 
 /** تطبيع الرابط: //... → https://... */

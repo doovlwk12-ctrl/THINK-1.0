@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { requireEngineerOrAdmin } from '@/lib/requireAuth'
+import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { uploadFile, deleteFileByUrl, STORAGE_NOT_CONFIGURED_MESSAGE } from '@/lib/storage'
@@ -14,9 +14,16 @@ const MAX_FILE_SIZE_AFTER_SAVE_BYTES = 5 * 1024 * 1024  // 5MB حد أقصى ب�
 
 export async function POST(request: NextRequest) {
   try {
-    const result = await requireEngineerOrAdmin(request)
+    const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
+
+    if (auth.role !== 'ENGINEER' && auth.role !== 'ADMIN') {
+      return Response.json(
+        { error: 'دور غير كافٍ - يلزم أن تكون مهندساً أو مسؤولاً لرفع المخططات' },
+        { status: 403 }
+      )
+    }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -41,10 +48,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user is engineer assigned to this order
+    // المهندس فقط المعيّن على الطلب يمكنه الرفع (المسؤول يتخطى)
     if (auth.role === 'ENGINEER' && order.engineerId !== auth.userId) {
       return Response.json(
-        { error: 'غير مصرح' },
+        { error: 'غير مصرح - المهندس غير معيّن على هذا الطلب' },
         { status: 403 }
       )
     }

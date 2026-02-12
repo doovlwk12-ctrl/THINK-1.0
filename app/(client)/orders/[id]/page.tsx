@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { PlanImage } from '@/components/shared/PlanImage'
-import { Clock, Package, User, MessageSquare, Edit } from 'lucide-react'
+import { Clock, Package, User, MessageSquare, Edit, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
 import { Loading } from '@/components/shared/Loading'
@@ -65,8 +65,10 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [revisionRequests, setRevisionRequests] = useState<RevisionRequest[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const fetchOrder = useCallback(async () => {
+  const fetchOrder = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const [orderResult, revisionsResult] = await Promise.all([
         apiClient.get<{ success: boolean; order: Order }>(`/orders/${orderId}`),
@@ -81,15 +83,19 @@ export default function OrderDetailPage() {
       if (!orderResult.success || !orderResult.order) {
         throw new Error('فشل تحميل الطلب')
       }
+      if (silent) toast.success('تم تحديث البيانات')
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'فشل تحميل بيانات الطلب'
       toast.error(errorMessage)
-      const dashboardPath = session?.user?.role === 'ADMIN' ? '/admin/dashboard' :
-                            session?.user?.role === 'ENGINEER' ? '/engineer/dashboard' :
-                            '/dashboard'
-      router.push(dashboardPath)
+      if (!silent) {
+        const dashboardPath = session?.user?.role === 'ADMIN' ? '/admin/dashboard' :
+                              session?.user?.role === 'ENGINEER' ? '/engineer/dashboard' :
+                              '/dashboard'
+        router.push(dashboardPath)
+      }
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
+      setRefreshing(false)
     }
   }, [orderId, router, session])
 
@@ -319,18 +325,31 @@ export default function OrderDetailPage() {
             />
             <h1 className="text-2xl font-bold text-charcoal dark:text-cream">تفاصيل الطلب #{order.orderNumber}</h1>
           </div>
-          {!isArchived ? (
-            <Link href={`/orders/${orderId}/chat`}>
-              <Button variant="outline">
-                <MessageSquare className="w-4 h-4" />
-                المحادثة
-              </Button>
-            </Link>
-          ) : (
-            <div className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <p className="text-sm font-semibold">انتهى وقت الطلب</p>
-            </div>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRefreshing(true)
+                fetchOrder(true)
+              }}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              تحديث البيانات
+            </Button>
+            {!isArchived ? (
+              <Link href={`/orders/${orderId}/chat`}>
+                <Button variant="outline">
+                  <MessageSquare className="w-4 h-4" />
+                  المحادثة
+                </Button>
+              </Link>
+            ) : (
+              <div className="px-4 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm font-semibold">انتهى وقت الطلب</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
