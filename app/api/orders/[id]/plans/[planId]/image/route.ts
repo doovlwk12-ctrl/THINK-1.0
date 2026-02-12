@@ -44,7 +44,17 @@ export async function GET(
     if (result instanceof NextResponse) return result
     const { auth } = result
 
-    const { id: orderId, planId } = await Promise.resolve(context.params)
+    const resolved = await Promise.resolve(context.params)
+    const orderId = resolved?.id ?? resolved?.orderId
+    const planId = resolved?.planId
+    const noStore = { 'Cache-Control': 'no-store' }
+
+    if (!orderId || !planId) {
+      return NextResponse.json(
+        { error: 'معرف الطلب أو المخطط ناقص' },
+        { status: 400, headers: noStore }
+      )
+    }
 
     const plan = await prisma.plan.findFirst({
       where: { id: planId, orderId },
@@ -56,15 +66,15 @@ export async function GET(
     })
 
     if (!plan) {
-      return new Response(null, { status: 404 })
+      return new Response(null, { status: 404, headers: noStore })
     }
 
-    if (plan.fileType !== 'image') {
-      return new Response(null, { status: 404 })
+    if (plan.fileType?.toLowerCase() !== 'image') {
+      return new Response(null, { status: 404, headers: noStore })
     }
 
     if (plan.purgedAt || !plan.fileUrl?.trim()) {
-      return new Response(null, { status: 410 })
+      return new Response(null, { status: 410, headers: noStore })
     }
 
     const { order } = plan
@@ -72,7 +82,7 @@ export async function GET(
     const isEngineer = order.engineerId === auth.userId
     const isAdmin = auth.role === 'ADMIN'
     if (!isClient && !isEngineer && !isAdmin) {
-      return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 403, headers: noStore })
     }
 
     const contentType = getImageContentType(plan.fileName)
@@ -83,7 +93,7 @@ export async function GET(
     if (fileUrl.startsWith('/')) {
       const filePath = join(process.cwd(), 'public', fileUrl)
       if (!existsSync(filePath)) {
-        return new Response(null, { status: 404 })
+        return new Response(null, { status: 404, headers: noStore })
       }
       const buffer = await readFile(filePath)
       return new Response(buffer, {
@@ -128,7 +138,7 @@ export async function GET(
       // fetch failed
     }
 
-    return new Response(null, { status: 502 })
+    return new Response(null, { status: 502, headers: { 'Cache-Control': 'no-store' } })
   } catch (error: unknown) {
     return handleApiError(error) as Response
   }

@@ -102,13 +102,18 @@ export function PlanImage({
   onTouchEnd,
 }: PlanImageProps) {
   const [loadError, setLoadError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
   const [triedProxy, setTriedProxy] = useState(false)
 
   if (fileType !== 'image') return null
 
   // مسار موحّد: عند وجود orderId و planId نعرض الصورة من API الصور (مضمون مع الصلاحيات)
+  // ?v= يمنع استخدام صورة خطأ مخزنة في الكاش؛ عند الفشل نعيد المحاولة مرة واحدة مع &r=
   if (orderId && planId) {
-    const imgSrc = getPlanImageApiPath(orderId, planId)
+    const base = getPlanImageApiPath(orderId, planId)
+    const imgSrc = retryKey
+      ? `${base}?v=${encodeURIComponent(planId)}&r=${retryKey}`
+      : `${base}?v=${encodeURIComponent(planId)}`
     if (loadError) {
       return (
         <div
@@ -136,7 +141,10 @@ export function PlanImage({
         loading={priority ? 'eager' : loading}
         decoding="async"
         referrerPolicy="no-referrer"
-        onError={() => setLoadError(true)}
+        onError={() => {
+          if (retryKey === 0) setRetryKey(() => Date.now())
+          else setLoadError(true)
+        }}
         onLoad={onLoad}
         onClick={onClick}
         draggable={draggable}
