@@ -535,7 +535,7 @@ export default function OrderDetailPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     {order.plans.filter((p) => p.fileUrl).map((plan) => (
                       <div key={plan.id} className="border border-greige/30 dark:border-charcoal-600 rounded-lg p-4 bg-white dark:bg-charcoal-700">
-                        {plan.fileType === 'image' && plan.fileUrl ? (
+                        {plan.fileType === 'image' && plan.fileUrl && orderId && plan.id ? (
                           <PlanImage
                             fileUrl={plan.fileUrl}
                             fileType={plan.fileType}
@@ -548,6 +548,8 @@ export default function OrderDetailPage() {
                             loading="lazy"
                             placeholder="blur"
                           />
+                        ) : plan.fileType === 'image' && plan.fileUrl ? (
+                          <div className="w-full h-48 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2 text-blue-gray dark:text-greige text-sm">تحميل الصورة...</div>
                         ) : plan.fileUrl ? (
                           <div className="w-full h-48 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2">
                             <span className="text-blue-gray dark:text-greige">PDF</span>

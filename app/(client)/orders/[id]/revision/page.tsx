@@ -1169,7 +1169,7 @@ export default function RevisionPage() {
                     minHeight: 300,
                   }}
                 >
-                  {plan.fileUrl ? (
+                  {plan.fileUrl && orderId && plan.id ? (
                   <PlanImage
                     imageRef={imageRef}
                     fileUrl={plan.fileUrl}
@@ -1190,6 +1190,8 @@ export default function RevisionPage() {
                     priority
                     quality={90}
                   />
+                  ) : plan.fileUrl ? (
+                    <div className="flex items-center justify-center min-h-[300px] p-8 text-center text-blue-gray dark:text-greige">تحميل الصورة...</div>
                   ) : (
                     <div className="flex items-center justify-center min-h-[300px] p-8 text-center text-amber-700 dark:text-amber-300">
                       <p>تم حذف الملف من الأرشيف بعد {ARCHIVE_PURGE_DAYS_AFTER_DEADLINE} يوماً من الموعد النهائي. لا يمكن إضافة تعديلات على هذا المخطط.</p>

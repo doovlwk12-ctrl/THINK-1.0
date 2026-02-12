@@ -241,7 +241,7 @@ export default function ChatPage() {
             <div className="grid md:grid-cols-3 gap-4">
               {plans.filter((p) => p.fileUrl).map((plan) => (
                 <div key={plan.id} className="border border-greige/30 dark:border-charcoal-600 rounded-lg p-3 bg-white dark:bg-charcoal-700">
-                  {plan.fileType === 'image' && plan.fileUrl ? (
+                  {plan.fileType === 'image' && plan.fileUrl && orderId && plan.id ? (
                     <PlanImage
                       fileUrl={plan.fileUrl}
                       fileType={plan.fileType}
@@ -254,6 +254,8 @@ export default function ChatPage() {
                       loading="lazy"
                       placeholder="blur"
                     />
+                  ) : plan.fileType === 'image' && plan.fileUrl ? (
+                    <div className="w-full h-32 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2 text-blue-gray dark:text-greige text-sm">تحميل الصورة...</div>
                   ) : plan.fileUrl ? (
                     <div className="w-full h-32 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2">
                       <span className="text-blue-gray dark:text-greige">PDF</span>
@@ -548,7 +550,7 @@ export default function ChatPage() {
                   <div className="p-8 text-center text-amber-700 dark:text-amber-300">
                     <p>تم حذف الملف من الأرشيف.</p>
                   </div>
-                ) : selectedRevision.plan.fileType === 'image' ? (
+                ) : selectedRevision.plan.fileType === 'image' && orderId && selectedRevision.plan.id ? (
                   <div className="relative w-full" ref={revisionContainerRef}>
                     <PlanImage
                       imageRef={revisionImageRef}
@@ -594,6 +596,8 @@ export default function ChatPage() {
                       </div>
                     ))}
                   </div>
+                ) : selectedRevision.plan.fileType === 'image' ? (
+                  <div className="p-8 text-center text-blue-gray dark:text-greige">تحميل الصورة...</div>
                 ) : (
                   <div className="p-8 text-center">
                     <p className="text-blue-gray dark:text-greige mb-4">المخطط بصيغة PDF</p>

@@ -3,11 +3,18 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
+import { logger } from '@/lib/logger'
 import { createAdminClient } from '@/lib/supabase'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
 import { gunzipSync } from 'zlib'
+
+const FAIL_REASON_HEADER = 'X-Image-Fail-Reason'
+
+function noStoreWithReason(reason: string): Record<string, string> {
+  return { 'Cache-Control': 'no-store', [FAIL_REASON_HEADER]: reason }
+}
 
 const EXT_TO_CONTENT_TYPE: Record<string, string> = {
   jpeg: 'image/jpeg',
@@ -47,12 +54,11 @@ export async function GET(
     const resolved = await Promise.resolve(context.params)
     const orderId = resolved?.id ?? resolved?.orderId
     const planId = resolved?.planId
-    const noStore = { 'Cache-Control': 'no-store' }
 
     if (!orderId || !planId) {
       return NextResponse.json(
         { error: 'معرف الطلب أو المخطط ناقص' },
-        { status: 400, headers: noStore }
+        { status: 400, headers: noStoreWithReason('params_missing') }
       )
     }
 
@@ -66,15 +72,15 @@ export async function GET(
     })
 
     if (!plan) {
-      return new Response(null, { status: 404, headers: noStore })
+      return new Response(null, { status: 404, headers: noStoreWithReason('plan_not_found') })
     }
 
     if (plan.fileType?.toLowerCase() !== 'image') {
-      return new Response(null, { status: 404, headers: noStore })
+      return new Response(null, { status: 404, headers: noStoreWithReason('file_type') })
     }
 
     if (plan.purgedAt || !plan.fileUrl?.trim()) {
-      return new Response(null, { status: 410, headers: noStore })
+      return new Response(null, { status: 410, headers: noStoreWithReason('purged') })
     }
 
     const { order } = plan
@@ -82,7 +88,10 @@ export async function GET(
     const isEngineer = order.engineerId === auth.userId
     const isAdmin = auth.role === 'ADMIN'
     if (!isClient && !isEngineer && !isAdmin) {
-      return NextResponse.json({ error: 'غير مصرح' }, { status: 403, headers: noStore })
+      return NextResponse.json(
+        { error: 'غير مصرح' },
+        { status: 403, headers: noStoreWithReason('forbidden') }
+      )
     }
 
     const contentType = getImageContentType(plan.fileName)
@@ -93,7 +102,7 @@ export async function GET(
     if (fileUrl.startsWith('/')) {
       const filePath = join(process.cwd(), 'public', fileUrl)
       if (!existsSync(filePath)) {
-        return new Response(null, { status: 404, headers: noStore })
+        return new Response(null, { status: 404, headers: noStoreWithReason('local_missing') })
       }
       const buffer = await readFile(filePath)
       return new Response(buffer, {
@@ -112,7 +121,15 @@ export async function GET(
       if (!error && data) {
         let buffer = Buffer.from(await data.arrayBuffer())
         if (parsed.path.endsWith('.gz')) {
-          buffer = gunzipSync(buffer)
+          try {
+            buffer = gunzipSync(buffer)
+          } catch (decompressErr) {
+            logger.warn('Plan image gunzip failed', { planId, path: parsed.path })
+            return new Response(null, {
+              status: 502,
+              headers: noStoreWithReason('decompress_failed'),
+            })
+          }
         }
         return new Response(buffer, {
           headers: {
@@ -121,7 +138,18 @@ export async function GET(
           },
         })
       }
+      logger.warn('Plan image Supabase download failed', {
+        planId,
+        path: parsed.path,
+        error: error?.message ?? 'unknown',
+      })
+    } else if (parsed && !admin) {
+      logger.warn('Plan image: Supabase admin client not available (check SUPABASE_SERVICE_ROLE_KEY)', {
+        planId,
+      })
     }
+
+    const failReason = parsed ? 'supabase_failed' : 'fetch_failed'
 
     // روابط خارجية أخرى: fetch
     try {
@@ -138,7 +166,7 @@ export async function GET(
       // fetch failed
     }
 
-    return new Response(null, { status: 502, headers: { 'Cache-Control': 'no-store' } })
+    return new Response(null, { status: 502, headers: noStoreWithReason(failReason) })
   } catch (error: unknown) {
     return handleApiError(error) as Response
   }

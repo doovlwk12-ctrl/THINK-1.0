@@ -439,7 +439,7 @@ export default function EngineerRevisionPage() {
 
               {plan ? (
                 <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                  {plan.fileType === 'image' ? (
+                  {plan.fileType === 'image' && orderId && plan.id ? (
                     <div className="relative w-full">
                       <PlanImage
                         imageRef={imageRef}
@@ -517,6 +517,10 @@ export default function EngineerRevisionPage() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  ) : plan.fileType === 'image' ? (
+                    <div className="w-full h-96 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <span className="text-gray-500 dark:text-gray-400">تحميل الصورة...</span>
                     </div>
                   ) : (
                     <div className="w-full h-96 bg-gray-200 dark:bg-gray-700 rounded flex flex-col items-center justify-center">

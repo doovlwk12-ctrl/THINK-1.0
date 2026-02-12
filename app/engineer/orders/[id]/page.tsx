@@ -954,7 +954,7 @@ export default function EngineerOrderPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   {order.plans.map((plan) => (
                     <div key={plan.id} className={`border rounded-lg p-4 bg-white dark:bg-charcoal-700 ${plan.isActive ? 'border-green-500 dark:border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-greige/30 dark:border-charcoal-600'}`}>
-                      {plan.fileType === 'image' ? (
+                      {plan.fileType === 'image' && orderId && plan.id ? (
                         <PlanImage
                           fileUrl={plan.fileUrl}
                           fileType={plan.fileType}
@@ -967,6 +967,10 @@ export default function EngineerOrderPage() {
                           loading="lazy"
                           placeholder="blur"
                         />
+                      ) : plan.fileType === 'image' ? (
+                        <div className="w-full h-48 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2 text-blue-gray dark:text-greige text-sm">
+                          تحميل الصورة...
+                        </div>
                       ) : (
                         <div className="w-full h-48 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2">
                           <span className="text-blue-gray dark:text-greige">PDF</span>
