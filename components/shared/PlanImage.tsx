@@ -5,9 +5,23 @@ import Image from 'next/image'
 const BLUR_PLACEHOLDER =
   'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k='
 
-/** روابط Supabase تمر عبر _next/image وتُرجع 400 على Vercel — نعرضها بـ img عادي */
+/** أي رابط خارجي لا نمرره لـ Next/Image لتجنب 400 على Vercel */
+function isExternalUrl(url: string): boolean {
+  if (typeof url !== 'string' || !url.trim()) return false
+  const u = url.trim()
+  return u.startsWith('http://') || u.startsWith('https://') || u.startsWith('//')
+}
+
+/** روابط Supabase — نمررها عبر وكيل الصور لتجنب 400 و CORS */
 function isSupabaseStorageUrl(url: string): boolean {
   return typeof url === 'string' && url.includes('supabase.co') && url.includes('/storage/')
+}
+
+/** تطبيع الرابط للوكيل: //... → https://... */
+function normalizeProxyUrl(url: string): string {
+  const u = url.trim()
+  if (u.startsWith('//')) return `https:${u}`
+  return u
 }
 
 export interface PlanImageProps {
@@ -33,9 +47,20 @@ export interface PlanImageProps {
   onTouchEnd?: () => void
 }
 
+/** مصدر العرض: روابط Supabase عبر وكيل API، والباقي كما هو */
+function getImageSrc(fileUrl: string): string {
+  const normalized = normalizeProxyUrl(fileUrl)
+  if (isSupabaseStorageUrl(normalized)) {
+    return `/api/image-proxy?url=${encodeURIComponent(normalized)}`
+  }
+  return fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl
+}
+
 /**
- * يعرض صورة مخطط: لروابط Supabase نستخدم <img> لتجنب 400 من _next/image،
- * وللمسارات المحلية نستخدم Next/Image للتحسين.
+ * يعرض صورة مخطط:
+ * - روابط Supabase: عبر /api/image-proxy (تجنب 400 و CORS)
+ * - أي رابط خارجي آخر: <img> مباشر
+ * - مسارات محلية (/uploads/): Next/Image للتحسين
  */
 export function PlanImage({
   fileUrl,
@@ -60,16 +85,16 @@ export function PlanImage({
 }: PlanImageProps) {
   if (fileType !== 'image' || !fileUrl) return null
 
-  if (isSupabaseStorageUrl(fileUrl)) {
+  if (isExternalUrl(fileUrl)) {
     return (
       <img
         ref={imageRef as React.RefObject<HTMLImageElement>}
-        src={fileUrl}
+        src={getImageSrc(fileUrl)}
         alt={alt}
         width={width}
         height={height}
         className={className}
-        loading={loading}
+        loading={priority ? 'eager' : loading}
         decoding="async"
         onLoad={onLoad}
         onClick={onClick}

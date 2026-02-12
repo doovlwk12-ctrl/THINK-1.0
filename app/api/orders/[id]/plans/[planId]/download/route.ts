@@ -94,7 +94,8 @@ export async function GET(
     const contentType = getContentType(plan.fileName, plan.fileType)
     const downloadName = safeDownloadFilename(plan.fileName, plan.fileType)
 
-    const fileUrl = plan.fileUrl
+    let fileUrl = plan.fileUrl.trim()
+    if (fileUrl.startsWith('//')) fileUrl = `https:${fileUrl}`
 
     if (fileUrl.startsWith('/')) {
       const filePath = join(process.cwd(), 'public', fileUrl)
@@ -124,8 +125,9 @@ export async function GET(
       // fetch failed (e.g. network/timeout on Vercel)
     }
     // Fallback: redirect to file URL so user can open/save from Supabase directly
-    if (fileUrl.startsWith('https://')) {
-      return NextResponse.redirect(fileUrl, 302)
+    const redirectUrl = fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl
+    if (redirectUrl.startsWith('https://')) {
+      return NextResponse.redirect(redirectUrl, 302)
     }
     return new Response(null, { status: 502 })
   } catch (error: unknown) {

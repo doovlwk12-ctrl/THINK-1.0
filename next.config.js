@@ -7,6 +7,8 @@ const nextConfig = {
   poweredByHeader: false,
   
   images: {
+    // تعطيل تحسين الصور للروابط الخارجية يمنع 400 من _next/image على Vercel مع Supabase
+    unoptimized: true,
     domains: ['localhost'],
     remotePatterns: [
       {
