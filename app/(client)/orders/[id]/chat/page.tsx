@@ -63,46 +63,28 @@ export default function ChatPage() {
   const revisionImageRef = useRef<HTMLImageElement>(null)
   const revisionContainerRef = useRef<HTMLDivElement>(null)
 
-  const fetchPlans = useCallback(async () => {
+  const fetchInitialData = useCallback(async () => {
     try {
-      const result = await apiClient.get<{ success: boolean; plans: Plan[] }>(`/orders/${orderId}/plans`)
-      if (result.success) {
-        setPlans(result.plans)
-      }
-    } catch {
-      // Silent fail
-    }
-  }, [orderId])
-
-  const fetchRevisions = useCallback(async () => {
-    try {
-      const [revisionsResult, plansResult] = await Promise.all([
+      const [plansResult, revisionsResult, orderResult] = await Promise.all([
+        apiClient.get<{ success: boolean; plans: Plan[] }>(`/orders/${orderId}/plans`),
         apiClient.get<{ success: boolean; revisionRequests: RevisionRequest[] }>(`/revisions/${orderId}`),
-        apiClient.get<{ success: boolean; plans: Plan[] }>(`/orders/${orderId}/plans`)
+        apiClient.get<{ success: boolean; order: { deadline: string; status: string; isExpired?: boolean } }>(`/orders/${orderId}`),
       ])
-      
-      if (revisionsResult.success && plansResult.success) {
-        // Map revisions with their associated plans
+      if (plansResult.success && plansResult.plans) {
+        setPlans(plansResult.plans)
+      }
+      if (revisionsResult.success && revisionsResult.revisionRequests) {
+        const planList = plansResult.success && plansResult.plans ? plansResult.plans : []
         const revisionsWithPlans = revisionsResult.revisionRequests.map((revision) => {
-          const plan = revision.planId 
-            ? plansResult.plans.find(p => p.id === revision.planId) || null
-            : null
+          const plan = revision.planId ? planList.find(p => p.id === revision.planId) || null : null
           return { ...revision, plan }
         })
         setRevisions(revisionsWithPlans)
       }
-    } catch {
-      // Silent fail
-    }
-  }, [orderId])
-
-  const fetchOrderInfo = useCallback(async () => {
-    try {
-      const result = await apiClient.get<{ success: boolean; order: { deadline: string; status: string; isExpired?: boolean } }>(`/orders/${orderId}`)
-      if (result.success) {
+      if (orderResult.success && orderResult.order) {
         setOrderInfo({
-          deadline: result.order.deadline,
-          status: result.order.status
+          deadline: orderResult.order.deadline,
+          status: orderResult.order.status
         })
       }
     } catch {
@@ -116,11 +98,9 @@ export default function ChatPage() {
       return
     }
     if (status === 'authenticated') {
-      fetchPlans()
-      fetchRevisions()
-      fetchOrderInfo()
+      fetchInitialData()
     }
-  }, [status, router, fetchPlans, fetchRevisions, fetchOrderInfo])
+  }, [status, router, fetchInitialData])
 
   useEffect(() => {
     scrollToBottom()

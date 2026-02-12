@@ -44,54 +44,48 @@ export default function SelectPackagePage() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
-  const fetchPackages = useCallback(async () => {
-    try {
-      const result = await apiClient.get<{ success: boolean; packages: Package[] }>('/packages')
-      if (result.success) {
-        setPackages(result.packages)
-      }
-    } catch {
-      toast.error('فشل تحميل الباقات')
-    }
-  }, [])
-
-  const fetchOrder = useCallback(async () => {
-    try {
-      const result = await apiClient.get<{ success: boolean; order: Order }>(`/orders/${orderId}`)
-      if (result.success) {
-        setOrder(result.order)
-        // Set current package as selected if packages are loaded
-        if (packages.length > 0) {
-          const currentPkg = packages.find(p => p.id === result.order.package.id)
-          if (currentPkg) {
-            setSelectedPackage(currentPkg)
-          }
-        }
-      }
-    } catch {
-      toast.error('فشل تحميل بيانات الطلب')
-      router.push('/dashboard')
-    } finally {
-      setLoading(false)
-    }
-  }, [orderId, router, packages])
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
       return
     }
+    if (status !== 'authenticated' || !orderId) return
 
-    if (status === 'authenticated') {
-      fetchPackages()
+    let cancelled = false
+    const load = async () => {
+      try {
+        const [packagesResult, orderResult] = await Promise.all([
+          apiClient.get<{ success: boolean; packages: Package[] }>('/packages'),
+          apiClient.get<{ success: boolean; order: Order }>(`/orders/${orderId}`),
+        ])
+        if (cancelled) return
+        if (packagesResult.success && packagesResult.packages) {
+          setPackages(packagesResult.packages)
+        } else {
+          toast.error('فشل تحميل الباقات')
+        }
+        if (orderResult.success && orderResult.order) {
+          setOrder(orderResult.order)
+          if (packagesResult.success && packagesResult.packages) {
+            const currentPkg = packagesResult.packages.find(p => p.id === orderResult.order!.package.id)
+            if (currentPkg) setSelectedPackage(currentPkg)
+          }
+        } else {
+          toast.error('فشل تحميل بيانات الطلب')
+          router.push('/dashboard')
+        }
+      } catch {
+        if (!cancelled) {
+          toast.error('فشل تحميل البيانات')
+          router.push('/dashboard')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
-  }, [status, router, fetchPackages])
-
-  useEffect(() => {
-    if (packages.length > 0 && orderId) {
-      fetchOrder()
-    }
-  }, [packages, orderId, fetchOrder])
+    load()
+    return () => { cancelled = true }
+  }, [status, router, orderId])
 
   const handlePackageSelect = async () => {
     if (!selectedPackage || !order) {

@@ -1,22 +1,21 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
-import { 
-  CheckCircle, 
-  Clock, 
-  FileText, 
-  Compass, 
-  PenTool, 
+import {
+  CheckCircle,
+  Clock,
+  FileText,
+  Compass,
+  PenTool,
   ArrowLeft,
-  ChevronDown,
   Phone,
   Mail,
   Layers,
   Target,
   Shield,
-  MessageCircle,
   Lightbulb,
   Zap
 } from 'lucide-react'
@@ -26,6 +25,18 @@ import {
   UnsuitableLayoutIcon
 } from '@/components/icons/ArchitecturalIcons'
 import { Button } from '@/components/shared/Button'
+
+const HomePageFAQ = dynamic(
+  () => import('./HomePageFAQ').then((m) => ({ default: m.HomePageFAQ })),
+  {
+    loading: () => (
+      <section id="faq" className="py-12 md:py-16 lg:py-20 bg-greige/20 dark:bg-charcoal-800/50 min-h-[320px] flex items-center justify-center">
+        <div className="w-12 h-12 border-2 border-rocky-blue/30 border-t-rocky-blue rounded-full animate-spin" />
+      </section>
+    ),
+    ssr: false,
+  }
+)
 import { Header } from '@/components/layout/Header'
 import { apiClient } from '@/lib/api'
 
@@ -122,24 +133,10 @@ export default function Home() {
   const { data: session } = useAuth()
   const [packages, setPackages] = useState<Package[]>([])
   const [loadingPackages, setLoadingPackages] = useState(true)
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [homepageContent, setHomepageContent] = useState<HomepageContent | null>(null)
   const packagesResolvedRef = useRef(false)
 
-  const fetchHomepageContent = useCallback(async () => {
-    try {
-      const result = await apiClient.get<{ success: boolean; content: HomepageContent }>('/content/homepage')
-      if (result.success && result.content) setHomepageContent(result.content)
-    } catch {
-      /* ignore – use fallback */
-    }
-  }, [])
-
   useEffect(() => {
-    fetchHomepageContent()
-  }, [fetchHomepageContent])
-
-  const fetchPackages = useCallback(async () => {
     packagesResolvedRef.current = false
     setLoadingPackages(true)
     const timeoutId = setTimeout(() => {
@@ -147,26 +144,34 @@ export default function Home() {
       setPackages(FALLBACK_PACKAGES)
       setLoadingPackages(false)
     }, PACKAGES_FALLBACK_TIMEOUT_MS)
-    try {
-      const result = await apiClient.get<{ success: boolean; packages: Package[] }>('/packages')
-      packagesResolvedRef.current = true
-      if (result.success && result.packages) {
-        setPackages(result.packages)
-      }
-    } catch (error: unknown) {
-      packagesResolvedRef.current = true
-      const errorMessage = error instanceof Error ? error.message : 'فشل تحميل الباقات'
-      console.error('Failed to fetch packages:', errorMessage)
-      setPackages(FALLBACK_PACKAGES)
-    } finally {
-      clearTimeout(timeoutId)
-      setLoadingPackages(false)
-    }
-  }, [])
 
-  useEffect(() => {
-    fetchPackages()
-  }, [fetchPackages])
+    const load = async () => {
+      try {
+        const [contentResult, packagesResult] = await Promise.all([
+          apiClient.get<{ success: boolean; content: HomepageContent }>('/content/homepage'),
+          apiClient.get<{ success: boolean; packages: Package[] }>('/packages'),
+        ])
+        if (contentResult.success && contentResult.content) {
+          setHomepageContent(contentResult.content)
+        }
+        packagesResolvedRef.current = true
+        if (packagesResult.success && packagesResult.packages) {
+          setPackages(packagesResult.packages)
+        } else {
+          setPackages(FALLBACK_PACKAGES)
+        }
+      } catch (error: unknown) {
+        packagesResolvedRef.current = true
+        if (error instanceof Error) console.error('Failed to fetch homepage data:', error.message)
+        setPackages(FALLBACK_PACKAGES)
+      } finally {
+        clearTimeout(timeoutId)
+        setLoadingPackages(false)
+      }
+    }
+    load()
+    return () => clearTimeout(timeoutId)
+  }, [])
 
   // Handle hash navigation
   useEffect(() => {
@@ -1093,70 +1098,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== FAQ Section - Enhanced ===== */}
-      <section id="faq" className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-greige/30 via-blue-gray/20 to-rocky-blue/30 dark:from-charcoal-800 dark:via-charcoal-800 dark:to-charcoal-900 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-rocky-blue/5 dark:bg-rocky-blue/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-gray/5 dark:bg-blue-gray/10 rounded-full blur-3xl" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <header className="text-center mb-8 md:mb-12 lg:mb-16">
-            {/* Badge - Architectural Style */}
-            <div className="relative inline-block bg-rocky-blue dark:bg-rocky-blue-600 text-cream px-6 py-2 rounded-none text-sm font-black mb-4 shadow-lg border-2 border-rocky-blue-400/30 dark:border-rocky-blue-400/40 flex items-center gap-2">
-              {/* Architectural corner decorations */}
-              <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-cream/50 dark:border-cream/40" />
-              <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-cream/50 dark:border-cream/40" />
-              <MessageCircle className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">{homepageContent?.faq?.sectionTitle ?? 'الأسئلة الشائعة'}</span>
-            </div>
-            
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-charcoal dark:text-cream mb-4 break-words">
-              {homepageContent?.faq?.sectionTitle ?? 'الأسئلة الشائعة'}
-            </h2>
-            <p className="text-base sm:text-lg md:text-xl text-blue-gray dark:text-greige max-w-2xl mx-auto px-1">
-              إجابات على أكثر الأسئلة التي تردنا
-            </p>
-          </header>
-
-          <div className="max-w-4xl mx-auto space-y-6 min-w-0">
-            {(homepageContent?.faq?.items?.length ? homepageContent.faq.items.map((item, i) => ({ ...item, icon: [Layers, Target, PenTool, Clock, Shield][i] ?? Layers })) : faqs).map((faq, idx) => (
-              <div key={idx} className="group">
-                <div className="bg-white dark:bg-charcoal-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-rocky-blue/30 dark:hover:border-rocky-blue-500/30 overflow-hidden">
-                  <button
-                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full p-6 flex items-center justify-between text-right hover:bg-greige/5 dark:hover:bg-charcoal-700/50 transition-colors min-h-[2.75rem]"
-                  >
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      {/* Icon with background */}
-                      <div className="w-12 h-12 bg-rocky-blue/10 dark:bg-rocky-blue/20 rounded-xl flex items-center justify-center border-2 border-rocky-blue/20 flex-shrink-0">
-                        <faq.icon className="w-6 h-6 text-rocky-blue dark:text-rocky-blue-300" />
-                      </div>
-                      <span className="text-lg font-black text-charcoal dark:text-cream group-hover:text-rocky-blue dark:group-hover:text-rocky-blue-300 transition-colors duration-300 break-words text-right">
-                        {faq.question}
-                      </span>
-                    </div>
-                    <div className={`w-10 h-10 rounded-full bg-rocky-blue/10 dark:bg-rocky-blue/20 flex items-center justify-center transition-all duration-300 ${
-                      openFaq === idx ? 'bg-rocky-blue dark:bg-rocky-blue-600 text-cream rotate-180' : 'text-rocky-blue dark:text-rocky-blue-300'
-                    }`}>
-                      <ChevronDown className="w-5 h-5" />
-                    </div>
-                  </button>
-                  
-                  <div className={`overflow-hidden transition-all duration-500 ${openFaq === idx ? 'max-h-96' : 'max-h-0'}`}>
-                    <div className="px-6 pb-6 pt-0">
-                      <div className="pt-4 border-t border-greige/30 dark:border-charcoal-600">
-                        <p className="text-base leading-relaxed text-blue-gray dark:text-greige">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomePageFAQ
+        sectionTitle={homepageContent?.faq?.sectionTitle ?? 'الأسئلة الشائعة'}
+        items={
+          homepageContent?.faq?.items?.length
+            ? homepageContent.faq.items.map((item, i) => ({
+                ...item,
+                icon: [Layers, Target, PenTool, Clock, Shield][i] ?? Layers,
+              }))
+            : faqs
+        }
+      />
 
       {/* ===== Final CTA Section - Enhanced ===== */}
       <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-b from-rocky-blue/50 via-rocky-blue-600 to-rocky-blue-700 dark:from-rocky-blue-800 dark:via-rocky-blue-900 dark:to-charcoal-900 relative overflow-hidden">

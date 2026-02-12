@@ -19,12 +19,12 @@ export const viewport: Viewport = {
   ],
 }
 
-const cairo = Cairo({ 
+const cairo = Cairo({
   subsets: ['arabic', 'latin'],
   display: 'swap',
   preload: true,
   variable: '--font-cairo',
-  weight: ['400', '500', '600', '700', '800', '900'],
+  weight: ['400', '600', '700'],
 })
 
 export const metadata: Metadata = {

@@ -66,30 +66,24 @@ export default function OrderDetailPage() {
   const [revisionRequests, setRevisionRequests] = useState<RevisionRequest[]>([])
   const [loading, setLoading] = useState(true)
 
-  const fetchRevisions = useCallback(async (oid: string) => {
-    try {
-      const result = await apiClient.get<{ success: boolean; revisionRequests: RevisionRequest[] }>(
-        `/revisions/${oid}`
-      )
-      if (result.success && result.revisionRequests) {
-        setRevisionRequests(result.revisionRequests)
-      }
-    } catch {
-      // Silent fail - revisions are optional
-    }
-  }, [])
-
   const fetchOrder = useCallback(async () => {
     try {
-      const result = await apiClient.get<{ success: boolean; order: Order }>(`/orders/${orderId}`)
-      if (result.success) {
-        setOrder(result.order)
-        fetchRevisions(orderId)
+      const [orderResult, revisionsResult] = await Promise.all([
+        apiClient.get<{ success: boolean; order: Order }>(`/orders/${orderId}`),
+        apiClient.get<{ success: boolean; revisionRequests: RevisionRequest[] }>(`/revisions/${orderId}`),
+      ])
+      if (orderResult.success && orderResult.order) {
+        setOrder(orderResult.order)
+      }
+      if (revisionsResult.success && revisionsResult.revisionRequests) {
+        setRevisionRequests(revisionsResult.revisionRequests)
+      }
+      if (!orderResult.success || !orderResult.order) {
+        throw new Error('فشل تحميل الطلب')
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'فشل تحميل بيانات الطلب'
       toast.error(errorMessage)
-      // Redirect to appropriate dashboard based on user role
       const dashboardPath = session?.user?.role === 'ADMIN' ? '/admin/dashboard' :
                             session?.user?.role === 'ENGINEER' ? '/engineer/dashboard' :
                             '/dashboard'
@@ -97,7 +91,7 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [orderId, router, session, fetchRevisions])
+  }, [orderId, router, session])
 
   useEffect(() => {
     if (status === 'unauthenticated') {

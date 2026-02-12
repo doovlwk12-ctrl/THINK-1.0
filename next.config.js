@@ -23,12 +23,10 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
   
-  // Enable experimental features for better performance
-  // experimental: { optimizeCss: true } — disabled
-  // experimental: {
-  //   optimizeCss: true,
-  // },
-  
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
+
   // Webpack optimizations
   webpack: (config, { dev, isServer }) => {
     // Production optimizations

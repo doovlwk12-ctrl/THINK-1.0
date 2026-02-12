@@ -12,12 +12,7 @@ function isExternalUrl(url: string): boolean {
   return u.startsWith('http://') || u.startsWith('https://') || u.startsWith('//')
 }
 
-/** روابط Supabase — نمررها عبر وكيل الصور لتجنب 400 و CORS */
-function isSupabaseStorageUrl(url: string): boolean {
-  return typeof url === 'string' && url.includes('supabase.co') && url.includes('/storage/')
-}
-
-/** تطبيع الرابط للوكيل: //... → https://... */
+/** تطبيع الرابط: //... → https://... */
 function normalizeProxyUrl(url: string): string {
   const u = url.trim()
   if (u.startsWith('//')) return `https:${u}`
@@ -47,20 +42,15 @@ export interface PlanImageProps {
   onTouchEnd?: () => void
 }
 
-/** مصدر العرض: روابط Supabase عبر وكيل API، والباقي كما هو */
+/** مصدر العرض: روابط Supabase مباشرة (بدون وكيل) لتظهر الصورة حتى بدون متغيرات بيئة */
 function getImageSrc(fileUrl: string): string {
-  const normalized = normalizeProxyUrl(fileUrl)
-  if (isSupabaseStorageUrl(normalized)) {
-    return `/api/image-proxy?url=${encodeURIComponent(normalized)}`
-  }
-  return fileUrl.startsWith('//') ? `https:${fileUrl}` : fileUrl
+  return normalizeProxyUrl(fileUrl)
 }
 
 /**
  * يعرض صورة مخطط:
- * - روابط Supabase: عبر /api/image-proxy (تجنب 400 و CORS)
- * - أي رابط خارجي آخر: <img> مباشر
- * - مسارات محلية (/uploads/): Next/Image للتحسين
+ * - أي رابط خارجي (http/https أو //): <img> مع الرابط المباشر (لا يمر عبر _next/image)
+ * - مسارات محلية (/uploads/): Next/Image
  */
 export function PlanImage({
   fileUrl,
