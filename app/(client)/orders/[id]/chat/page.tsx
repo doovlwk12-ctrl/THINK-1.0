@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useOrderChat, type ChatMessage } from '@/hooks/useOrderChat'
-import Image from 'next/image'
+import { PlanImage } from '@/components/shared/PlanImage'
 import { Send, Download, User, MessageSquare, X, MapPin, Eye, Loader2 } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
@@ -262,15 +262,15 @@ export default function ChatPage() {
               {plans.filter((p) => p.fileUrl).map((plan) => (
                 <div key={plan.id} className="border border-greige/30 dark:border-charcoal-600 rounded-lg p-3 bg-white dark:bg-charcoal-700">
                   {plan.fileType === 'image' && plan.fileUrl ? (
-                    <Image
-                      src={plan.fileUrl}
+                    <PlanImage
+                      fileUrl={plan.fileUrl}
+                      fileType={plan.fileType}
                       alt="Plan"
                       width={320}
                       height={128}
                       className="w-full h-32 object-cover rounded mb-2"
                       loading="lazy"
                       placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                     />
                   ) : plan.fileUrl ? (
                     <div className="w-full h-32 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2">
@@ -281,6 +281,8 @@ export default function ChatPage() {
                   <a
                     href={`/api/orders/${orderId}/plans/${plan.id}/download`}
                     download={plan.fileName?.trim() || (plan.fileType === 'pdf' ? 'plan.pdf' : 'plan.jpeg')}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-2 text-rocky-blue dark:text-rocky-blue-300 hover:underline text-sm"
                   >
                     <Download className="w-4 h-4" />
@@ -566,14 +568,15 @@ export default function ChatPage() {
                   </div>
                 ) : selectedRevision.plan.fileType === 'image' ? (
                   <div className="relative w-full" ref={revisionContainerRef}>
-                    <Image
-                      ref={revisionImageRef}
-                      src={selectedRevision.plan.fileUrl}
+                    <PlanImage
+                      imageRef={revisionImageRef}
+                      fileUrl={selectedRevision.plan.fileUrl}
+                      fileType={selectedRevision.plan.fileType}
                       alt="Plan with revisions"
                       width={1200}
                       height={800}
                       className="w-full h-auto"
-                      unoptimized
+                      priority
                     />
                     {selectedRevision.pins.map((pin, index) => (
                       <div

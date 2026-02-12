@@ -110,16 +110,24 @@ export async function GET(
       })
     }
 
-    const remoteRes = await fetch(fileUrl, { method: 'GET' })
-    if (!remoteRes.ok || !remoteRes.body) {
-      return new Response(null, { status: 502 })
+    try {
+      const remoteRes = await fetch(fileUrl, { method: 'GET', redirect: 'follow' })
+      if (remoteRes.ok && remoteRes.body) {
+        return new Response(remoteRes.body, {
+          headers: {
+            'Content-Type': contentType,
+            'Content-Disposition': `attachment; filename="${downloadName}"`,
+          },
+        })
+      }
+    } catch {
+      // fetch failed (e.g. network/timeout on Vercel)
     }
-    return new Response(remoteRes.body, {
-      headers: {
-        'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${downloadName}"`,
-      },
-    })
+    // Fallback: redirect to file URL so user can open/save from Supabase directly
+    if (fileUrl.startsWith('https://')) {
+      return NextResponse.redirect(fileUrl, 302)
+    }
+    return new Response(null, { status: 502 })
   } catch (error: unknown) {
     return handleApiError(error) as Response
   }

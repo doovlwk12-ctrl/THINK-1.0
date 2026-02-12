@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import Image from 'next/image'
+import { PlanImage } from '@/components/shared/PlanImage'
 import Link from 'next/link'
 import { 
   ArrowRight, 
@@ -441,9 +441,10 @@ export default function EngineerRevisionPage() {
                 <div className="relative bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                   {plan.fileType === 'image' ? (
                     <div className="relative w-full">
-                      <Image
-                        ref={imageRef}
-                        src={plan.fileUrl}
+                      <PlanImage
+                        imageRef={imageRef}
+                        fileUrl={plan.fileUrl}
+                        fileType={plan.fileType}
                         alt="Plan"
                         width={1200}
                         height={800}

@@ -36,6 +36,30 @@ const SOCIAL_TYPE_LABELS: Record<string, string> = {
 
 const SOCIAL_TYPES = ['instagram', 'snapchat', 'x', 'whatsapp', 'linkedin'] as const
 
+/** حدود الأحرف لكل حقل لضمان عدم كسر التصميم في الصفحة الرئيسية */
+const LIMITS = {
+  heroTitle: 120,
+  heroSubtitle: 320,
+  faqSectionTitle: 80,
+  faqQuestion: 220,
+  faqAnswer: 700,
+  ctaBadge: 40,
+  ctaTitle: 80,
+  ctaSubtitle: 120,
+  ctaParagraph: 550,
+  ctaFeatureTitle: 50,
+  ctaFeatureDesc: 100,
+  footerEmail: 80,
+  footerPhone: 30,
+  footerCopyright: 120,
+  socialUrl: 500,
+} as const
+
+function clamp(str: string, max: number): string {
+  if (str.length <= max) return str
+  return str.slice(0, max)
+}
+
 const DEFAULT: HomepageContentPayload = {
   hero: {
     title: 'حوّل احتياجاتك إلى مخطط معماري مدروس',
@@ -85,11 +109,39 @@ export default function AdminHomepageContentPage() {
     try {
       const result = await apiClient.get<{ success: boolean; content: HomepageContentPayload }>('/admin/content/homepage')
       if (result.success && result.content) {
+        const c = result.content
         setForm({
-          hero: result.content.hero ?? DEFAULT.hero,
-          faq: result.content.faq ?? DEFAULT.faq,
-          cta: result.content.cta ?? DEFAULT.cta,
-          footer: result.content.footer ?? DEFAULT.footer,
+          hero: {
+            title: clamp(String(c.hero?.title ?? DEFAULT.hero?.title ?? ''), LIMITS.heroTitle),
+            subtitle: clamp(String(c.hero?.subtitle ?? DEFAULT.hero?.subtitle ?? ''), LIMITS.heroSubtitle),
+          },
+          faq: {
+            sectionTitle: clamp(String(c.faq?.sectionTitle ?? DEFAULT.faq?.sectionTitle ?? ''), LIMITS.faqSectionTitle),
+            items: (c.faq?.items?.length ? c.faq.items : DEFAULT.faq?.items ?? []).map((item) => ({
+              question: clamp(String(item?.question ?? ''), LIMITS.faqQuestion),
+              answer: clamp(String(item?.answer ?? ''), LIMITS.faqAnswer),
+            })),
+          },
+          cta: {
+            badge: clamp(String(c.cta?.badge ?? DEFAULT.cta?.badge ?? ''), LIMITS.ctaBadge),
+            title: clamp(String(c.cta?.title ?? DEFAULT.cta?.title ?? ''), LIMITS.ctaTitle),
+            subtitle: clamp(String(c.cta?.subtitle ?? DEFAULT.cta?.subtitle ?? ''), LIMITS.ctaSubtitle),
+            paragraph: clamp(String(c.cta?.paragraph ?? DEFAULT.cta?.paragraph ?? ''), LIMITS.ctaParagraph),
+            features: (c.cta?.features?.length ? c.cta.features : DEFAULT.cta?.features ?? []).map((f) => ({
+              title: clamp(String(f?.title ?? ''), LIMITS.ctaFeatureTitle),
+              desc: clamp(String(f?.desc ?? ''), LIMITS.ctaFeatureDesc),
+            })),
+          },
+          footer: {
+            email: clamp(String(c.footer?.email ?? DEFAULT.footer?.email ?? ''), LIMITS.footerEmail),
+            phone: clamp(String(c.footer?.phone ?? DEFAULT.footer?.phone ?? ''), LIMITS.footerPhone),
+            copyright: clamp(String(c.footer?.copyright ?? DEFAULT.footer?.copyright ?? ''), LIMITS.footerCopyright),
+            socialLinks: (c.footer?.socialLinks?.length ? c.footer.socialLinks : DEFAULT.footer?.socialLinks ?? []).map((l) => ({
+              type: l?.type ?? 'instagram',
+              url: clamp(String(l?.url ?? ''), LIMITS.socialUrl),
+              visible: l?.visible ?? true,
+            })),
+          },
         })
       }
     } catch {
@@ -130,14 +182,18 @@ export default function AdminHomepageContentPage() {
   }
 
   const updateHero = (key: 'title' | 'subtitle', value: string) =>
-    setForm((f) => ({ ...f, hero: { ...(f.hero ?? DEFAULT.hero!), [key]: value } }))
+    setForm((f) => ({
+      ...f,
+      hero: { ...(f.hero ?? DEFAULT.hero!), [key]: clamp(value, key === 'title' ? LIMITS.heroTitle : LIMITS.heroSubtitle) },
+    }))
   const updateFaq = (key: 'sectionTitle', value: string) =>
-    setForm((f) => ({ ...f, faq: { ...(f.faq ?? DEFAULT.faq!), [key]: value } }))
+    setForm((f) => ({ ...f, faq: { ...(f.faq ?? DEFAULT.faq!), [key]: clamp(value, LIMITS.faqSectionTitle) } }))
   const updateFaqItem = (index: number, key: 'question' | 'answer', value: string) =>
     setForm((f) => {
       const items = [...(f.faq?.items ?? [])]
       if (!items[index]) return f
-      items[index] = { ...items[index], [key]: value }
+      const max = key === 'question' ? LIMITS.faqQuestion : LIMITS.faqAnswer
+      items[index] = { ...items[index], [key]: clamp(value, max) }
       return { ...f, faq: { ...(f.faq ?? DEFAULT.faq!), items } }
     })
   const addFaqItem = () =>
@@ -157,25 +213,30 @@ export default function AdminHomepageContentPage() {
       },
     }))
 
+  const ctaLimit = (key: string) =>
+    key === 'badge' ? LIMITS.ctaBadge : key === 'title' ? LIMITS.ctaTitle : key === 'subtitle' ? LIMITS.ctaSubtitle : LIMITS.ctaParagraph
   const updateCta = (key: keyof NonNullable<HomepageContentPayload['cta']>, value: string) =>
-    setForm((f) => ({ ...f, cta: { ...(f.cta ?? DEFAULT.cta!), [key]: value } }))
+    setForm((f) => ({ ...f, cta: { ...(f.cta ?? DEFAULT.cta!), [key]: clamp(value, ctaLimit(key)) } }))
   const updateCtaFeature = (index: number, key: 'title' | 'desc', value: string) =>
     setForm((f) => {
       const features = [...(f.cta?.features ?? [])]
       if (!features[index]) return f
-      features[index] = { ...features[index], [key]: value }
+      const max = key === 'title' ? LIMITS.ctaFeatureTitle : LIMITS.ctaFeatureDesc
+      features[index] = { ...features[index], [key]: clamp(value, max) }
       return { ...f, cta: { ...(f.cta ?? DEFAULT.cta!), features } }
     })
 
+  const footerLimit = (key: string) =>
+    key === 'email' ? LIMITS.footerEmail : key === 'phone' ? LIMITS.footerPhone : LIMITS.footerCopyright
   const updateFooter = (key: 'email' | 'phone' | 'copyright', value: string) =>
-    setForm((f) => ({ ...f, footer: { ...(f.footer ?? DEFAULT.footer!), [key]: value } }))
+    setForm((f) => ({ ...f, footer: { ...(f.footer ?? DEFAULT.footer!), [key]: clamp(value, footerLimit(key)) } }))
   const updateSocialLink = (index: number, key: 'type' | 'url' | 'visible', value: string | boolean) =>
     setForm((f) => {
       const socialLinks = [...(f.footer?.socialLinks ?? [])]
       if (!socialLinks[index]) return f
       if (key === 'visible') socialLinks[index].visible = value as boolean
       else if (key === 'type') socialLinks[index].type = value as (typeof SOCIAL_TYPES)[number]
-      else socialLinks[index].url = value as string
+      else socialLinks[index].url = clamp(value as string, LIMITS.socialUrl)
       return { ...f, footer: { ...(f.footer ?? DEFAULT.footer!), socialLinks } }
     })
   const addSocialLink = () =>
@@ -242,7 +303,9 @@ export default function AdminHomepageContentPage() {
                   value={form.hero?.title ?? ''}
                   onChange={(e) => updateHero('title', e.target.value)}
                   placeholder="حوّل احتياجاتك إلى مخطط معماري مدروس"
+                  maxLength={LIMITS.heroTitle}
                 />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.hero?.title ?? '').length} / {LIMITS.heroTitle}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">العنوان الفرعي</label>
@@ -251,7 +314,9 @@ export default function AdminHomepageContentPage() {
                   onChange={(e) => updateHero('subtitle', e.target.value)}
                   placeholder="تصميم تخطيطي مبدئي..."
                   className={textareaClass}
+                  maxLength={LIMITS.heroSubtitle}
                 />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.hero?.subtitle ?? '').length} / {LIMITS.heroSubtitle}</p>
               </div>
             </div>
           </Card>
@@ -269,7 +334,9 @@ export default function AdminHomepageContentPage() {
                   value={form.faq?.sectionTitle ?? ''}
                   onChange={(e) => updateFaq('sectionTitle', e.target.value)}
                   placeholder="الأسئلة الشائعة"
+                  maxLength={LIMITS.faqSectionTitle}
                 />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.faq?.sectionTitle ?? '').length} / {LIMITS.faqSectionTitle}</p>
               </div>
               {(form.faq?.items ?? []).map((item, index) => (
                 <div key={index} className="p-4 bg-greige/10 dark:bg-charcoal-700 rounded-lg border border-greige/30 dark:border-charcoal-600 space-y-3">
@@ -283,13 +350,17 @@ export default function AdminHomepageContentPage() {
                     value={item.question}
                     onChange={(e) => updateFaqItem(index, 'question', e.target.value)}
                     placeholder="السؤال"
+                    maxLength={LIMITS.faqQuestion}
                   />
+                  <p className="text-xs text-charcoal/70 dark:text-cream/70">{item.question.length} / {LIMITS.faqQuestion}</p>
                   <textarea
                     value={item.answer}
                     onChange={(e) => updateFaqItem(index, 'answer', e.target.value)}
                     placeholder="الجواب"
                     className={`${textareaClass} min-h-[60px]`}
+                    maxLength={LIMITS.faqAnswer}
                   />
+                  <p className="text-xs text-charcoal/70 dark:text-cream/70">{item.answer.length} / {LIMITS.faqAnswer}</p>
                 </div>
               ))}
               <Button type="button" variant="outline" onClick={addFaqItem}>
@@ -308,15 +379,18 @@ export default function AdminHomepageContentPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">نص الشارة</label>
-                <Input value={form.cta?.badge ?? ''} onChange={(e) => updateCta('badge', e.target.value)} placeholder="ابدأ الآن" />
+                <Input value={form.cta?.badge ?? ''} onChange={(e) => updateCta('badge', e.target.value)} placeholder="ابدأ الآن" maxLength={LIMITS.ctaBadge} />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.cta?.badge ?? '').length} / {LIMITS.ctaBadge}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">العنوان الرئيسي</label>
-                <Input value={form.cta?.title ?? ''} onChange={(e) => updateCta('title', e.target.value)} placeholder="خذ قرارك بثقة" />
+                <Input value={form.cta?.title ?? ''} onChange={(e) => updateCta('title', e.target.value)} placeholder="خذ قرارك بثقة" maxLength={LIMITS.ctaTitle} />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.cta?.title ?? '').length} / {LIMITS.ctaTitle}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">العنوان الفرعي</label>
-                <Input value={form.cta?.subtitle ?? ''} onChange={(e) => updateCta('subtitle', e.target.value)} placeholder="وابدأ بتصميم منزلك..." />
+                <Input value={form.cta?.subtitle ?? ''} onChange={(e) => updateCta('subtitle', e.target.value)} placeholder="وابدأ بتصميم منزلك..." maxLength={LIMITS.ctaSubtitle} />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.cta?.subtitle ?? '').length} / {LIMITS.ctaSubtitle}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">الفقرة</label>
@@ -325,7 +399,9 @@ export default function AdminHomepageContentPage() {
                   onChange={(e) => updateCta('paragraph', e.target.value)}
                   placeholder="لا تبدأ البناء..."
                   className={textareaClass}
+                  maxLength={LIMITS.ctaParagraph}
                 />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.cta?.paragraph ?? '').length} / {LIMITS.ctaParagraph}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-2">البطاقات الثلاث</label>
@@ -337,13 +413,16 @@ export default function AdminHomepageContentPage() {
                         onChange={(e) => updateCtaFeature(index, 'title', e.target.value)}
                         placeholder="العنوان"
                         className="flex-1 min-w-0"
+                        maxLength={LIMITS.ctaFeatureTitle}
                       />
                       <Input
                         value={feat.desc}
                         onChange={(e) => updateCtaFeature(index, 'desc', e.target.value)}
                         placeholder="الوصف"
                         className="flex-1 min-w-0"
+                        maxLength={LIMITS.ctaFeatureDesc}
                       />
+                      <span className="text-xs text-charcoal/70 dark:text-cream/70 self-center">{feat.title.length}/{LIMITS.ctaFeatureTitle} — {feat.desc.length}/{LIMITS.ctaFeatureDesc}</span>
                     </div>
                   ))}
                 </div>
@@ -360,15 +439,18 @@ export default function AdminHomepageContentPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">البريد الإلكتروني</label>
-                <Input value={form.footer?.email ?? ''} onChange={(e) => updateFooter('email', e.target.value)} placeholder="info@..." />
+                <Input value={form.footer?.email ?? ''} onChange={(e) => updateFooter('email', e.target.value)} placeholder="info@..." maxLength={LIMITS.footerEmail} />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.footer?.email ?? '').length} / {LIMITS.footerEmail}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">رقم الهاتف</label>
-                <Input value={form.footer?.phone ?? ''} onChange={(e) => updateFooter('phone', e.target.value)} placeholder="+966 ..." />
+                <Input value={form.footer?.phone ?? ''} onChange={(e) => updateFooter('phone', e.target.value)} placeholder="+966 ..." maxLength={LIMITS.footerPhone} />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.footer?.phone ?? '').length} / {LIMITS.footerPhone}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-1">نص حقوق النشر</label>
-                <Input value={form.footer?.copyright ?? ''} onChange={(e) => updateFooter('copyright', e.target.value)} placeholder="منصة فكرة. جميع الحقوق محفوظة." />
+                <Input value={form.footer?.copyright ?? ''} onChange={(e) => updateFooter('copyright', e.target.value)} placeholder="منصة فكرة. جميع الحقوق محفوظة." maxLength={LIMITS.footerCopyright} />
+                <p className="text-xs text-charcoal/70 dark:text-cream/70 mt-1">{(form.footer?.copyright ?? '').length} / {LIMITS.footerCopyright}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-charcoal dark:text-cream mb-2">روابط السوشيال ميديا</label>
@@ -407,7 +489,9 @@ export default function AdminHomepageContentPage() {
                         placeholder="رابط الملف الشخصي أو الصفحة"
                         className="w-full"
                         dir="ltr"
+                        maxLength={LIMITS.socialUrl}
                       />
+                      <p className="text-xs text-charcoal/70 dark:text-cream/70">{link.url.length} / {LIMITS.socialUrl}</p>
                     </div>
                   ))}
                   <Button type="button" variant="outline" onClick={addSocialLink} className="w-full sm:w-auto">

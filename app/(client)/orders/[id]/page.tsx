@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
-import Image from 'next/image'
+import { PlanImage } from '@/components/shared/PlanImage'
 import { Clock, Package, User, MessageSquare, Edit } from 'lucide-react'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
@@ -523,15 +523,15 @@ export default function OrderDetailPage() {
                     {order.plans.filter((p) => p.fileUrl).map((plan) => (
                       <div key={plan.id} className="border border-greige/30 dark:border-charcoal-600 rounded-lg p-4 bg-white dark:bg-charcoal-700">
                         {plan.fileType === 'image' && plan.fileUrl ? (
-                          <Image
-                            src={plan.fileUrl}
+                          <PlanImage
+                            fileUrl={plan.fileUrl}
+                            fileType={plan.fileType}
                             alt="Plan"
                             width={480}
                             height={192}
                             className="w-full h-48 object-cover rounded mb-2"
                             loading="lazy"
                             placeholder="blur"
-                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                           />
                         ) : plan.fileUrl ? (
                           <div className="w-full h-48 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2">
@@ -541,6 +541,8 @@ export default function OrderDetailPage() {
                         <a
                           href={`/api/orders/${orderId}/plans/${plan.id}/download`}
                           download={plan.fileName?.trim() || (plan.fileType === 'pdf' ? 'plan.pdf' : 'plan.jpeg')}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex items-center gap-2 text-rocky-blue dark:text-rocky-blue-300 hover:underline text-sm"
                         >
                           تحميل المخطط

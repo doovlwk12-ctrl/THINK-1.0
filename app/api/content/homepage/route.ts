@@ -42,8 +42,10 @@ async function getHomepageContent() {
   }
 }
 
-const cachedGetHomepageContent = unstable_cache(getHomepageContent, ['homepage-content'], {
+const CACHE_TAG = 'homepage-content'
+const cachedGetHomepageContent = unstable_cache(getHomepageContent, [CACHE_TAG], {
   revalidate: 60,
+  tags: [CACHE_TAG],
 })
 
 const CACHE_MAX_AGE = 60

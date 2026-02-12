@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Upload, Download, User, Clock, Send, X, Edit, MessageCircle, Trash2, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { PlanImage } from '@/components/shared/PlanImage'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
 import { Loading } from '@/components/shared/Loading'
@@ -955,15 +955,15 @@ export default function EngineerOrderPage() {
                   {order.plans.map((plan) => (
                     <div key={plan.id} className={`border rounded-lg p-4 bg-white dark:bg-charcoal-700 ${plan.isActive ? 'border-green-500 dark:border-green-600 bg-green-50 dark:bg-green-900/20' : 'border-greige/30 dark:border-charcoal-600'}`}>
                       {plan.fileType === 'image' ? (
-                        <Image
-                          src={plan.fileUrl}
+                        <PlanImage
+                          fileUrl={plan.fileUrl}
+                          fileType={plan.fileType}
                           alt="Plan"
                           width={480}
                           height={192}
                           className="w-full h-48 object-cover rounded mb-2"
                           loading="lazy"
                           placeholder="blur"
-                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                         />
                       ) : (
                         <div className="w-full h-48 bg-greige/20 dark:bg-charcoal-600 rounded flex items-center justify-center mb-2">
@@ -974,6 +974,8 @@ export default function EngineerOrderPage() {
                         <a
                           href={`/api/orders/${orderId}/plans/${plan.id}/download`}
                           download={plan.fileName?.trim() || (plan.fileType === 'pdf' ? 'plan.pdf' : 'plan.jpeg')}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex items-center gap-2 text-rocky-blue dark:text-rocky-blue-300 hover:underline"
                         >
                           <Download className="w-4 h-4" />

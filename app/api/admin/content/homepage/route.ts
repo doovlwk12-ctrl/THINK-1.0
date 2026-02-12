@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -141,6 +142,7 @@ export async function PUT(request: NextRequest) {
         data: { content: contentString },
       })
     }
+    revalidateTag('homepage-content')
     return Response.json({ success: true, content: merged })
   } catch (error: unknown) {
     return handleApiError(error)

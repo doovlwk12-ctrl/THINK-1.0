@@ -15,7 +15,7 @@ import {
   Lock,
   Unlock
 } from 'lucide-react'
-import Image from 'next/image'
+import { PlanImage } from '@/components/shared/PlanImage'
 import { Button } from '@/components/shared/Button'
 import { Card } from '@/components/shared/Card'
 import { Loading } from '@/components/shared/Loading'
@@ -1170,9 +1170,10 @@ export default function RevisionPage() {
                   }}
                 >
                   {plan.fileUrl ? (
-                  <Image
-                    ref={imageRef}
-                    src={plan.fileUrl}
+                  <PlanImage
+                    imageRef={imageRef}
+                    fileUrl={plan.fileUrl}
+                    fileType={plan.fileType}
                     alt="Plan"
                     width={1200}
                     height={800}
