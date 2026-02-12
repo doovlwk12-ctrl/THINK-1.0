@@ -23,6 +23,8 @@ export interface UploadEngineerFileOptions {
   folder?: string
   /** الحجم الأقصى بالبايت (افتراضي 10MB). */
   maxSizeBytes?: number
+  /** معرف الطلب — عند توفره نضع ملفات الطلب تحت plans/{orderId}/ لتفريق بيانات كل عميل عن الباقي. */
+  orderId?: string
 }
 
 export interface UploadEngineerFileResult {
@@ -79,7 +81,11 @@ export async function uploadEngineerFileToOrders(
 
   const extension = file.name.split('.').pop()?.toLowerCase() || 'bin'
   const uniqueName = `${randomUUID()}.${extension}`
-  const objectPath = `${folder}/${uniqueName}`
+  // فصل ملفات كل طلب: plans/{orderId}/{uuid}.ext — يمنع اختلاط بيانات العملاء ويُسهّل الحذف والحدود لكل طلب
+  const orderSegment = options.orderId?.replace(/[^a-zA-Z0-9_-]/g, '') || ''
+  const objectPath = orderSegment
+    ? `${folder}/${orderSegment}/${uniqueName}`
+    : `${folder}/${uniqueName}`
 
   const buffer = Buffer.from(await file.arrayBuffer())
   const { url, path: storedPath } = await uploadToSupabaseBucket(

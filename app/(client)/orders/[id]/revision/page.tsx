@@ -22,7 +22,7 @@ import { Loading } from '@/components/shared/Loading'
 import { Header } from '@/components/layout/Header'
 import { BackButton } from '@/components/shared/BackButton'
 import { apiClient } from '@/lib/api'
-import { isOrderExpired } from '@/lib/utils'
+import { isOrderExpired, ARCHIVE_PURGE_DAYS_AFTER_DEADLINE } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 interface Plan {
@@ -1174,6 +1174,8 @@ export default function RevisionPage() {
                     imageRef={imageRef}
                     fileUrl={plan.fileUrl}
                     fileType={plan.fileType}
+                    orderId={orderId}
+                    planId={plan.id}
                     alt="Plan"
                     width={1200}
                     height={800}
@@ -1190,7 +1192,7 @@ export default function RevisionPage() {
                   />
                   ) : (
                     <div className="flex items-center justify-center min-h-[300px] p-8 text-center text-amber-700 dark:text-amber-300">
-                      <p>تم حذف الملف من الأرشيف بعد 45 يوماً من الموعد النهائي. لا يمكن إضافة تعديلات على هذا المخطط.</p>
+                      <p>تم حذف الملف من الأرشيف بعد {ARCHIVE_PURGE_DAYS_AFTER_DEADLINE} يوماً من الموعد النهائي. لا يمكن إضافة تعديلات على هذا المخطط.</p>
                     </div>
                   )}
                   {/* Render Pins — كل دبابيس المخطط الحالي من كل المجموعات (لا تختفي) */}

@@ -99,3 +99,18 @@ export async function deleteFromSupabaseBucket(bucket: string, path: string): Pr
   const { error } = await admin.storage.from(bucket).remove([path])
   if (error) throw error
 }
+
+/**
+ * نقل ملف داخل نفس الـ bucket (من السيرفر فقط).
+ * يُستخدم لنقل المخططات من plans/ إلى archive/ عند انتهاء مدة الطلب.
+ */
+export async function moveInSupabaseBucket(
+  bucket: string,
+  fromPath: string,
+  toPath: string
+): Promise<void> {
+  const admin = createAdminClient()
+  if (!admin) throw new Error('Supabase admin client not available')
+  const { error } = await admin.storage.from(bucket).move(fromPath, toPath)
+  if (error) throw error
+}

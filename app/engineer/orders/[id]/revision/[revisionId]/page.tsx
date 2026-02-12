@@ -445,6 +445,8 @@ export default function EngineerRevisionPage() {
                         imageRef={imageRef}
                         fileUrl={plan.fileUrl}
                         fileType={plan.fileType}
+                        orderId={orderId}
+                        planId={plan.id}
                         alt="Plan"
                         width={1200}
                         height={800}

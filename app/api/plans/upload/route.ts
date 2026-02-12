@@ -108,12 +108,13 @@ export async function POST(request: NextRequest) {
     if (isSupabaseStorageConfigured()) {
       const result = await uploadEngineerFileToOrders(file, {
         folder: 'plans',
+        orderId,
         maxSizeBytes: MAX_FILE_SIZE_BYTES,
       })
       uploadResult = { url: result.url, fileName: result.fileName, fileSize: result.fileSize }
     } else {
       uploadResult = await uploadFile(file, {
-        folder: 'plans',
+        folder: `plans/${orderId}`,
         maxSize: MAX_FILE_SIZE_BYTES,
         allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
       })

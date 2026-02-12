@@ -4,8 +4,7 @@ import { requireEngineerOrAdmin } from '@/lib/requireAuth'
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { logger } from '@/lib/logger'
-import { unlink } from 'fs/promises'
-import { join } from 'path'
+import { deleteFileByUrl } from '@/lib/storage'
 
 export async function DELETE(
   request: NextRequest,
@@ -57,28 +56,21 @@ export async function DELETE(
       )
     }
 
-    // Delete file from storage
-    try {
-      // Extract file path from URL
-      if (plan.fileUrl.startsWith('/')) {
-        // Local file path
-        const filePath = join(process.cwd(), 'public', plan.fileUrl)
-        try {
-          await unlink(filePath)
-        } catch (fileError: unknown) {
-          // File might not exist, continue with database deletion
-          logger.warn('File not found, continuing with database deletion', {
-            path: plan.fileUrl,
-            error: fileError instanceof Error ? fileError.message : String(fileError),
-          })
+    // حذف الملف من التخزين (محلي أو Supabase) حتى تُطبَّق التعديلات عند إعادة الرفع وتظهر الصور
+    if (plan.fileUrl?.trim()) {
+      try {
+        const url = plan.fileUrl.trim().startsWith('//') ? `https:${plan.fileUrl.trim()}` : plan.fileUrl.trim()
+        await deleteFileByUrl(url)
+        const pathMatch = url.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/)
+        if (pathMatch?.[1]) {
+          await prisma.fileExpiryTracker.deleteMany({ where: { filePath: pathMatch[1] } })
         }
-      } else {
-        // Cloud storage URL - log warning but continue
-        logger.warn('Cloud storage file deletion not implemented', { fileUrl: plan.fileUrl })
+      } catch (fileError: unknown) {
+        logger.warn('حذف الملف من التخزين فشل أو الملف غير موجود، نكمل حذف السجل', {
+          planId,
+          error: fileError instanceof Error ? fileError.message : String(fileError),
+        })
       }
-    } catch (fileError: unknown) {
-      logger.error('Error deleting file', { planId }, fileError instanceof Error ? fileError : new Error(String(fileError)))
-      // Continue with database deletion even if file deletion fails
     }
 
     // Delete plan from database

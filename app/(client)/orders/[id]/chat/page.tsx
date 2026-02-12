@@ -245,6 +245,8 @@ export default function ChatPage() {
                     <PlanImage
                       fileUrl={plan.fileUrl}
                       fileType={plan.fileType}
+                      orderId={orderId}
+                      planId={plan.id}
                       alt="Plan"
                       width={320}
                       height={128}
@@ -552,6 +554,8 @@ export default function ChatPage() {
                       imageRef={revisionImageRef}
                       fileUrl={selectedRevision.plan.fileUrl}
                       fileType={selectedRevision.plan.fileType}
+                      orderId={orderId}
+                      planId={selectedRevision.plan.id}
                       alt="Plan with revisions"
                       width={1200}
                       height={800}

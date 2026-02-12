@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { validateTransition, type OrderStatus } from '@/lib/orderStateMachine'
 import { appendOrderAuditLog } from '@/lib/orderAuditLog'
+import { ARCHIVE_PURGE_DAYS_AFTER_DEADLINE } from '@/lib/utils'
 
 export async function POST(
   request: NextRequest,
@@ -81,13 +82,13 @@ export async function POST(
         })
       }
 
-      // تحذير للعميل صاحب الطلب: احتفظ بنسخة المخطط — سيُحذف بعد 45 يوماً من الموعد النهائي
+      // تحذير للعميل صاحب الطلب: احتفظ بنسخة المخطط — سيُحذف بعد المدة المحددة من الموعد النهائي
       await tx.notification.create({
         data: {
           userId: order.clientId,
           type: 'archive_purge_warning',
           title: 'تنبيه: احتفظ بنسخة من المخططات',
-          message: `تم إنهاء الطلب ${order.orderNumber}. يُرجى حفظ ملفات المخططات لديك — سيتم حذف الملفات من المنصة بعد 45 يوماً من الموعد النهائي ولن تُحفظ في الأرشيف.`,
+          message: `تم إنهاء الطلب ${order.orderNumber}. يُرجى حفظ ملفات المخططات لديك — سيتم نقل الملفات إلى الأرشيف بعد ${ARCHIVE_PURGE_DAYS_AFTER_DEADLINE} يوماً من الموعد النهائي.`,
           data: JSON.stringify({
             orderId,
             orderNumber: order.orderNumber,

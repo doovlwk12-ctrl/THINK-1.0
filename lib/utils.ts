@@ -85,15 +85,26 @@ export function isOrderExpired(deadline: Date | string): boolean {
   return deadlineDate < now
 }
 
-/** عدد أيام بعد الموعد النهائي لحذف ملفات الطلب من الأرشيف */
-export const ARCHIVE_PURGE_DAYS_AFTER_DEADLINE = 45
+/** عدد أيام بعد الموعد النهائي لنقل الملفات إلى مجلد الأرشيف (ثم تبقى هناك مدة أخرى ثم تُحذف). */
+export const ARCHIVE_PURGE_DAYS_AFTER_DEADLINE = 15
+
+/** عدد أيام بقاء الملفات في مجلد الأرشيف قبل الحذف النهائي من التخزين (يمكن تغييره بالاتفاق). */
+export const ARCHIVE_RETENTION_DAYS = 15
 
 /**
- * تاريخ حذف الملفات من الأرشيف = الموعد النهائي + 45 يوم
+ * تاريخ نقل الملفات إلى الأرشيف = الموعد النهائي + ARCHIVE_PURGE_DAYS_AFTER_DEADLINE يوم
  */
 export function getArchivePurgeDate(deadline: Date | string): Date {
   const d = typeof deadline === 'string' ? new Date(deadline) : deadline
   const out = new Date(d)
   out.setDate(out.getDate() + ARCHIVE_PURGE_DAYS_AFTER_DEADLINE)
+  return out
+}
+
+/** تاريخ الحذف النهائي من التخزين = تاريخ النقل إلى الأرشيف + مدة الاحتفاظ */
+export function getArchiveDeleteDate(purgedAt: Date | string): Date {
+  const d = typeof purgedAt === 'string' ? new Date(purgedAt) : purgedAt
+  const out = new Date(d)
+  out.setDate(out.getDate() + ARCHIVE_RETENTION_DAYS)
   return out
 }

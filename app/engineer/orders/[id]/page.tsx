@@ -958,6 +958,8 @@ export default function EngineerOrderPage() {
                         <PlanImage
                           fileUrl={plan.fileUrl}
                           fileType={plan.fileType}
+                          orderId={orderId}
+                          planId={plan.id}
                           alt="Plan"
                           width={480}
                           height={192}

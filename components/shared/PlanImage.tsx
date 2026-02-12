@@ -9,6 +9,18 @@ const BLUR_PLACEHOLDER =
 /** نطاقات التخزين المعروفة: أي رابط يحتويها نعرضه بـ <img> مباشرة */
 const STORAGE_HOSTS = ['supabase.co', 'amazonaws.com', 'cloudinary.com', 'res.cloudinary.com']
 
+/** روابط Supabase نمررها عبر وكيل الصور لضمان ظهور الصورة (حتى مع bucket خاص أو CORS) */
+function isSupabaseStorageUrl(url: string): boolean {
+  if (typeof url !== 'string' || !url.trim()) return false
+  return url.includes('supabase.co') && url.includes('/storage/v1/object/')
+}
+
+/** تحويل رابط Supabase إلى رابط وكيل الصور */
+function getProxyUrl(fileUrl: string): string {
+  const normalized = fileUrl.trim().startsWith('//') ? `https:${fileUrl.trim()}` : fileUrl.trim()
+  return `/api/image-proxy?url=${encodeURIComponent(normalized)}`
+}
+
 /** مسار محلي فقط (مثل /uploads/...) نمرره لـ Next/Image؛ غير ذلك نستخدم <img> لتجنب 400 على Vercel */
 function isLocalPath(url: string): boolean {
   if (typeof url !== 'string' || !url.trim()) return false
@@ -37,6 +49,9 @@ export interface PlanImageProps {
   blurDataURL?: string
   priority?: boolean
   quality?: number
+  /** عند توفرهما نستخدم مسار الصورة الموحّد /api/orders/[id]/plans/[planId]/image (مضمون مع الصلاحيات) */
+  orderId?: string
+  planId?: string
   /** للصفحات التي تحتاج ref (مثل صفحة التعديلات) */
   imageRef?: React.RefObject<HTMLImageElement | null>
   onClick?: React.MouseEventHandler<HTMLImageElement>
@@ -58,6 +73,11 @@ function getImageSrc(fileUrl: string): string {
  * - أي رابط خارجي (http/https أو //): <img> مع الرابط المباشر (لا يمر عبر _next/image)
  * - مسارات محلية (/uploads/): Next/Image
  */
+/** مسار موحّد لعرض صورة المخطط (مع صلاحيات) — يُفضّل عند توفر orderId و planId */
+function getPlanImageApiPath(orderId: string, planId: string): string {
+  return `/api/orders/${orderId}/plans/${planId}/image`
+}
+
 export function PlanImage({
   fileUrl,
   fileType,
@@ -70,6 +90,8 @@ export function PlanImage({
   blurDataURL,
   priority,
   quality,
+  orderId,
+  planId,
   imageRef,
   onClick,
   onLoad,
@@ -80,11 +102,13 @@ export function PlanImage({
   onTouchEnd,
 }: PlanImageProps) {
   const [loadError, setLoadError] = useState(false)
+  const [triedProxy, setTriedProxy] = useState(false)
 
-  if (fileType !== 'image' || !fileUrl) return null
+  if (fileType !== 'image') return null
 
-  // روابط التخزين (Supabase وغيرها) أو أي رابط غير محلي: <img> مباشرة لتجنب 400 ومنع تكسر الصور
-  if (!isLocalPath(fileUrl)) {
+  // مسار موحّد: عند وجود orderId و planId نعرض الصورة من API الصور (مضمون مع الصلاحيات)
+  if (orderId && planId) {
+    const imgSrc = getPlanImageApiPath(orderId, planId)
     if (loadError) {
       return (
         <div
@@ -100,10 +124,11 @@ export function PlanImage({
       )
     }
     return (
-      /* eslint-disable-next-line @next/next/no-img-element -- روابط تخزين خارجية، next/image يسبب 400 على Vercel */
+      /* eslint-disable-next-line @next/next/no-img-element -- مسار API موحّد للصور */
       <img
+        key={imgSrc}
         ref={imageRef as React.RefObject<HTMLImageElement>}
-        src={getImageSrc(fileUrl)}
+        src={imgSrc}
         alt={alt}
         width={width}
         height={height}
@@ -112,6 +137,60 @@ export function PlanImage({
         decoding="async"
         referrerPolicy="no-referrer"
         onError={() => setLoadError(true)}
+        onLoad={onLoad}
+        onClick={onClick}
+        draggable={draggable}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      />
+    )
+  }
+
+  if (!fileUrl) return null
+
+  // روابط التخزين (Supabase وغيرها) أو أي رابط غير محلي: <img> مباشرة أو عبر الوكيل
+  if (!isLocalPath(fileUrl)) {
+    const isSupabase = isSupabaseStorageUrl(fileUrl)
+    const proxySrc = getProxyUrl(fileUrl)
+    const directSrc = getImageSrc(fileUrl)
+    const imgSrc = isSupabase && !triedProxy ? proxySrc : directSrc
+
+    if (loadError) {
+      return (
+        <div
+          className={className}
+          style={{ width, height, minHeight: height }}
+          role="img"
+          aria-label={alt}
+        >
+          <div className="w-full h-full flex items-center justify-center bg-greige/20 dark:bg-charcoal-600 rounded text-blue-gray dark:text-greige text-sm text-center p-4">
+            لم تُحمّل الصورة — استخدم &quot;تحميل المخطط&quot; أدناه
+          </div>
+        </div>
+      )
+    }
+    return (
+      /* eslint-disable-next-line @next/next/no-img-element -- روابط تخزين خارجية أو وكيل؛ next/image يسبب 400 على Vercel */
+      <img
+        key={imgSrc}
+        ref={imageRef as React.RefObject<HTMLImageElement>}
+        src={imgSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        loading={priority ? 'eager' : loading}
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => {
+          if (isSupabase && !triedProxy) {
+            setTriedProxy(true)
+          } else {
+            setLoadError(true)
+          }
+        }}
         onLoad={onLoad}
         onClick={onClick}
         draggable={draggable}

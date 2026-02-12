@@ -12,7 +12,7 @@ import { Loading } from '@/components/shared/Loading'
 import { Header } from '@/components/layout/Header'
 import { BackButton } from '@/components/shared/BackButton'
 import { apiClient } from '@/lib/api'
-import { formatDateHijriMiladi, formatDateTimeHijriMiladi, isOrderExpired } from '@/lib/utils'
+import { formatDateHijriMiladi, formatDateTimeHijriMiladi, isOrderExpired, ARCHIVE_PURGE_DAYS_AFTER_DEADLINE } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 interface Order {
@@ -528,7 +528,7 @@ export default function OrderDetailPage() {
                   <div className="rounded-lg p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                     <p className="text-amber-800 dark:text-amber-200 font-medium">تم حذف الملفات من الأرشيف</p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      يظهر الطلب في الأرشيف فقط كسجل — كان فيه طلب ومخططات سابقة، ولا يمكن تحميل المخططات بعد 45 يوماً من الموعد النهائي. احتفظ بنسخة من الملفات لديك قبل انتهاء المدة.
+                      يظهر الطلب في الأرشيف فقط كسجل — كان فيه طلب ومخططات سابقة، ولا يمكن تحميل المخططات بعد {ARCHIVE_PURGE_DAYS_AFTER_DEADLINE} يوماً من الموعد النهائي. احتفظ بنسخة من الملفات لديك قبل انتهاء المدة.
                     </p>
                   </div>
                 ) : (
@@ -539,6 +539,8 @@ export default function OrderDetailPage() {
                           <PlanImage
                             fileUrl={plan.fileUrl}
                             fileType={plan.fileType}
+                            orderId={orderId}
+                            planId={plan.id}
                             alt="Plan"
                             width={480}
                             height={192}
