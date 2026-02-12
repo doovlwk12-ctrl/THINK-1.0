@@ -26,13 +26,22 @@ export async function GET(request: NextRequest) {
     if (!order) {
       return NextResponse.json({ success: true, messages: [] }, { status: 200 })
     }
-    if (auth.role !== 'ADMIN') {
-      if (auth.role === 'ENGINEER' && order.engineerId !== auth.userId) {
+    const role = String(auth.role ?? '').toUpperCase()
+    const userId = String(auth.userId ?? '').trim()
+    if (role === 'ADMIN') {
+      // الأدمن يصل لجميع المحادثات دون ربط بالطلب
+    } else if (role === 'ENGINEER') {
+      const orderEngineerId = order.engineerId != null ? String(order.engineerId).trim() : ''
+      if (orderEngineerId && orderEngineerId !== userId) {
         return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
       }
-      if (auth.role === 'CLIENT' && order.clientId !== auth.userId) {
+    } else if (role === 'CLIENT') {
+      const orderClientId = String(order.clientId ?? '').trim()
+      if (orderClientId !== userId) {
         return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
       }
+    } else {
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
     }
     const rows = await prisma.message.findMany({
       where: { orderId },

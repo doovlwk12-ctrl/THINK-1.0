@@ -37,13 +37,22 @@ export async function POST(request: NextRequest) {
     if (!order) {
       return NextResponse.json({ error: 'الطلب غير موجود' }, { status: 404 })
     }
-    if (auth.role !== 'ADMIN') {
-      if (auth.role === 'ENGINEER' && order.engineerId !== auth.userId) {
+    const role = String(auth.role ?? '').toUpperCase()
+    const userId = String(auth.userId ?? '').trim()
+    if (role === 'ADMIN') {
+      // الأدمن يرسل في أي محادثة دون ربط بالطلب
+    } else if (role === 'ENGINEER') {
+      const orderEngineerId = order.engineerId != null ? String(order.engineerId).trim() : ''
+      if (orderEngineerId && orderEngineerId !== userId) {
         return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
       }
-      if (auth.role === 'CLIENT' && order.clientId !== auth.userId) {
+    } else if (role === 'CLIENT') {
+      const orderClientId = String(order.clientId ?? '').trim()
+      if (orderClientId !== userId) {
         return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
       }
+    } else {
+      return NextResponse.json({ error: 'غير مصرح' }, { status: 403 })
     }
     const content = sanitizeText(rawContent)
     const message = await prisma.message.create({
