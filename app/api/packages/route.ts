@@ -3,6 +3,8 @@ import { handleApiError } from '@/lib/errors'
 import { unstable_cache } from 'next/cache'
 import { PACKAGES_CACHE_TAG } from '@/lib/cacheTags'
 
+export const dynamic = 'force-dynamic'
+
 async function getPackages() {
   const packages = await prisma.package.findMany({
     where: {

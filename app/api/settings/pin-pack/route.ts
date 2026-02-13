@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 
+export const dynamic = 'force-dynamic'
+
 // GET: public – read-only pin pack pricing and messages (for revision page)
 export async function GET() {
   try {

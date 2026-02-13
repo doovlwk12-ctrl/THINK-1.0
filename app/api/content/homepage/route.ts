@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 import { unstable_cache } from 'next/cache'
 
+export const dynamic = 'force-dynamic'
+
 export type SocialLinkType = 'instagram' | 'snapchat' | 'x' | 'whatsapp' | 'linkedin'
 
 export interface HomepageContentPublic {

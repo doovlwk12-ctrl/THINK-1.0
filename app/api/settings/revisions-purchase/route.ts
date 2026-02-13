@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { handleApiError } from '@/lib/errors'
 
+export const dynamic = 'force-dynamic'
+
 const DEFAULT_PRICE = 100
 const DEFAULT_MAX = 20
 
