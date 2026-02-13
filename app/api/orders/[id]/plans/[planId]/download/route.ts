@@ -113,7 +113,7 @@ export async function GET(
         return new Response(null, { status: 404 })
       }
       const buffer = await readFile(filePath)
-      return new Response(buffer, {
+      return new Response(new Uint8Array(buffer), {
         headers: {
           'Content-Type': contentType,
           'Content-Disposition': `attachment; filename="${downloadName}"`,
@@ -131,7 +131,7 @@ export async function GET(
         if (parsed.path.endsWith('.gz')) {
           buffer = gunzipSync(buffer)
         }
-        return new Response(buffer, {
+        return new Response(new Uint8Array(buffer), {
           headers: {
             'Content-Type': contentType,
             'Content-Disposition': `attachment; filename="${downloadName}"`,
@@ -144,11 +144,11 @@ export async function GET(
       const remoteRes = await fetch(fileUrl, { method: 'GET', redirect: 'follow' })
       if (remoteRes.ok && remoteRes.body) {
         const arrayBuffer = await remoteRes.arrayBuffer()
-        let body: ArrayBuffer | Buffer = arrayBuffer
+        let body: ArrayBuffer | Uint8Array = arrayBuffer
         if (fileUrl.endsWith('.gz')) {
-          body = gunzipSync(Buffer.from(arrayBuffer))
+          body = new Uint8Array(gunzipSync(Buffer.from(arrayBuffer)))
         }
-        return new Response(body, {
+        return new Response(body as BodyInit, {
           headers: {
             'Content-Type': contentType,
             'Content-Disposition': `attachment; filename="${downloadName}"`,

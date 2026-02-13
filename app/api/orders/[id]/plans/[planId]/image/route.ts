@@ -52,7 +52,7 @@ export async function GET(
     const { auth } = result
 
     const resolved = await Promise.resolve(context.params)
-    const orderId = resolved?.id ?? resolved?.orderId
+    const orderId = resolved?.id
     const planId = resolved?.planId
 
     if (!orderId || !planId) {
@@ -123,7 +123,7 @@ export async function GET(
         if (parsed.path.endsWith('.gz')) {
           try {
             buffer = gunzipSync(buffer)
-          } catch (decompressErr) {
+          } catch {
             logger.warn('Plan image gunzip failed', { planId, path: parsed.path })
             return new Response(null, {
               status: 502,
