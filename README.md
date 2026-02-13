@@ -63,7 +63,8 @@ npm run dev          # تطوير
 npm run build        # بناء
 npm run start        # تشغيل النسخة المبنية
 npm run lint         # فحص الكود
-npm run db:push      # مزامنة قاعدة البيانات
+npm run db:push      # مزامنة قاعدة البيانات (تطوير)
+npx prisma migrate deploy  # تطبيق migrations على الإنتاج
 npm run db:studio    # Prisma Studio
 npm run db:seed      # بيانات تجريبية
 npm run sync:prisma-to-supabase-auth  # ربط حسابات User مع Supabase Auth (عند استخدام Supabase)
@@ -80,6 +81,17 @@ npm run sync:prisma-to-supabase-auth  # ربط حسابات User مع Supabase A
 
 بيئة الإنتاج: ضبط `.env` حسب `.env.example` (قاعدة البيانات، NextAuth أو Supabase، إلخ).
 
+### النشر على Vercel
+
+1. **ربط المستودع** من GitHub إلى Vercel.
+2. **إعداد متغيرات البيئة** — راجع `docs/ENV-CHECKLIST.md` للقائمة الكاملة.
+3. **قاعدة البيانات:** استخدم Supabase مع `DATABASE_URL` بالمنفذ **6543** و `?pgbouncer=true` — راجع `docs/VERCEL-DATABASE-FIX.md`.
+4. **تشغيل Migrations:** بعد أول نشر، نفّذ محلياً ضد قاعدة الإنتاج:
+   ```bash
+   npx prisma migrate deploy
+   npm run db:seed   # بيانات تجريبية
+   ```
+
 ### التخزين (المخططات والصور)
 
 - **على Vercel (أو أي استضافة بدون قرص ثابت):** التخزين المحلي غير متوفر. يجب إعداد **Supabase Storage** حتى تظهر صور المخططات وتعمل رفع الملفات:
@@ -94,6 +106,8 @@ npm run sync:prisma-to-supabase-auth  # ربط حسابات User مع Supabase A
 
 | الملف | الوصف |
 |-------|--------|
+| `docs/ENV-CHECKLIST.md` | قائمة متغيرات البيئة للتحقق والإدخال |
+| `docs/VERCEL-DATABASE-FIX.md` | إصلاح خطأ الاتصال بقاعدة البيانات على Vercel |
 | `docs/CHAT-SYSTEM-AUDIT-REPORT.md` | تقرير فحص نظام المحادثة (API، Prisma، RLS، الواجهة) |
 | `docs/CHAT-SYSTEM-SOLUTION.md` | دليل الحل وقائمة التحقق لخطأ 500 في المحادثة |
 | `docs/CHAT-MESSAGES-AUDIT.md` | توثيق مسارات الرسائل ومعالجة الأخطاء |
