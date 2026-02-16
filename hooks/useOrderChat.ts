@@ -100,11 +100,11 @@ export function useOrderChat(
       if (!supabase) return
       const ch = channelRef.current
       if (ch) {
-        ch.send({ type: 'broadcast', event: 'message', payload: message })
+        void ch.httpSend('message', message)
         return
       }
       const tempCh = supabase.channel(`order:${orderId}`)
-      tempCh.send({ type: 'broadcast', event: 'message', payload: message })
+      void tempCh.httpSend('message', message)
       supabase.removeChannel(tempCh)
     },
     [orderId]

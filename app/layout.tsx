@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Cairo } from 'next/font/google'
+import NextTopLoader from 'nextjs-toploader'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
@@ -48,6 +49,7 @@ export default function RootLayout({
         />
       </head>
       <body className={cairo.className} suppressHydrationWarning>
+        <NextTopLoader color="#5b7c99" height={3} showSpinner={false} />
         <ThemeProvider>
           <ErrorBoundaryProvider>
             <AuthProvider>
