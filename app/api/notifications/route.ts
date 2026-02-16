@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
           where: { userId: auth.userId, isRead: false },
         }),
       ])
-    } catch (dbError) {
+    } catch (_dbError) {
       return NextResponse.json(
         { success: false, error: 'تعذر تحميل الإشعارات. تحقق من اتصال قاعدة البيانات ثم أعد المحاولة.' },
         { status: 503 }

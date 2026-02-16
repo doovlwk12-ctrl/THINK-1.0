@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         },
         _sum: { amount: true },
       })
-    } catch (dbError) {
+    } catch (_dbError) {
       return NextResponse.json(
         {
           success: false,

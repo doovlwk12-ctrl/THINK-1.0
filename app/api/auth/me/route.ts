@@ -14,7 +14,7 @@ export async function GET(request: Request) {
         where: { id: auth.userId },
         select: { id: true, name: true, email: true, role: true },
       })
-    } catch (dbError) {
+    } catch (_dbError) {
       return NextResponse.json(
         { error: 'تعذر الاتصال بقاعدة البيانات. تحقق من DATABASE_URL على Vercel ثم أعد المحاولة.' },
         { status: 503 }
