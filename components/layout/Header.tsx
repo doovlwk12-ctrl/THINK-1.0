@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -151,16 +152,16 @@ export function Header() {
             onClick={handleHomeClick}
             aria-label="منصة فكرة - الصفحة الرئيسية"
           >
-            {/* أيقونة مخطط أرضي — أوضح وأنسب */}
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-rocky-blue/10 dark:bg-rocky-blue/20 border border-rocky-blue/20 dark:border-rocky-blue-400/30 flex items-center justify-center group-hover:bg-rocky-blue/15 dark:group-hover:bg-rocky-blue/25 group-hover:border-rocky-blue/30 dark:group-hover:border-rocky-blue-400/40 transition-colors duration-300">
-              <svg className="w-5 h-5 text-rocky-blue dark:text-rocky-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {/* إطار المخطط */}
-                <rect x="4" y="4" width="16" height="16" rx="0.5" />
-                {/* جدران داخلية — تخطيط أرضي */}
-                <path d="M4 12h16M12 4v16" />
-                {/* فتحة باب صغيرة */}
-                <path d="M11 12h2" strokeWidth="1.5" />
-              </svg>
+            {/* شعار FELKRA — يظهر أصلياً في الوضعين */}
+            <div className="flex-shrink-0 h-[85px] w-[120px] flex items-center overflow-hidden rounded-lg bg-cream/80 dark:bg-charcoal-800/90 -translate-y-2">
+              <Image
+                src="/logo.jpeg"
+                alt="فكرة - FELKRA"
+                width={120}
+                height={85}
+                className="h-[85px] w-[120px] object-contain"
+                priority
+              />
             </div>
             {/* النص */}
             <div className="flex flex-col items-start justify-center">
