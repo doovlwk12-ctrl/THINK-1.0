@@ -8,10 +8,18 @@ export async function GET(request: Request) {
     const result = await requireAuth(request)
     if (result instanceof NextResponse) return result
     const { auth } = result
-    const dbUser = await prisma.user.findUnique({
-      where: { id: auth.userId },
-      select: { id: true, name: true, email: true, role: true },
-    })
+    let dbUser
+    try {
+      dbUser = await prisma.user.findUnique({
+        where: { id: auth.userId },
+        select: { id: true, name: true, email: true, role: true },
+      })
+    } catch (dbError) {
+      return NextResponse.json(
+        { error: 'تعذر الاتصال بقاعدة البيانات. تحقق من DATABASE_URL على Vercel ثم أعد المحاولة.' },
+        { status: 503 }
+      )
+    }
     if (!dbUser) {
       return NextResponse.json(
         {

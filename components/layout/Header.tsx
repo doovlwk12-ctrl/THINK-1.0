@@ -29,14 +29,14 @@ export function Header() {
 
   // Sync display name from profile API when user is logged in (so dropdown shows correct name)
   useEffect(() => {
-    if (!session?.user?.id) return
+    if (authStatus !== 'authenticated' || !session?.user?.id) return
     let cancelled = false
     apiClient.get<{ success: boolean; user?: { name: string } }>('/users/profile').then((res) => {
       if (cancelled || !res?.success || !res?.user?.name) return
       setDisplayName(res.user.name)
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [session?.user?.id, setDisplayName])
+  }, [authStatus, session?.user?.id, setDisplayName])
 
   // Track hash changes
   useEffect(() => {
@@ -239,7 +239,7 @@ export function Header() {
           {/* User Actions — تباعد كافٍ على الجوال لمنع تداخل الأيقونات */}
           <div className="flex items-center gap-3 ms-4 sm:ms-6 md:ms-8">
             <ThemeToggle />
-            {session && (
+            {session && authStatus === 'authenticated' && (
               <>
                 <NotificationBell />
                 <UserMenu
