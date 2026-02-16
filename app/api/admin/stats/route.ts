@@ -10,111 +10,93 @@ export async function GET(request: NextRequest) {
     if (result instanceof NextResponse) return result
     const { auth: _auth } = result
 
-    // Get all stats in parallel
-    const [
-      totalOrders,
-      totalUsers,
-      totalClients,
-      totalEngineers,
-      activeEngineers,
-      totalRevenue,
-      pendingOrders,
-      inProgressOrders,
-      completedOrders,
-      totalPackages,
-      activePackages,
-    ] = await Promise.all([
-      // Total orders
-      prisma.order.count(),
-      
-      // Total users
-      prisma.user.count(),
-      
-      // Total clients
-      prisma.user.count({
-        where: { role: 'CLIENT' },
-      }),
-      
-      // Total engineers
-      prisma.user.count({
-        where: { role: 'ENGINEER' },
-      }),
-      
-      // Active engineers (engineers with at least one assigned order)
-      prisma.user.count({
-        where: {
-          role: 'ENGINEER',
-          engineerOrders: {
-            some: {
-              status: {
-                in: ['PENDING', 'IN_PROGRESS', 'REVIEW'],
-              },
+    let totalOrders: number
+    let totalUsers: number
+    let totalClients: number
+    let totalEngineers: number
+    let activeEngineers: number
+    let totalRevenue: { _sum: { amount: number | null } }
+    let pendingOrders: number
+    let inProgressOrders: number
+    let completedOrders: number
+    let totalPackages: number
+    let activePackages: number
+    let recentOrders: number
+    let recentRevenue: { _sum: { amount: number | null } }
+
+    try {
+      const [
+        _totalOrders,
+        _totalUsers,
+        _totalClients,
+        _totalEngineers,
+        _activeEngineers,
+        _totalRevenue,
+        _pendingOrders,
+        _inProgressOrders,
+        _completedOrders,
+        _totalPackages,
+        _activePackages,
+      ] = await Promise.all([
+        prisma.order.count(),
+        prisma.user.count(),
+        prisma.user.count({ where: { role: 'CLIENT' } }),
+        prisma.user.count({ where: { role: 'ENGINEER' } }),
+        prisma.user.count({
+          where: {
+            role: 'ENGINEER',
+            engineerOrders: {
+              some: { status: { in: ['PENDING', 'IN_PROGRESS', 'REVIEW'] } },
             },
           },
-        },
-      }),
-      
-      // Total revenue (sum of all paid orders)
-      prisma.payment.aggregate({
+        }),
+        prisma.payment.aggregate({
+          where: { status: 'completed' },
+          _sum: { amount: true },
+        }),
+        prisma.order.count({ where: { status: 'PENDING' } }),
+        prisma.order.count({ where: { status: 'IN_PROGRESS' } }),
+        prisma.order.count({ where: { status: 'COMPLETED' } }),
+        prisma.package.count(),
+        prisma.package.count({ where: { isActive: true } }),
+      ])
+
+      totalOrders = _totalOrders
+      totalUsers = _totalUsers
+      totalClients = _totalClients
+      totalEngineers = _totalEngineers
+      activeEngineers = _activeEngineers
+      totalRevenue = _totalRevenue
+      pendingOrders = _pendingOrders
+      inProgressOrders = _inProgressOrders
+      completedOrders = _completedOrders
+      totalPackages = _totalPackages
+      activePackages = _activePackages
+
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      recentOrders = await prisma.order.count({
+        where: { createdAt: { gte: sevenDaysAgo } },
+      })
+
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      recentRevenue = await prisma.payment.aggregate({
         where: {
           status: 'completed',
+          createdAt: { gte: thirtyDaysAgo },
         },
-        _sum: {
-          amount: true,
+        _sum: { amount: true },
+      })
+    } catch (dbError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'تعذر تحميل الإحصائيات. تحقق من اتصال قاعدة البيانات (DATABASE_URL) على Vercel ثم أعد المحاولة.',
         },
-      }),
-      
-      // Pending orders
-      prisma.order.count({
-        where: { status: 'PENDING' },
-      }),
-      
-      // In progress orders
-      prisma.order.count({
-        where: { status: 'IN_PROGRESS' },
-      }),
-      
-      // Completed orders
-      prisma.order.count({
-        where: { status: 'COMPLETED' },
-      }),
-      
-      // Total packages
-      prisma.package.count(),
-      
-      // Active packages
-      prisma.package.count({
-        where: { isActive: true },
-      }),
-    ])
-
-    // Get recent orders (last 7 days)
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    
-    const recentOrders = await prisma.order.count({
-      where: {
-        createdAt: {
-          gte: sevenDaysAgo,
-        },
-      },
-    })
-
-    // Get recent revenue (last 30 days)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    
-    const recentRevenue = await prisma.payment.aggregate({
-      where: {
-        status: 'completed',
-        createdAt: {
-          gte: thirtyDaysAgo,
-        },
-      },
-      _sum: {
-        amount: true,
-      },
-    })
+        { status: 503 }
+      )
+    }
 
     return Response.json({
       success: true,
@@ -124,8 +106,8 @@ export async function GET(request: NextRequest) {
         totalClients,
         totalEngineers,
         activeEngineers,
-        totalRevenue: totalRevenue._sum.amount || 0,
-        recentRevenue: recentRevenue._sum.amount || 0,
+        totalRevenue: totalRevenue._sum.amount ?? 0,
+        recentRevenue: recentRevenue._sum.amount ?? 0,
         pendingOrders,
         inProgressOrders,
         completedOrders,
