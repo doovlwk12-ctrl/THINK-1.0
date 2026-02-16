@@ -36,25 +36,28 @@ export async function GET(request: NextRequest) {
       ...(unreadOnly && { isRead: false }),
     }
 
-    const [notifications, total, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
-        where: whereClause,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take: limit,
-      }),
-      prisma.notification.count({
-        where: whereClause,
-      }),
-      prisma.notification.count({
-        where: {
-          userId: auth.userId,
-          isRead: false,
-        },
-      }),
-    ])
+    let notifications: Awaited<ReturnType<typeof prisma.notification.findMany>>
+    let total: number
+    let unreadCount: number
+    try {
+      ;[notifications, total, unreadCount] = await Promise.all([
+        prisma.notification.findMany({
+          where: whereClause,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        prisma.notification.count({ where: whereClause }),
+        prisma.notification.count({
+          where: { userId: auth.userId, isRead: false },
+        }),
+      ])
+    } catch (dbError) {
+      return NextResponse.json(
+        { success: false, error: 'تعذر تحميل الإشعارات. تحقق من اتصال قاعدة البيانات ثم أعد المحاولة.' },
+        { status: 503 }
+      )
+    }
 
     // Parse data JSON for each notification
     const notificationsWithParsedData = notifications.map((notification) => ({

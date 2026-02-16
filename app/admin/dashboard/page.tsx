@@ -70,13 +70,16 @@ export default function AdminDashboard() {
 
   const roleReady = status === 'authenticated' && session?.user?.role != null
   const isAdmin = session?.user?.role === 'ADMIN'
-  if (status === 'loading' || !roleReady || !isAdmin || loading) {
+  const initialLoad = loading && stats === null
+  if (status === 'loading' || !roleReady || !isAdmin || initialLoad) {
     return (
       <div className="min-h-screen bg-cream dark:bg-charcoal-900 flex items-center justify-center">
         <Loading text="جاري التحميل..." />
       </div>
     )
   }
+
+  const statsFailed = stats === null
 
   return (
     <div className="min-h-screen bg-cream dark:bg-charcoal-900">
@@ -86,6 +89,25 @@ export default function AdminDashboard() {
         <BackButton href="/" label="العودة للصفحة الرئيسية" />
         
         <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-charcoal dark:text-cream">لوحة تحكم الإدارة</h1>
+
+        {statsFailed && (
+          <Card className="mb-6 p-4 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30">
+            <p className="text-amber-800 dark:text-amber-200 mb-2">تعذر تحميل الإحصائيات. تحقق من اتصال قاعدة البيانات (DATABASE_URL) على Vercel ثم أعد المحاولة.</p>
+            <button
+              type="button"
+              onClick={() => fetchStats()}
+              className="text-sm font-medium text-amber-900 dark:text-amber-100 underline hover:no-underline"
+            >
+              إعادة المحاولة
+            </button>
+          </Card>
+        )}
+
+        {loading && (
+          <div className="flex justify-center py-8">
+            <Loading text="جاري تحميل الإحصائيات..." />
+          </div>
+        )}
 
         {/* Main Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
